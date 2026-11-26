@@ -5,6 +5,9 @@
 "profile_blocked_title" = "Автор заблокирован";
 "profile_blocks_load_failed" = "Не удалось загрузить блокировки. Повторите попытку.";
 "profile_check_in_actions" = "Действия с чекином";
+"profile_check_in_like" = "Поставить лайк. Лайков: %1$d";
+"profile_check_in_unlike" = "Убрать лайк. Лайков: %1$d";
+"profile_check_in_like_failed" = "Не удалось обновить лайк";
 "profile_check_in_rating" = "Кофе: %1$d, сервис: %2$d, атмосфера: %3$d. Средняя оценка: %4$@ из 5";
 "profile_check_in_report" = "Пожаловаться";
 "profile_close" = "Закрыть";

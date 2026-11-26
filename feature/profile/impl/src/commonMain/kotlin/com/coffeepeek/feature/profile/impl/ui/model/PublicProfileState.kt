@@ -12,6 +12,7 @@ internal enum class PublicProfileError {
     BlocksLoad, Unavailable, Load, Verification, Follow, Favorites, Activity, Connections, CheckIns,
 }
 
+
 internal data class PublicProfileState(
     val isLoading: Boolean = true,
     val isSignedIn: Boolean = false,
@@ -21,7 +22,10 @@ internal data class PublicProfileState(
     val isLoadingCheckIns: Boolean = false,
     val isLoadingMoreCheckIns: Boolean = false,
     val checkInsError: PublicProfileError? = null,
+    val pendingLikeIds: Set<String> = emptySet(),
+    val likeErrorIds: Set<String> = emptySet(),
     val hasMoreCheckIns: Boolean = false,
+    val checkInDate: String? = null,
     val isOwnProfile: Boolean = false,
     val isFollowing: Boolean = false,
     val isFollowLoading: Boolean = false,

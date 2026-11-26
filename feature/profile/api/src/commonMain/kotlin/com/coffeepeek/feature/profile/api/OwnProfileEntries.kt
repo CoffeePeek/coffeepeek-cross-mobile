@@ -13,6 +13,9 @@ class OwnProfileShelf(
     val onOpened: () -> Unit,
 )
 
+/** The localized month and independent navigation actions for the public profile calendar. */
+typealias ProfileCalendarHeaderContent = @Composable (month: String, previous: (() -> Unit)?, next: (() -> Unit)?) -> Unit
+
 /** Profile arranges these slots; the history feature owns their shared state and scrolling. */
 class OwnProfileHistory(
     val calendar: @Composable () -> Unit,

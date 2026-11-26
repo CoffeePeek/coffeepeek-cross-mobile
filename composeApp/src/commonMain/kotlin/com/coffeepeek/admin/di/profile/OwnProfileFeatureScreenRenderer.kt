@@ -36,6 +36,7 @@ import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.feature.auth.domain.AuthRepository
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
@@ -96,6 +97,7 @@ internal fun featureOwnProfileScreenRenderer(
     repository: PublicProfileData,
     checkIns: PublicCheckInsPort,
     accounts: ProfileAccountPort,
+    likes: ProfileCheckInLikes,
     notifications: NotificationFeature,
     auth: AuthRepository,
     drafts: OldReviewDrafts,
@@ -108,6 +110,7 @@ internal fun featureOwnProfileScreenRenderer(
         data = repository,
         checkIns = checkIns,
         accounts = accounts,
+        likes = likes,
         signOut = AppProfileSignOut(notifications, auth, drafts),
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),

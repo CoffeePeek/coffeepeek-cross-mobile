@@ -5,6 +5,9 @@
 "profile_blocked_title" = "Аўтар заблакіраваны";
 "profile_blocks_load_failed" = "Не ўдалося загрузіць блакіроўкі. Паўтарыце спробу.";
 "profile_check_in_actions" = "Дзеянні з чэкінам";
+"profile_check_in_like" = "Паставіць упадабанне. Упадабанняў: %1$d";
+"profile_check_in_unlike" = "Прыбраць упадабанне. Упадабанняў: %1$d";
+"profile_check_in_like_failed" = "Не атрымалася абнавіць упадабанне";
 "profile_check_in_rating" = "Кава: %1$d, сэрвіс: %2$d, атмасфера: %3$d. Сярэдняя адзнака: %4$@ з 5";
 "profile_check_in_report" = "Паскардзіцца";
 "profile_close" = "Закрыць";

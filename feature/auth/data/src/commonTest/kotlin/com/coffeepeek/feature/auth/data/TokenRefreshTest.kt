@@ -52,6 +52,20 @@ class TokenRefreshTest {
         } finally { client.close() }
     }
 
+    @Test fun rotatedRefreshTokenIsSentOnTheNextExchange() = runBlocking {
+        val client = client { tokens(payload.replace("new-refresh", "refresh-${requests.size}")) }
+        try {
+            val refresh = createTokenRefresh(client)
+            val first = refresh.refresh("old-refresh").getOrThrow()
+            val second = refresh.refresh(assertNotNull(first.refreshToken)).getOrThrow()
+            assertEquals(SessionTokens("new-access", "refresh-2", accessExpiry, refreshExpiry), second)
+            assertEquals(
+                listOf("""{"refreshToken":"old-refresh"}""", """{"refreshToken":"refresh-1"}"""),
+                requests.map { it.body.toByteArray().decodeToString() },
+            )
+        } finally { client.close() }
+    }
+
     @Test fun missingOrInvalidBodyCredentialsNeverUseCookieOrSentToken() = runBlocking {
         val fields = listOf("accessToken", "refreshToken", "accessTokenExpiresAt", "refreshTokenExpiresAt")
         for (field in fields) {

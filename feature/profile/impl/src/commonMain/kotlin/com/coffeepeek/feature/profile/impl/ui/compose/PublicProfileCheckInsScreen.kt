@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.profile.impl.resources.Res
 import com.coffeepeek.feature.profile.impl.resources.profile_back
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -24,9 +26,11 @@ import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPaddin
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.api.ProfileAuthor
@@ -37,11 +41,14 @@ import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
+import com.coffeepeek.feature.profile.impl.ui.data.filteredCheckIns
+import com.coffeepeek.feature.profile.impl.ui.data.PublicProfileTimeZone
+import kotlinx.datetime.TimeZone
 
 @Composable
 internal fun PublicProfileCheckInsScreenContent(
     state: PublicProfileState, slots: ProfileSlots, onBack: () -> Unit, onOpenShop: (String) -> Unit,
-    onRetry: () -> Unit, onLoadMore: () -> Unit,
+    onRetry: () -> Unit, onLoadMore: () -> Unit, onLike: (String) -> Unit,
     onPhotoClick: (List<String>, List<String>, Int) -> Unit,
     authorActions: ProfileAuthorActions = ProfileAuthorActions.None,
 ) {
@@ -55,7 +62,7 @@ internal fun PublicProfileCheckInsScreenContent(
                     checkNotNull(state.profile), authorActions)
                 state.profile == null && state.isLoading -> ProfileSectionLoader(160.dp)
                 state.profile == null -> InlineProfileError(stringResource(Res.string.profile_load_failed), onRetry)
-                else -> PublicProfileCheckInsList(state, slots, onOpenShop, onRetry, onLoadMore, onPhotoClick, authorActions = authorActions)
+                else -> PublicProfileCheckInsList(state, slots, onOpenShop, onRetry, onLoadMore, onLike, onPhotoClick, authorActions = authorActions)
             }
         }
     }
@@ -64,29 +71,41 @@ internal fun PublicProfileCheckInsScreenContent(
 @Composable
 internal fun PublicProfileCheckInsList(
     state: PublicProfileState, slots: ProfileSlots, onOpenShop: (String) -> Unit,
-    onRetry: () -> Unit, onLoadMore: () -> Unit, onPhotoClick: (List<String>, List<String>, Int) -> Unit,
+    onRetry: () -> Unit, onLoadMore: () -> Unit, onLike: (String) -> Unit, onPhotoClick: (List<String>, List<String>, Int) -> Unit,
     modifier: Modifier = Modifier.fillMaxSize(),
     isOwnProfile: Boolean = state.isOwnProfile,
     authorActions: ProfileAuthorActions = ProfileAuthorActions.None,
+    listState: LazyListState = rememberLazyListState(),
+    header: (@Composable () -> Unit)? = null,
+    bottomPadding: Dp = 32.dp,
+    dateZone: TimeZone = PublicProfileTimeZone,
 ) {
     val profile = state.profile ?: return
     val author = ProfileAuthor(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
-    val listState = rememberLazyListState()
-    slots.photoPrefetch(listState, state.checkIns.map { it.id to it.photoPreviewUrls.take(3) })
-    LazyColumn(state = listState, modifier = modifier, contentPadding = coffeePeekScrollContentPadding(PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp)),
+    val rows = remember(state.checkIns, state.checkInDate, dateZone) { state.filteredCheckIns(dateZone) }
+    slots.photoPrefetch(listState, rows.map { it.id to it.photoPreviewUrls.take(3) })
+    LazyColumn(state = listState, modifier = modifier,
+        contentPadding = coffeePeekScrollContentPadding(PaddingValues(top = if (header == null) 12.dp else 0.dp, bottom = bottomPadding)),
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(state.checkIns, key = { it.id }) { checkIn ->
+        if (header != null) item(contentType = "profile-header") { header() }
+        items(rows, key = { it.id }) { checkIn ->
             val allowActions = state.isSignedIn && !isOwnProfile
             PublicProfileCheckInCard(checkIn, author, slots,
                 checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { slug -> { onOpenShop(slug) } }, onPhotoClick,
                 onBlock = if (allowActions) ({ authorActions.requestBlock(author) }) else null,
-                onReport = if (allowActions) ({ slots.reportCheckIn(checkIn.id) }) else null)
+                onReport = if (allowActions) ({ slots.reportCheckIn(checkIn.id) }) else null,
+                onLike = { onLike(checkIn.id) }, likeEnabled = checkIn.id !in state.pendingLikeIds,
+                likeError = checkIn.id in state.likeErrorIds)
         }
         if (state.isLoadingCheckIns || state.isLoadingMoreCheckIns) item { ProfileSectionLoader(88.dp) }
-        else if (state.checkInsError != null) item { InlineProfileError(stringResource(Res.string.profile_check_ins_failed), onRetry) }
-        else if (state.checkIns.isEmpty()) item { Text(stringResource(Res.string.profile_check_ins_empty)) }
-        if (state.hasMoreCheckIns && !state.isLoadingMoreCheckIns && state.checkInsError == null) item {
-            TextButton(onClick = onLoadMore, modifier = Modifier.fillMaxWidth()) { Text(stringResource(Res.string.profile_load_more)) }
+        else if (state.checkInsError != null) item { Box(Modifier.padding(horizontal = 16.dp)) {
+            InlineProfileError(stringResource(Res.string.profile_check_ins_failed), onRetry)
+        } }
+        else if (rows.isEmpty() && !state.hasMoreCheckIns) item {
+            Text(stringResource(Res.string.profile_check_ins_empty), Modifier.padding(horizontal = 16.dp))
+        }
+        if (state.hasMoreCheckIns && !state.isLoadingCheckIns && !state.isLoadingMoreCheckIns && state.checkInsError == null) item {
+            TextButton(onClick = onLoadMore, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) { Text(stringResource(Res.string.profile_load_more)) }
         }
     }
 }
@@ -95,7 +114,7 @@ internal fun PublicProfileCheckInsList(
 private fun PublicProfileCheckInsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val slots = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> },
         photoPrefetch = { _, _ -> })
-    PublicProfileCheckInsScreenContent(PublicProfileState(isLoading = false), slots, {}, {}, {}, {}, { _, _, _ -> })
+    PublicProfileCheckInsScreenContent(PublicProfileState(isLoading = false), slots, {}, {}, {}, {}, {}, { _, _, _ -> })
 }
 
 @Preview @Composable private fun PublicProfileCheckInsLightPreview() = PublicProfileCheckInsPreview(false)

@@ -91,7 +91,7 @@ private fun OwnPublicProfileContent(
         slug = slug, nickname = profile.userName, avatarUrl = profile.avatarUrl,
         vm = publicVm, authorActions = authorActions, slots = slots.shared, onBack = null,
         onOpenShop = callbacks.openShop, onOpenRoaster = callbacks.openRoaster, onLogin = callbacks.login,
-        onOpenUser = callbacks.openUser, onShare = {}, onOpenCheckIns = {},
+        onOpenUser = callbacks.openUser, onShare = {},
         own = OwnProfileExtras(
             onOpenFavorites = callbacks.openFavorites,
             onOpenContributions = callbacks.openContributions, topBarActions = actions,

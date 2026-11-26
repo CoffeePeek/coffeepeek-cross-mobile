@@ -16,6 +16,7 @@ data class IosPublicProfileDay(val date: String, val today: Boolean, val count: 
 data class IosPublicProfileCheckIns(
     val rows: List<IosOwnProfileCheckIn>, val loading: Boolean, val failed: Boolean, val more: Boolean,
     val ratings: Map<String, IosPublicProfileRating>,
+    val pendingLikeIds: List<String>, val likeErrorIds: List<String>,
 )
 data class IosPublicProfileRating(val coffee: Int, val service: Int, val place: Int)
 data class IosPublicProfileConnections(
@@ -31,7 +32,7 @@ internal fun PublicProfileSnapshot.iosState(language: String) = IosPublicProfile
     activity = IosPublicProfileActivity(week.map { IosPublicProfileDay(it.date, it.today, it.count, it.photo) },
         activityLoading, activityFailed),
     checkIns = IosPublicProfileCheckIns(checkIns.map { it.iosCheckIn(language, profile?.nickname.orEmpty(), profile?.avatarUrl) },
-        checkInsLoading, checkInsFailed, hasMoreCheckIns, ratings()),
+        checkInsLoading, checkInsFailed, hasMoreCheckIns, ratings(), pendingLikeIds.toList(), likeErrorIds.toList()),
     connections = IosPublicProfileConnections(connectionKind != null, connectionKind == PublicProfileConnectionKind.Followers,
         connectionsLoading, connectionsFailed, hasMoreConnections,
         connections.map { IosOwnProfileFollower(it.slug, it.userName, it.avatarUrl) }),

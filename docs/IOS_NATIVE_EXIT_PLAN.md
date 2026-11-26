@@ -939,3 +939,42 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   Release archive before accepting a replacement 2.0 upload; observe exact Apple
   processing. No device home-screen icon refresh or new phone interaction is
   claimed.
+
+### Reconcile native iOS into develop (2026-11-26)
+
+- Owner explicitly requested resolving PR 367 conflicts and merging native into
+  develop, then continuing issues 412/421/422 in separate PRs. TestFlight 2.0
+  (3257), run 45879455140 at abeccd74c14b83fee0bd716b37c50a1b9c311cdf, is left
+  running independently; the owner requested not waiting for its upload result.
+  No replacement dispatch or device action is part of this integration.
+- Reconciliation starts from that native source and develop
+  942fe922b3fd391378045f2e251d5d4cb1b782b2. Preserve the native app shell, feature
+  entries, session/account-generation guards and completed native UI corrections.
+  Fresh develop profile calendar/filter/pagination/likes changes are carried into
+  the live shared and native profile paths rather than restoring removed legacy
+  ProfileActivity API/Compose implementations. Existing shared like writers are
+  reused; native public-profile pending/error/retry/return behavior is covered by
+  four added non-UI session contracts and colocated busy/error previews.
+- Token rotation retains both branches' native endpoint, atomic replacement,
+  ownership/rejection/cancellation/redaction guards and the added blank-token and
+  sequential-rotation regressions. Independent static security review of this
+  conflict boundary found no actionable issues; runtime tests remain a separate
+  gate. Navigator/photo-import guards retain native behavior already containing
+  the earlier develop lifecycle fixes.
+- Keep the later checksum-pinned ONNX binary/local bindings instead of restoring
+  the superseded source-mirror dependency. Retain both dependency recovery records.
+  Keep iOS marketing version 2.0 and develop's increased shared build offset 1100.
+  The running 3257 job remains pinned to its original source and offset.
+- Verification plan: assemble Android directSandbox (no installation), run the
+  affected auth/network/session/profile/history/community/data/composition JVM
+  contracts, preserve paired previews, and queue full native iOS verification.
+  No UI/instrumentation/screenshot tests, real-account writes or phone actions.
+  Function-body verification passed with 125 recorded and zero new violations;
+  the stricter native baseline is preserved without manually raising entries.
+- The initial integration test command selected nonexistent
+  testDirectSandboxUnitTest; no tests ran in that invocation. It was corrected to
+  the existing testDirectDebugUnitTest with inspected fake session/navigation/
+  MockEngine composition fixtures; the APK target remains directSandbox.
+- The first compile then caught a duplicate onOpenCoffee named argument created
+  by automatic merging in the public-profile slot adapter. The identical second
+  callback was removed; original selection/compile failure logs remain local.

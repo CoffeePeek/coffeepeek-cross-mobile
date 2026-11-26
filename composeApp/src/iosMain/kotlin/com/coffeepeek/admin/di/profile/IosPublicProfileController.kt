@@ -13,6 +13,7 @@ import com.coffeepeek.core.media.ImageUrlFetcher
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.domain.PublicProfileData
@@ -32,6 +33,7 @@ internal fun iosPublicProfileContent(): (String, String?, String?, Boolean) -> U
     val accounts = koinInject<ProfileAccountPort>()
     val data = koinInject<PublicProfileData>()
     val checkIns = koinInject<PublicCheckInsPort>()
+    val likes = koinInject<ProfileCheckInLikes>()
     val visibility = koinInject<AuthorVisibility>()
     val blocks = koinInject<AuthorBlockActions>()
     val snapshots = koinInject<ProfileSnapshotStore>()
@@ -39,16 +41,17 @@ internal fun iosPublicProfileContent(): (String, String?, String?, Boolean) -> U
     val imageFetcher = koinInject<ImageUrlFetcher>()
     val collections = iosCollectionsWorkspaceContent()
     val media = remember(imageFetcher) { IosCatalogueMedia(imageFetcher, Constants.BASE_URL) }
-    return iosPublicProfileContent(factory, shelf, accounts, data, checkIns, visibility, blocks, snapshots, language, media, collections)
+    return iosPublicProfileContent(factory, shelf, accounts, data, checkIns, likes, visibility, blocks, snapshots, language, media, collections)
 }
 
 internal fun iosPublicProfileContent(factory: (IosPublicProfile) -> UIViewController, shelf: IosShelfFactory,
-    accounts: ProfileAccountPort, data: PublicProfileData, checkIns: PublicCheckInsPort, visibility: AuthorVisibility,
+    accounts: ProfileAccountPort, data: PublicProfileData, checkIns: PublicCheckInsPort,
+    likes: ProfileCheckInLikes, visibility: AuthorVisibility,
     blocks: AuthorBlockActions, snapshots: ProfileSnapshotStore, language: LanguagePort, media: IosCatalogueMedia,
     collections: (String, String?, String?) -> UIViewController,
 ): (String, String?, String?, Boolean) -> UIViewController {
     return { slug, nickname, avatarUrl, checkInsOnly ->
-        val profile = createIosPublicProfileSession(slug, data, checkIns, accounts, AppProfileAuthorVisibility(visibility), snapshots)
+        val profile = createIosPublicProfileSession(slug, data, checkIns, accounts, likes, AppProfileAuthorVisibility(visibility), snapshots)
         factory(IosPublicProfile(profile, AppProfileAuthorActions(blocks), language, media,
             slug, nickname, avatarUrl, checkInsOnly,
             shelfController = { target, own, allowed -> nativeShelfController(shelf("public", target, own, allowed)) }, collections = collections))

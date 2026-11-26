@@ -31,6 +31,11 @@
     <string name="profile_section_all_description">Усе: %1$s</string>
     <string name="profile_check_ins_failed">Не ўдалося загрузіць чэкіны</string>
     <string name="profile_check_ins_empty">Пакуль няма чэкінаў</string>
+    <string name="profile_check_ins_open_history">Асабістая гісторыя чэкінаў</string>
+    <string name="profile_calendar_expanded">Каляндар разгорнуты</string>
+    <string name="profile_calendar_collapsed">Каляндар згорнуты</string>
+    <string name="profile_check_in_shelf_bag">Пачак кавы</string>
+    <string name="profile_check_in_open_coffee">Адкрыць каву</string>
     <string name="profile_activity_failed">Не ўдалося загрузіць актыўнасць</string>
     <string name="profile_blocked_title">Аўтар заблакіраваны</string>
     <string name="profile_blocked_message">Публікацыі аўтара «%1$s» схаваныя. Вы можаце зняць блакіроўку ў любы момант.</string>
@@ -134,7 +139,6 @@
     <string name="profile_deletion_wait_hint">Пасля пацвярджэння вы аўтаматычна выйдзеце з праграмы.</string>
     <string name="profile_deletion_resend">Адправіць ліст яшчэ раз</string>
     <string name="profile_deletion_resend_wait">Паўторная адпраўка пакуль недаступная</string>
-    <string name="profile_check_in_likes">Лайкі: %1$d</string>
     <string name="profile_check_in_rating">Кава: %1$d, сэрвіс: %2$d, атмасфера: %3$d. Сярэдняя адзнака: %4$s з 5</string>
     <string name="profile_check_in_photo">Фатаграфія %1$d з %2$d</string>
     <string name="profile_check_in_actions">Дзеянні з чэкінам</string>
@@ -159,7 +163,7 @@
     <string name="profile_brew_turkish">Cezve (Turkish Coffee)</string>
     <string name="profile_week_loading">Загрузка актыўнасці…</string>
     <string name="profile_week_error">Не ўдалося загрузіць актыўнасць</string>
-    <string name="profile_week_open">Адкрыць чэкіны</string>
+    <string name="profile_week_open">Разгарнуць каляндар</string>
     <string name="profile_week_day">%1$s: %2$s</string>
     <plurals name="profile_week_count">
         <item quantity="one">%1$d чэкін</item>
@@ -191,4 +195,7 @@
     <string name="profile_connections_following_one">%1$d падпіска</string>
     <string name="profile_connections_following_few">%1$d падпіскі</string>
     <string name="profile_connections_following_many">%1$d падпісак</string>
+    <string name="profile_check_in_like">Паставіць упадабанне. Упадабанняў: %1$d</string>
+    <string name="profile_check_in_unlike">Прыбраць упадабанне. Упадабанняў: %1$d</string>
+    <string name="profile_check_in_like_failed">Не атрымалася абнавіць упадабанне</string>
 </resources>

@@ -220,6 +220,7 @@ final class PublicProfileModel: ObservableObject {
         update(profile.current())
         observation = profile.observe(onState: { [weak self] in self?.update($0) },
             onLanguage: { [weak self] in self?.strings = Self.strings(language: $0) })
+        profile.resume()
     }
 
     func stop() {
@@ -276,14 +277,19 @@ final class PublicProfileModel: ObservableObject {
 }
 
 @MainActor
-private func publicProfilePreview(language: String, checkInsOnly: Bool = false) -> some View {
+private func publicProfilePreview(language: String, checkInsOnly: Bool = false,
+                                  pendingLike: Bool = false, failedLike: Bool = false) -> some View {
     let identity = IosOwnProfileIdentity(name: "CoffeePeek", about: "Кофе и прогулки", avatar: nil, checkIns: 6, shops: 2,
         roasters: 1, followers: 11, canOpenFollowers: true, following: KotlinInt(int: 4))
     let activity = IosPublicProfileActivity(days: [
         IosPublicProfileDay(date: "2026-11-16", today: false, count: 2, photo: nil),
         IosPublicProfileDay(date: "2026-11-17", today: true, count: 0, photo: nil),
     ], loading: false, failed: false)
-    let rows = IosPublicProfileCheckIns(rows: [], loading: false, failed: false, more: false, ratings: [:])
+    let row = IosOwnProfileCheckIn(id: "preview", name: "CoffeePeek", avatar: nil, shop: "CoffeePeek", shopSlug: "preview",
+        home: false, note: "Кофе и прогулки", date: "26.11.2026", drink: nil, helpfulCount: 3, liked: false,
+        score: nil, photos: [], brew: nil)
+    let rows = IosPublicProfileCheckIns(rows: [row], loading: false, failed: false, more: false, ratings: [:],
+        pendingLikeIds: pendingLike ? [row.id] : [], likeErrorIds: failedLike ? [row.id] : [])
     let connections = IosPublicProfileConnections(open: false, followers: true, loading: false, failed: false, more: false, people: [])
     let state = IosPublicProfileState(active: true, loading: false, errorKey: nil, refreshFailed: false, visibilityRevision: 0,
         blockedName: nil, identity: identity, slug: "coffeepeek", own: false, signedIn: true, following: false, followEnabled: true,
@@ -305,4 +311,20 @@ private func publicProfilePreview(language: String, checkInsOnly: Bool = false) 
 
 #Preview("Public check-ins dark") {
     publicProfilePreview(language: "be", checkInsOnly: true).preferredColorScheme(.dark)
+}
+
+#Preview("Public reaction pending light") {
+    publicProfilePreview(language: "ru", pendingLike: true).preferredColorScheme(.light)
+}
+
+#Preview("Public reaction pending dark") {
+    publicProfilePreview(language: "be", pendingLike: true).preferredColorScheme(.dark)
+}
+
+#Preview("Public reaction failure light") {
+    publicProfilePreview(language: "ru", failedLike: true).preferredColorScheme(.light)
+}
+
+#Preview("Public reaction failure dark") {
+    publicProfilePreview(language: "be", failedLike: true).preferredColorScheme(.dark)
 }

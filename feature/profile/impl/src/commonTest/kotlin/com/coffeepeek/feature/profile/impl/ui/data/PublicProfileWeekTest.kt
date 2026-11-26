@@ -9,6 +9,7 @@ import kotlin.test.assertNull
 class PublicProfileWeekTest {
     @Test fun timestampsKeepMinskCivilDaysAndMalformedRowsAreIgnored() {
         assertEquals("2026-10-22", publicProfileDate("2026-10-21T22:30:00Z"))
+        assertEquals("2026-10-21", publicProfileDate("2026-10-21T22:30:00Z", kotlinx.datetime.TimeZone.UTC))
         assertEquals("2026-10-22", publicProfileDate("2026-10-22T01:45:00+03:00"))
         assertNull(publicProfileDate("invalid"))
         val days = publicProfileWeek(publicProfileWeekDates("2026-10-22"), emptyMap(), listOf(row("invalid")))
@@ -34,6 +35,14 @@ class PublicProfileWeekTest {
         ))
         assertEquals(listOf(1, 2, 1, 0, 0, 0, 0), days.map { it.count })
         assertEquals(listOf("thumb"), days[1].photos)
+    }
+
+    @Test fun missingMonthRemainsUnknownExceptForAlreadyLoadedPublicCheckIns() {
+        val dates = publicProfileWeekDates("2026-11-01")
+        val days = publicProfileWeek(dates, mapOf("2026-11" to PublicProfileActivity("2026-11", emptySet())),
+            listOf(row("2026-10-31T12:00:00Z")))
+        assertEquals(listOf(false, false, false, false, false, true, true), days.map { it.known })
+        assertEquals(listOf(0, 0, 0, 0, 0, 1, 0), days.map { it.count })
     }
 
     @Test fun weekStartsOnMondayAcrossYearsAndLeapDays() {

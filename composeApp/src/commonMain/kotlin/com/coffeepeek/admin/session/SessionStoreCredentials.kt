@@ -38,7 +38,7 @@ private fun Session.toTokens() = SessionTokens(accessToken, refreshToken, access
 
 private fun SessionTokens.toSession(current: Session?) = Session(
     accessToken = accessToken,
-    refreshToken = refreshToken,
+    refreshToken = refreshToken?.takeIf(String::isNotBlank),
     userId = JwtUtils.extractUserId(accessToken) ?: current?.userId,
     accessTokenExpiresAt = accessTokenExpiresAt,
     refreshTokenExpiresAt = refreshTokenExpiresAt,

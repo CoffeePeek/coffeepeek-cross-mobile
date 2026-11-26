@@ -1,0 +1,66 @@
+name: Project issue workflow
+
+on:
+  pull_request:
+    branches: [develop, main]
+    types: [closed]
+  issues:
+    types: [opened, labeled, reopened]
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue reference such as '#350' or 'CoffeePeek/coffeepeek-tracker#456'
+        required: true
+        type: string
+      target:
+        description: Branch status to preview
+        required: true
+        type: choice
+        options: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coffeepeek-project-6-status
+  queue: max
+
+jobs:
+  sync:
+    if: >-
+      github.repository == 'CoffeePeek/coffeepeek-cross-mobile' &&
+      vars.PROJECT_STATUS_ENABLED == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.merged == true &&
+        github.event.pull_request.head.repo.full_name == github.repository) ||
+       (github.event_name == 'issues' && (github.event.action != 'labeled' || github.event.label.name == 'project:coffeepeek')) ||
+       (github.event_name == 'schedule' && vars.PROJECT_STATUS_ARCHIVE_ENABLED == 'true') ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the trusted revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.merge_commit_sha || github.sha }}
+          persist-credentials: false
+
+      - name: Create the project automation token
+        id: project_token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.PROJECT_STATUS_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PROJECT_STATUS_APP_PRIVATE_KEY }}
+          owner: CoffeePeek
+          repositories: coffeepeek-cross-mobile,coffeepeek-tracker,coffeepeek-backend
+          permission-issues: read
+          permission-pull-requests: read
+          permission-organization-projects: write
+
+      - name: Apply opted-in project rules
+        env:
+          PROJECT_STATUS_TOKEN: ${{ steps.project_token.outputs.token }}
+          PROJECT_STATUS_DRY_RUN: ${{ vars.PROJECT_STATUS_DRY_RUN }}
+          PROJECT_STATUS_ARCHIVE_ENABLED: ${{ vars.PROJECT_STATUS_ARCHIVE_ENABLED }}
+        run: node tools/project-status/run.mjs

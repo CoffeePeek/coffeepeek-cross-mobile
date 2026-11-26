@@ -53,7 +53,8 @@ internal class FeatureCommunityScreenRenderer(private val entry: CommunityEntry)
 
 internal fun communityHost() = CommunityHost(
     image = { url, highQuality, modifier, scale, onDecodedSize ->
-        CoffeePeekImage(data = url, highQualityData = highQuality, contentScale = scale, modifier = modifier, onDecodedSize = onDecodedSize)
+        CoffeePeekImage(data = url, highQualityData = highQuality, contentScale = scale, modifier = modifier,
+            showLoader = onDecodedSize != null, onDecodedSize = onDecodedSize)
     },
     displayDate = { rememberReviewDisplayDate(it) },
     brewMethodLabel = { it.methodLabel(it) },
