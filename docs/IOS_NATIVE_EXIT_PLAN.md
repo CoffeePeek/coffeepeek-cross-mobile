@@ -906,5 +906,36 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   runs, including one whose final Gradle command and all 1130 cases had finished.
   Increase only that job's deadline to 60 minutes so this checkpoint can finish
   its reports and cache cleanup without another whole-suite timeout retry.
-- Full Xcode verification and replacement 2.0 TestFlight delivery remain pending.
-  No new real-device visual acceptance or live account mutation is claimed.
+- Full macOS verification 45871074438 passed both jobs at source
+  3f83bdbc5616cd77197ddfcdf08e288b0cdecca2: Kotlin/Swift iOS Simulator build,
+  binary/deployment/Liquid Glass compatibility, tooling and all selected Native
+  stages. Retained XML: 1134 tests / 156 suites, zero failures/errors/skips.
+  The four new cancellation cases are present for iosSimulatorArm64. This run
+  completed without a retry under the corrected deadline; earlier timeouts above
+  remain recorded separately. Independent read-only review found no findings.
+- PR 439 merged into native as 3610ac260361dcc305457d0414bca6d7dfb6bc11.
+  Its complete tree matches verified 3f83bdbc5616cd77197ddfcdf08e288b0cdecca2.
+  Replacement 2.0 (3255) was dispatched once as release run 45877675595 for that
+  exact source. The owner then requested restoring the previous app icon.
+  Run 45877675595 was cancelled while archiving, before upload. Upload and Apple
+  processing were skipped; temporary signing cleanup succeeded. No successful
+  TestFlight delivery is claimed for 3255. No new real-device visual acceptance
+  or live account mutation is claimed.
+
+### Restore the production app icon (2026-11-26)
+
+- Fresh main 3128c7dc0002367b05038753c16a6c3163f850ce contains the November 19
+  sunset icon from b138797131cc7ed400793fe9e44c40154a256d46; native still had
+  older artwork from f3520a04c. Restore only the two existing default/dark PNGs
+  byte-for-byte from b13879713, without redrawing or changing Android assets.
+- Both PNGs are 1024x1024 RGB with no alpha channel, valid CRC and the same
+  SHA256 cf376cf334c7c271c9a2f6920157cd4192648d959b6872e11c301aecb26ebb16.
+  Their bytes also match fresh main. Existing catalog appearance entries remain.
+  Xcode and the active xcross builder select AppIcon from this shared catalog.
+  The older SwiftPM packager was not built or given new icon metadata here.
+- This checkpoint changes no Kotlin/Swift runtime, dependencies or release
+  metadata. The successful 1134-case Native run and full iOS build above remain
+  behavior evidence. Verify the restored asset catalog and the complete signed
+  Release archive before accepting a replacement 2.0 upload; observe exact Apple
+  processing. No device home-screen icon refresh or new phone interaction is
+  claimed.
