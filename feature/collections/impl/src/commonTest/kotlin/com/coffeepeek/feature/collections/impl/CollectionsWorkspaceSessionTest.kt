@@ -44,6 +44,29 @@ class CollectionsWorkspaceSessionTest {
         assertEquals(listOf(second.key, savedShop.key), session.current().places.map { it.key })
         assertEquals(1, saved.updates)
         assertEquals(1, saved.itemWrites)
+        assertEquals(listOf("saved"), events)
+    }
+
+    @Test fun nativeCreationUsesSavedCallbackInsteadOfBack() = runTest(dispatcher) {
+        val session = session(CollectionsWorkspaceMode.Editor)
+        runCurrent()
+        session.title("New collection")
+        session.save()
+        runCurrent()
+        assertEquals(1, saved.creates)
+        assertEquals(listOf("saved"), events)
+    }
+
+    @Test fun nativeSaveFailureKeepsTheEditorOpen() = runTest(dispatcher) {
+        saved.updateFailure = SavedCollectionConflict()
+        val session = session(CollectionsWorkspaceMode.Editor, "private")
+        runCurrent()
+        session.title("My edits")
+        session.save()
+        runCurrent()
+        assertEquals("Conflict", session.current().failure)
+        assertEquals("My edits", session.current().title)
+        assertTrue(events.isEmpty())
     }
 
     @Test fun featuredChoiceRemainsPublicAndAccountScoped() = runTest(dispatcher) {
@@ -146,6 +169,7 @@ class CollectionsWorkspaceSessionTest {
         assertEquals("week", session.current().query)
         assertNull(session.current().quickTitle)
         assertTrue(session.current().lists.single { it.id == "created" }.selected)
+        assertTrue(events.isEmpty())
         session.commitMemberships()
         runCurrent()
         assertEquals(setOf("created"), saved.sentMemberships)
@@ -272,12 +296,12 @@ class CollectionsWorkspaceSessionTest {
     private fun picker(kind: CollectionPlaceKind = CollectionPlaceKind.CoffeeShop): CollectionsWorkspaceSession = CollectionsWorkspaceSession(saved, SavedTestSnapshots(),
         account, CollectionsWorkspaceMode.Picker, null, null,
         SavedCollectionTarget(kind, if (kind == CollectionPlaceKind.CoffeeShop) "shop" else "roaster"),
-        { events.add("back") }, { events.add("sign-in") }, {}, {}, {}, {}, {}).also(sessions::add)
+        { events.add("back") }, { events.add("sign-in") }, {}, {}, {}, {}, {}, onSaved = { events.add("saved") }).also(sessions::add)
 
     private fun session(mode: CollectionsWorkspaceMode, id: String? = null,
         repository: SavedCollectionsRepository = saved): CollectionsWorkspaceSession =
         CollectionsWorkspaceSession(repository, SavedTestSnapshots(), account, mode, id, null, null,
             { events.add("back") }, { events.add("sign-in") }, { events.add("editor:$it") },
-            { events.add("collection:$it") }, {}, {}, {}).also(sessions::add)
+            { events.add("collection:$it") }, {}, {}, {}, onSaved = { events.add("saved") }).also(sessions::add)
 }
 

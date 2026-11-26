@@ -189,14 +189,16 @@ class IosNativeRoot internal constructor(private val dependencies: Koin, private
         modals.revoke()
         val child = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
         val generation = epoch
+        val origin = RootNavigationOrigin(session)
         val destinations = IosNativeDestinations(dependencies, ui, child, { session.isLoggedIn }, ::resetLogin,
-            { expanded -> if (epoch == generation) output.update { it.copy(expandedMap = expanded) } }, reselections.search, refreshCommunity::register)
-        owner = RootOwner(session, tabs, child, NativeRootNavigationModel(session.isLoggedIn, business), destinations)
+            { expanded -> if (epoch == generation) output.update { it.copy(expandedMap = expanded) } },
+            reselections.search, refreshCommunity::register, origin)
+        owner = RootOwner(session, tabs, child, NativeRootNavigationModel(session.isLoggedIn, business), destinations, origin)
         output.update { it.copy(ready = false, generation = epoch, expandedMap = false, stacks = emptyList()) }
     }
     private fun observeNavigation() {
         scope.launch(start = CoroutineStart.UNDISPATCHED) { Navigator.navigationEvents.collect { event ->
-            if (output.value.ready) guardedTransition(epoch) { it.plan(event) }
+            if (output.value.ready) guardedTransition(epoch) { model -> planNavigation(event, model) }
         } }
         val readiness = output.map { it.generation.takeIf { _ -> it.ready } }.distinctUntilChanged()
         scope.launch { combine(Navigator.pendingTabSelection, readiness) { tab, ready -> tab to ready }.collectLatest { (tab, ready) ->
@@ -205,6 +207,12 @@ class IosNativeRoot internal constructor(private val dependencies: Koin, private
         scope.launch { combine(Navigator.nativePendingLink, readiness) { link, ready -> link to ready }.collectLatest { (link, ready) ->
             if (link != null && ready != null && guardedTransition(ready) { it.planLink(link) }) Navigator.consumeNativeLink(link)
         } }
+    }
+    private fun planNavigation(event: Navigator.NavEvent, model: NativeRootNavigationModel): NativeRootStacks {
+        val current = owner ?: return model.actual
+        if (!current.origin.accepts(event, sessions.currentRootNavigationSession())) return model.actual
+        if (event is Navigator.NavEvent.ReturnToProfile) Navigator.prepareProfileReturn()
+        return model.plan(event)
     }
     private fun observeDeferredLogin() {
         scope.launch { combine(output, Navigator.nativeLoginAfterSessionEnd) { state, requested ->
@@ -279,5 +287,5 @@ class IosNativeRoot internal constructor(private val dependencies: Koin, private
 
 private data class RootEnvironment(val state: RootNavigationState, val businessMode: Boolean, val ready: Boolean)
 private class RootOwner(val session: RootNavigationSession, val tabs: List<Navigator.Screen>, val scope: CoroutineScope,
-    val model: NativeRootNavigationModel, val destinations: IosNativeDestinations,
+    val model: NativeRootNavigationModel, val destinations: IosNativeDestinations, val origin: RootNavigationOrigin,
 ) { val routes = mutableMapOf<Long, IosRootRoute>() }

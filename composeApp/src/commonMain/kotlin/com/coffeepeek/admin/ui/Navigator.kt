@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -149,6 +150,7 @@ private fun RootNavHost(
         data class SelectTab(val tab: Screen) : NavEvent
         data object PopBack : NavEvent
         data object NavigateUp : NavEvent
+        class ReturnToProfile internal constructor(internal val origin: RootNavigationOrigin) : NavEvent
     }
 
     @Serializable
@@ -272,6 +274,7 @@ private fun RootNavHost(
         hasOpenedAppLink.value = false
         consumeProfileShelf()
         consumeProfileCheckIns()
+        consumeTabSelection()
     }
 
     fun returnToProfileShelf() {
@@ -384,6 +387,16 @@ private fun RootNavHost(
         navigatorScope.launch { _navigationEvents.emit(NavEvent.PopBack) }
     }
 
+    internal fun returnToProfile(origin: RootNavigationOrigin) {
+        navigatorScope.launch { _navigationEvents.emit(NavEvent.ReturnToProfile(origin)) }
+    }
+
+    internal fun prepareProfileReturn() {
+        consumeProfileShelf()
+        consumeProfileCheckIns()
+        consumeTabSelection()
+    }
+
     fun closeAuth() {
         popBack()
     }
@@ -446,7 +459,7 @@ private fun RootNavHost(
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLoggedIn != null) {
                 key(state.generation, isLoggedIn) {
-                    BaseNavigator(isLoggedIn)
+                    RootNavigationHost(checkNotNull(state.session))
                 }
             }
             LoadingDialog(show = loading)
@@ -471,15 +484,22 @@ private fun RootNavHost(
     }
 
     @Composable
+    private fun RootNavigationHost(session: RootNavigationSession) {
+        val origin = remember(session) { RootNavigationOrigin(session) }
+        CompositionLocalProvider(LocalRootNavigationOrigin provides origin) { BaseNavigator(session.isLoggedIn) }
+    }
+
+    private fun rootNavigationEvents(isLoggedIn: Boolean) = navigationEvents.map { event ->
+        if (event is NavEvent.NavigateTo) event.copy(screen = event.screen.profileDestination(isLoggedIn)) else event
+    }
+
+    @Composable
     private fun BaseNavigator(isLoggedIn: Boolean) {
         koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().HandlePendingOpen(isLoggedIn)
         val appLink by pendingAppLink.collectAsState()
-        val sessionEvents = remember(isLoggedIn) {
-            navigationEvents.map { event ->
-                if (event is NavEvent.NavigateTo) event.copy(screen = event.screen.profileDestination(isLoggedIn))
-                else event
-            }
-        }
+        val origin = LocalRootNavigationOrigin.current
+        val sessions = koinInject<SessionReader>()
+        val sessionEvents = remember(isLoggedIn) { rootNavigationEvents(isLoggedIn) }
         if (PlatformRootNavigation(isLoggedIn, sessionEvents, appLink?.appLinkDestination(isLoggedIn),
             { pendingAppLink.compareAndSet(appLink, null) },
             { screen, login -> RootScreen(screen, login, isLoggedIn) },
@@ -517,18 +537,7 @@ private fun RootNavHost(
         }
 
         LaunchedEffect(Unit) {
-            sessionEvents.onEach { event ->
-                when (event) {
-                    is NavEvent.PopBack -> nav.popBackStack()
-                    is NavEvent.NavigateUp -> nav.navigateUp()
-                    is NavEvent.NavigateTo -> {
-                        if (event.screen.isHandledByRootNav()) {
-                            nav.navigateFromRoot(event.screen)
-                        }
-                    }
-                    else -> Unit
-                }
-            }.launchIn(this)
+            sessionEvents.onEach { nav.handleRootEvent(it, origin, sessions) }.launchIn(this)
         }
 
         val shopPhotoUnderStatusBar = currentEntry?.destination?.let {
@@ -764,6 +773,21 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
         }
         val existing = stack.getOrNull(existingProfileIndex(stack, screen))
         if (existing != null) popBackStack(existing, inclusive = false) else navigate(screen)
+    }
+
+    private fun NavHostController.handleRootEvent(event: NavEvent, origin: RootNavigationOrigin, sessions: SessionReader) {
+        if (!origin.accepts(event, sessions.currentRootNavigationSession())) return
+        when (event) {
+            NavEvent.PopBack -> popBackStack()
+            NavEvent.NavigateUp -> navigateUp()
+            is NavEvent.ReturnToProfile -> {
+                prepareProfileReturn()
+                popBackStack<Screen.Main>(inclusive = false)
+                _pendingTabSelection.value = Screen.ProfileTab
+            }
+            is NavEvent.NavigateTo -> if (event.screen.isHandledByRootNav()) navigateFromRoot(event.screen)
+            is NavEvent.SelectTab -> Unit
+        }
     }
 
     @Composable

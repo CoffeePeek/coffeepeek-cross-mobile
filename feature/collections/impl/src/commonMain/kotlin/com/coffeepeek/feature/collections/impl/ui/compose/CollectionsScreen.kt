@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.collectLatest
 
 internal class CollectionsCallbacks(val back: () -> Unit, val signIn: () -> Unit,
     val openShop: (String) -> Unit, val openRoaster: (String) -> Unit, val shareText: (String) -> Unit,
-    val shareImages: (List<ByteArray>, String) -> Unit)
+    val shareImages: (List<ByteArray>, String) -> Unit, val saved: () -> Unit = {})
 
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable

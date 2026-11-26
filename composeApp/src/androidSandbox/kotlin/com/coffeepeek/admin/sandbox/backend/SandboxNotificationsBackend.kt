@@ -9,6 +9,8 @@ import java.time.LocalDate
 internal class SandboxNotificationsBackend(private val today: LocalDate) {
     private val rows = linkedMapOf<String, JsonObject>()
     private var push = true
+    var selectedCitySlug: String? = null
+        private set
 
     init {
         reset(true)
@@ -17,6 +19,7 @@ internal class SandboxNotificationsBackend(private val today: LocalDate) {
     fun reset(populated: Boolean) {
         rows.clear()
         push = true
+        selectedCitySlug = null
         if (!populated) return
         add(NEW_SHOP, "NewShop", "Новая кофейня", "Sandbox Lab появилась на карте.", "Shop", "published-lab")
         add(CORRECTION, "CorrectionModeration", "Правка одобрена", "Описание Sandbox Cafe обновлено.", "ShopChange", "change-approved")
@@ -31,6 +34,7 @@ internal class SandboxNotificationsBackend(private val today: LocalDate) {
         if (!path.startsWith(ROOT)) return null
         if (path == ROOT && method == HttpMethod.Get) return inbox()
         if (path == "$ROOT/push") return pushPreference(method, input)
+        if (path == "$ROOT/city" && method == HttpMethod.Put) return cityPreference(input)
         if (path.startsWith("$ROOT/devices/") || path == "$ROOT/activity") return empty()
         if (path == "$ROOT/read" && method == HttpMethod.Put) return readAll(input)
         val id = path.removePrefix("$ROOT/").substringBefore('/')
@@ -43,6 +47,14 @@ internal class SandboxNotificationsBackend(private val today: LocalDate) {
             }
             else -> missing()
         }
+    }
+
+    private fun cityPreference(input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        val value = input["citySlug"]
+        if (value == null || value !is JsonPrimitive || (value != JsonNull && (!value.isString || value.content.isBlank())))
+            return HttpStatusCode.BadRequest to buildJsonObject {}
+        selectedCitySlug = value.contentOrNull
+        return empty()
     }
 
     private fun inbox() = ok(buildJsonObject {

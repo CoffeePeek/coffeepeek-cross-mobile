@@ -58,6 +58,7 @@ private suspend fun handleSavedEvent(event: SavedCollectionsEvent, model: SavedC
         SavedCollectionsEvent.Back -> callbacks.back()
         SavedCollectionsEvent.SignIn -> callbacks.signIn()
         SavedCollectionsEvent.CancelExport -> Unit
+        is SavedCollectionsEvent.Saved -> if (model.isCurrentSave(event)) callbacks.saved()
         is SavedCollectionsEvent.Editor -> editor(event.id)
         is SavedCollectionsEvent.Place -> if (event.value.kind == CollectionPlaceKind.CoffeeShop) callbacks.openShop(event.value.slug)
             else callbacks.openRoaster(event.value.slug)

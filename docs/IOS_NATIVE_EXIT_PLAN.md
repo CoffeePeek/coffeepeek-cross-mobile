@@ -978,3 +978,22 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
 - The first compile then caught a duplicate onOpenCoffee named argument created
   by automatic merging in the public-profile slot adapter. The identical second
   callback was removed; original selection/compile failure logs remain local.
+- Native verification `45887439805` on `a030f9ac39c3` failed in both the Simulator
+  build and Kotlin/Native contract job before native test execution. The compiler
+  reported unresolved `public` calls and inapplicable own/public profile factory
+  overloads in `IosNativeDestinations.kt`; later native suites were skipped.
+  PR #443 carries the correction after merging develop `54839ede4f2b`: use the
+  unambiguous `publicProfileController` property and map the active native profile
+  factory parameters by name, including each existing `ProfileCheckInLikes` port.
+  Deleted Compose fallback and feature aliases remain retired. The original CI
+  failure is retained here; fresh source verification is a separate gate.
+- The factory correction plus local merge `3768f3858` passed the Windows follow-up
+  gate on 2026-11-26 with JDK 17 and `--max-workers=6`: collections impl 7 suites/
+  110 cases, profile impl 10 suites/110 cases and application Direct Debug unit
+  168 suites/747 cases, 967 total, zero failures/errors/skips, no retries.
+  Direct Sandbox assembly, isolation and packaged runtime classes passed;
+  function-body verification remains 125 recorded and zero new, baseline
+  unchanged. Built Sandbox 1.2.2.3392-sandbox/3392 was not installed or launched.
+  Windows does not establish iOS compilation acceptance. A fresh PR #443 native
+  verification must pass before merging/releasing this correction; the original
+  failed build and skipped native suites are not replaced by the local pass.

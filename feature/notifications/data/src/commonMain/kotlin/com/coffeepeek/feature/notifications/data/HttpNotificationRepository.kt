@@ -42,6 +42,14 @@ internal class HttpNotificationRepository(private val client: HttpClient) : Noti
             expectSuccess = true; contentType(ContentType.Application.Json); setBody(PushSettingsDto(enabled))
         }.checked()
     }
+    override suspend fun setCity(citySlug: String?) {
+        val response = client.put("$root/city") {
+            expectSuccess = true
+            contentType(ContentType.Application.Json)
+            setBody(CityDto(citySlug))
+        }
+        check(response.status == HttpStatusCode.NoContent) { "Notification city request failed" }
+    }
     override suspend fun markRead(id: String) {
         client.put("$root/$id/read") { expectSuccess = true }.checked()
     }
@@ -59,6 +67,7 @@ internal class HttpNotificationRepository(private val client: HttpClient) : Noti
     private fun HttpResponse.checked() { check(status.isSuccess()) { "Notification request failed" } }
 }
 
+@Serializable private data class CityDto(val citySlug: String?)
 @Serializable private data class DeviceDto(val token: String)
 @Serializable private data class PushSettingsDto(val enabled: Boolean)
 @Serializable private data class ReadAllDto(val throughId: String)
