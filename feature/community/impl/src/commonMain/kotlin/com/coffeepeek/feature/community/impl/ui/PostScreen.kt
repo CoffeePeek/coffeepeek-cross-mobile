@@ -58,16 +58,9 @@ import com.coffeepeek.feature.community.impl.post.PostState
 import com.coffeepeek.feature.community.impl.post.PostViewModel
 
 /** What the post screen asks the caller to do; navigation is not decided here. */
-internal class PostCallbacks(
-    val onBack: () -> Unit,
-    val onSignIn: () -> Unit,
-    val onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
-    val onOpenShop: (slug: String) -> Unit,
-    val onOpenCoffee: (slug: String) -> Unit,
-    val onEditHome: (String) -> Unit = {},
-)
+internal typealias PostCallbacks = com.coffeepeek.feature.community.api.CommunityPostNavigation
 
-private class PostPhotoPreview(val thumbnails: List<String>, val originals: List<String>, val index: Int)
+internal class PostPhotoPreview(val thumbnails: List<String>, val originals: List<String>, val index: Int)
 
 @Composable
 internal fun PostScreen(vm: PostViewModel, host: CommunityHost, blockActions: AuthorBlockActions, callbacks: PostCallbacks, modifier: Modifier = Modifier) {
@@ -154,7 +147,7 @@ private fun PostBody(post: CommunityPost, state: PostState, host: CommunityHost,
 }
 
 /** The feed's card actions for one post; likes, reports and blocking need a published post of someone else, sharing a published one. */
-private fun postActions(
+internal fun postActions(
     post: CommunityPost,
     state: PostState,
     onAction: (PostAction) -> Unit,
@@ -180,9 +173,9 @@ private fun postActions(
     )
 }
 
-private fun PostState.reportForm() = ReportForm(reportText, reportIssue, reportFailed, reportFailure, isReporting)
+internal fun PostState.reportForm() = ReportForm(reportText, reportIssue, reportFailed, reportFailure, isReporting)
 
-private fun postReportCallbacks(onAction: (PostAction) -> Unit) = ReportCallbacks(
+internal fun postReportCallbacks(onAction: (PostAction) -> Unit) = ReportCallbacks(
     onText = { onAction(PostAction.ReportText(it)) },
     onSubmit = { onAction(PostAction.SubmitReport) },
     onDismiss = { onAction(PostAction.DismissReport) },

@@ -13,13 +13,14 @@ import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.test.runTest
 import kotlin.io.encoding.Base64
 import kotlin.test.*
+import kotlin.time.Instant
 
 class ProtectedPhotoTransportTest {
     private fun session(expiry: Long = SystemPhotoCacheClock.wallMillis() / 1000 + 3600) =
         Session("header.${Base64.UrlSafe.encode("{\"exp\":$expiry}".encodeToByteArray())}.signature", "refresh", "viewer")
-    private fun data(name: String): ImageUrl = ImageUrl(
+    private fun data(name: String, credentials: Session = session()): ImageUrl = ImageUrl(
         "https://gateway.example/api/v1/check-ins/visit/photos/$name/variants/source/1/feed.png",
-        ProtectedPhotoSession.scope(session()), PhotoDisplayPermission(),
+        ProtectedPhotoSession.scope(credentials), PhotoDisplayPermission(),
     )
     private fun headers(policy: String) = headersOf(
         HttpHeaders.CacheControl to listOf(policy), HttpHeaders.ETag to listOf("\"variant-a\""),
@@ -158,5 +159,64 @@ class ProtectedPhotoTransportTest {
         assertNotSame(old, next)
         ProtectedPhotoSession.scope(null)
         assertFalse(ProtectedPhotoSession.current(next))
+    }
+
+    @Test fun serverExpiryAuthorizesOpaqueTokensAndCapsProtectedDisplayPermission() = runTest {
+        val deadline = SystemPhotoCacheClock.wallMillis() + 15_000
+        val credentials = Session("opaque", "refresh", "viewer", Instant.fromEpochMilliseconds(deadline))
+        val client = HttpClient(MockEngine {
+            respond(ByteReadChannel(byteArrayOf(9)), HttpStatusCode.OK, headers("private,no-store"))
+        })
+        try {
+            val request = data("server-expiry-opaque", credentials)
+            assertContentEquals(byteArrayOf(9), protectedVariantBytes(client, request))
+            assertEquals(deadline, request.displayPermission?.permission?.value?.wallDeadline)
+        } finally { client.close() }
+    }
+
+    @Test fun futureServerExpiryOverridesAnExpiredJwtForBothTransportPaths() = runTest {
+        val future = Instant.fromEpochMilliseconds(SystemPhotoCacheClock.wallMillis() + 3_600_000)
+        val request = data("server-overrides-expired-jwt", session(1).copy(accessTokenExpiresAt = future))
+        val client = HttpClient(MockEngine {
+            respond(ByteReadChannel(byteArrayOf(8)), HttpStatusCode.OK, headers("private,no-store"))
+        })
+        try {
+            assertContentEquals(byteArrayOf(8), protectedVariantBytes(client, request))
+            grantOnlinePhoto(request, SystemPhotoCacheClock.monotonicMillis())
+            assertNotNull(request.displayPermission?.permission?.value)
+        } finally { client.close() }
+    }
+
+    @Test fun pastServerExpiryRejectsPrivatePhotosEvenWhenJwtAndRefreshRemainValid() = runTest {
+        val expired = session().copy(accessTokenExpiresAt = Instant.fromEpochMilliseconds(1))
+        val request = data("server-overrides-future-jwt", expired)
+        var calls = 0
+        val client = HttpClient(MockEngine { calls++; error("must not request expired credentials") })
+        try {
+            assertFailsWith<IllegalStateException> { protectedVariantBytes(client, request) }
+            assertFailsWith<IllegalStateException> { grantOnlinePhoto(request, SystemPhotoCacheClock.monotonicMillis()) }
+            assertEquals(0, calls)
+            assertNull(request.displayPermission?.permission?.value)
+        } finally { client.close() }
+    }
+
+    @Test fun onlinePermissionUsesServerDeadlineAndLegacyExpiryFallback() {
+        val deadline = SystemPhotoCacheClock.wallMillis() + 15_000
+        val request = data("online-server-expiry", Session("opaque", "refresh", "viewer", Instant.fromEpochMilliseconds(deadline)))
+        grantOnlinePhoto(request, SystemPhotoCacheClock.monotonicMillis())
+        assertEquals(deadline, request.displayPermission?.permission?.value?.wallDeadline)
+        val legacy = data("online-legacy-fallback")
+        grantOnlinePhoto(legacy, SystemPhotoCacheClock.monotonicMillis())
+        assertNotNull(legacy.displayPermission?.permission?.value)
+        val expired = data("online-legacy-expired", session(1))
+        assertFailsWith<IllegalStateException> { grantOnlinePhoto(expired, SystemPhotoCacheClock.monotonicMillis()) }
+    }
+
+    @Test fun changingOnlyServerExpiryInvalidatesThePreviousPhotoScope() {
+        val credentials = session().copy(accessTokenExpiresAt = Instant.parse("2099-01-01T00:00:00Z"))
+        val previous = ProtectedPhotoSession.scope(credentials)
+        val current = ProtectedPhotoSession.scope(credentials.copy(accessTokenExpiresAt = Instant.parse("2099-01-02T00:00:00Z")))
+        assertFalse(ProtectedPhotoSession.current(previous))
+        assertTrue(ProtectedPhotoSession.current(current))
     }
 }

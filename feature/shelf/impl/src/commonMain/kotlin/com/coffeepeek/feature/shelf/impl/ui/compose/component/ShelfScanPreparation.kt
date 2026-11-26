@@ -50,6 +50,7 @@ internal fun ShelfScanPreparation(
 @Composable
 private fun ShelfPreparationStatus(scanner: ShelfScannerStatus, onPrepare: () -> Unit) {
     when (scanner) {
+        ShelfScannerStatus.Disabled -> Text(stringResource(Res.string.shelf_scanner_disabled))
         ShelfScannerStatus.Checking -> CoffeePeekLoader(stringResource(Res.string.shelf_scanner_checking))
         ShelfScannerStatus.Ready -> CoffeePeekLoader(stringResource(Res.string.shelf_scanner_downloading_unknown))
         is ShelfScannerStatus.NeedsDownload -> CoffeePeekButton(
@@ -84,3 +85,5 @@ private fun ShelfPreparationPreview(dark: Boolean, scanner: ShelfScannerStatus) 
 @Preview @Composable private fun ShelfPreparationDarkPreview() = ShelfPreparationPreview(true, ShelfScannerStatus.NeedsDownload(33_000_000))
 @Preview @Composable private fun ShelfPreparationProgressLightPreview() = ShelfPreparationPreview(false, ShelfScannerStatus.Downloading(11_000_000, 33_000_000))
 @Preview @Composable private fun ShelfPreparationProgressDarkPreview() = ShelfPreparationPreview(true, ShelfScannerStatus.Downloading(11_000_000, 33_000_000))
+@Preview @Composable private fun ShelfPreparationDisabledLightPreview() = ShelfPreparationPreview(false, ShelfScannerStatus.Disabled)
+@Preview @Composable private fun ShelfPreparationDisabledDarkPreview() = ShelfPreparationPreview(true, ShelfScannerStatus.Disabled)

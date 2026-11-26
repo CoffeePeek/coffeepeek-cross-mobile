@@ -10,6 +10,10 @@ plugins {
 }
 
 android.namespace = "com.coffeepeek.feature.shelf.data"
+// Dart uppercases Windows environment keys, including ORG_GRADLE_PROJECT suffixes.
+val xcrossBuild = providers.gradleProperty("coffeepeekXcross").map(String::toBoolean)
+    .orElse(providers.environmentVariable("COFFEEPEEK_XCROSS").map { it == "1" })
+    .orElse(false).get()
 
 dependencies {
     api(project(module.feature.shelf.domain))
@@ -32,7 +36,8 @@ kotlin {
     // Scanner model downloads on Android use a plain client of their own: never the API client with its session headers.
     sourceSets.androidMain.dependencies { implementation(libs.ktor.client.okhttp) }
     sourceSets.iosMain.dependencies { implementation(libs.ktor.client.darwin) }
-    swiftPMDependencies {
+    sourceSets.iosMain.get().kotlin.srcDir(if (xcrossBuild) "src/iosXcrossMain/kotlin" else "src/iosOnnxMain/kotlin")
+    if (!xcrossBuild) swiftPMDependencies {
         // ONNX Runtime's Objective-C API for iosMain, through a local package that adds the linker settings it lacks.
         localSwiftPackage(
             directory = layout.projectDirectory.dir("ShelfOnnxRuntime"),

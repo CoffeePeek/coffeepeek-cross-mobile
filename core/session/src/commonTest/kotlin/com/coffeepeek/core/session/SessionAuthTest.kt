@@ -5,6 +5,8 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.*
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlin.time.Duration.Companion.seconds
 
 /** Characterizes what "active session" and the JWT helpers mean before they move to core/session. */
 @OptIn(ExperimentalEncodingApi::class, ExperimentalTime::class)
@@ -61,5 +63,42 @@ class SessionAuthTest {
             assertNull(JwtUtils.extractExp(bad), bad)
             assertFalse(JwtUtils.isAccessTokenExpired(bad), bad)
         }
+    }
+
+    @Test fun serverAccessExpiryOverridesAContradictoryJwtExpiry() {
+        val current = Instant.parse("2026-11-25T12:00:00Z")
+        val expiredJwt = Session(token(current.epochSeconds - 3600), null, "user", current + 3600.seconds)
+        val futureJwt = Session(token(current.epochSeconds + 3600), null, "user", current - 1.seconds)
+        assertTrue(SessionAuth.isActive(expiredJwt, current))
+        assertFalse(SessionAuth.isActive(futureJwt, current))
+    }
+
+    @Test fun serverAccessExpiryAppliesToOpaqueTokensAndKeepsTheRefreshLeeway() {
+        val current = Instant.parse("2026-11-25T12:00:00Z")
+        val session = Session("opaque", null, "user", current + 31.seconds)
+        assertTrue(SessionAuth.isActive(session, current))
+        assertFalse(SessionAuth.isActive(session.copy(accessTokenExpiresAt = current + 30.seconds), current))
+        assertFalse(SessionAuth.isActive(session.copy(accessTokenExpiresAt = current - 1.seconds), current))
+    }
+
+    @Test fun legacySessionsStillUseJwtExpiryWhenServerExpiryIsAbsent() {
+        val current = Instant.parse("2026-11-25T12:00:00Z")
+        assertTrue(SessionAuth.isActive(Session(token(current.epochSeconds + 31), null, "user"), current))
+        assertFalse(SessionAuth.isActive(Session(token(current.epochSeconds + 30), null, "user"), current))
+        assertTrue(SessionAuth.isActive(Session("opaque", null, "user"), current))
+    }
+
+    @Test fun refreshCredentialsRemainRecoverableDespitePastExpiriesOrClockSkew() {
+        val current = Instant.parse("2026-11-25T12:00:00Z")
+        val session = Session("opaque", "refresh", "user", current - 3600.seconds, current - 1.seconds)
+        assertTrue(SessionAuth.isActive(session, current))
+        assertTrue(SessionAuth.isActive(session, Instant.parse("2099-01-01T00:00:00Z")))
+        assertFalse(SessionAuth.isActive(session.copy(refreshToken = " "), current))
+    }
+
+    @Test fun expiryMetadataCannotMakeMissingCredentialsActive() {
+        val future = Instant.parse("2099-01-01T00:00:00Z")
+        assertFalse(SessionAuth.isActive(Session("", "refresh", "user", future, future)))
+        assertFalse(SessionAuth.isActive(Session("opaque", "refresh", null, future, future)))
     }
 }

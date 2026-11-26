@@ -1,0 +1,417 @@
+import ComposeApp
+import SwiftUI
+
+struct ShopDetailNativeScreen: View {
+    let state: ShopDetailNativeData
+    let actions: ShopDetailNativeActions
+    let topInset: CGFloat
+    let bottomInset: CGFloat
+    let owner: () -> AnyView
+    let card: (ShopCheckInListRow) -> AnyView
+    @State private var selectedPhoto = 0
+    @State private var viewportWidth: CGFloat = 320
+    @State private var visibleNames: Set<String> = []
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private func text(_ key: String) -> String { state.labels[key] ?? "" }
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .topLeading) {
+                if let details = state.details { content(details) } else { status }
+                if state.details == nil { back.padding(.top, topInset + 12).padding(.leading, 12) }
+                if let message = state.message {
+                    VStack { Spacer(); ShopDetailToastView(message: message, dismissLabel: text("dismiss"), dismiss: actions.dismissMessage) }
+                        .padding(.bottom, bottomInset + 80)
+                }
+            }
+            .coordinateSpace(name: "shop-detail")
+            .onAppear { viewportWidth = geometry.size.width }
+            .onChange(of: geometry.size.width) { _, width in viewportWidth = width }
+            .onPreferenceChange(ShopDetailExposureFrames.self) { frames in
+                let viewport = CGRect(origin: .zero, size: geometry.size)
+                let names = Set(frames.values.filter { item in
+                    let area = item.rect.width * item.rect.height
+                    let visible = item.rect.intersection(viewport)
+                    return area > 0 && !visible.isNull && visible.width * visible.height / area >= 0.1
+                }.map(\.feature))
+                visibleNames = names
+                actions.visible(names)
+            }
+        }
+        .font(CoffeePeekNativeStyle.font(15)).foregroundStyle(CoffeePeekNativeStyle.foreground)
+        .background(CoffeePeekNativeStyle.background).tint(CoffeePeekNativeStyle.accent)
+        .allowsHitTesting(state.active)
+        .sheet(isPresented: Binding(get: { state.priceVisible }, set: { if !$0 { actions.call("dismiss-price") } })) {
+            priceInformation.presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+        }
+        .onAppear { actions.visible(visibleNames) }
+        .onDisappear { actions.visible([]) }
+    }
+
+    private func content(_ details: IosShopDetails) -> some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                hero(details)
+                stats(details).padding(.horizontal, 16)
+                if state.loading { CoffeePeekNativeLoader(label: text("refreshing")).frame(maxWidth: .infinity) }
+                if state.failed { recovery }
+                ShopDetailNativeInformation(details: details, scheduleExpanded: state.scheduleExpanded,
+                    featuresExpanded: state.featuresExpanded, labels: state.labels, actions: actions)
+                    .padding(.horizontal, 16)
+                checkIns
+                Button { actions.call("report-shop") } label: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(text("report")).font(CoffeePeekNativeStyle.font(16, weight: "SemiBold"))
+                        Text(text("report-body")).foregroundStyle(CoffeePeekNativeStyle.secondary)
+                    }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
+                }.buttonStyle(.plain)
+                    .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 24))
+                    .overlay { RoundedRectangle(cornerRadius: 24).strokeBorder(CoffeePeekNativeStyle.border).allowsHitTesting(false) }
+                    .padding(.horizontal, 16)
+            }
+            .padding(.bottom, 16)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: state.scheduleExpanded)
+        }
+        .scrollIndicators(.hidden)
+        .safeAreaInset(edge: .bottom, spacing: 0) { footer(details) }
+    }
+
+    private func hero(_ details: IosShopDetails) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            heroPhotos(details)
+            LinearGradient(colors: [.black.opacity(0.2), .clear, .black.opacity(0.8)], startPoint: .top, endPoint: .bottom)
+                .allowsHitTesting(false)
+            heroIdentity(details)
+            VStack {
+                toolbar
+                Spacer()
+            }
+        }
+        .frame(height: dynamicTypeSize.isAccessibilitySize ? 470 + topInset : 300 + topInset)
+        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 16, bottomTrailingRadius: 16))
+        .shopDetailExposure("Photos", id: "hero", enabled: !details.photos.isEmpty)
+        .onChange(of: details.photos.map(\.id)) { _, _ in selectedPhoto = min(selectedPhoto, max(0, details.photos.count - 1)) }
+    }
+
+    @ViewBuilder private func heroPhotos(_ details: IosShopDetails) -> some View {
+        if details.photos.isEmpty { CoffeePeekPhotoPlaceholder() }
+        else {
+            TabView(selection: $selectedPhoto) {
+                ForEach(Array(details.photos.enumerated()), id: \.element.id) { index, photo in
+                    Button { actions.call("hero-photo", "", index) } label: {
+                        CoffeePeekCardImage(url: photo.url, symbol: nil, loadImage: actions.image)
+                    }.buttonStyle(.plain).accessibilityLabel(photo.label).tag(index)
+                }
+            }.tabViewStyle(.page(indexDisplayMode: .never))
+        }
+    }
+
+    private func heroIdentity(_ details: IosShopDetails) -> some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(alignment: .bottom, spacing: 12))
+        return layout {
+            heroNameAddress(details)
+            ShopHeroPhotoMetadata(kind: details.kind, position: details.photos.count > 1
+                ? "\(min(selectedPhoto, details.photos.count - 1) + 1) / \(details.photos.count)" : nil)
+        }.foregroundStyle(.white).padding(16).padding(.top, topInset + 60)
+    }
+
+    private func heroNameAddress(_ details: IosShopDetails) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(details.title).font(CoffeePeekNativeStyle.font(28, weight: "Bold", relativeTo: .title)).lineLimit(3)
+                .accessibilityAddTraits(.isHeader)
+            if let address = details.address, !address.isEmpty {
+                Button { actions.call("map") } label: { Label(address, systemImage: "mappin.and.ellipse") }
+                    .buttonStyle(.plain).disabled(!details.canRoute).accessibilityLabel(text("map"))
+            } else if details.canRoute {
+                Button(text("map")) { actions.call("map") }
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var toolbar: some View {
+        HStack(spacing: 8) {
+            back
+            Spacer(minLength: 0)
+            Button { actions.call("favorite") } label: {
+                ZStack {
+                    CoffeePeekLikeIcon(selected: state.favorite, isLoading: state.favoriteBusy)
+                        .opacity(state.favoriteBusy ? 0 : 1)
+                    if state.favoriteBusy {
+                        CoffeePeekNativeLoader(label: text("loading"), size: 22).accessibilityHidden(true)
+                    }
+                }
+                    .frame(width: 48, height: 48).contentShape(Circle())
+            }.buttonStyle(.plain).shopDetailGlassCircle().disabled(!state.favoriteEnabled || state.favoriteBusy)
+                .accessibilityLabel(state.favoriteLabel).shopDetailExposure("Favorite", id: "favorite")
+            actionButton("square.and.arrow.up", label: text("share"), name: "share")
+                .shopDetailExposure("Share", id: "share")
+            owner().frame(width: 48, height: 48)
+        }.padding(.horizontal, 12).padding(.top, topInset + 8)
+    }
+
+    private var back: some View { actionButton("chevron.left", label: text("back"), name: "back") }
+
+    private func actionButton(_ symbol: String, label: String, name: String) -> some View {
+        Button { actions.call(name) } label: {
+            Image(systemName: symbol).font(.system(size: 20)).foregroundStyle(CoffeePeekNativeStyle.foreground)
+                .frame(width: 48, height: 48).contentShape(Circle())
+        }.buttonStyle(.plain).shopDetailGlassCircle().accessibilityLabel(label)
+    }
+
+    private func stats(_ details: IosShopDetails) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: 8) { statistics(details, compact: true) }
+            VStack(spacing: 8) { statistics(details, compact: false) }
+        }
+    }
+
+    @ViewBuilder private func statistics(_ details: IosShopDetails, compact: Bool) -> some View {
+        stat(details.rating, subtitle: details.reviews, symbol: "star.fill", action: "check-ins", compact: compact)
+        if let distance = details.distance { stat(distance, subtitle: text("distance"), symbol: "location", action: nil, compact: compact) }
+        if let price = details.priceValue { stat(price, subtitle: text("price"), symbol: "banknote", action: "price", compact: compact) }
+    }
+
+    @ViewBuilder private func stat(_ value: String, subtitle: String, symbol: String, action: String?, compact: Bool) -> some View {
+        let content = statContent(value, subtitle: subtitle, symbol: symbol, compact: compact)
+        if let action {
+            Button { actions.call(action) } label: { content }.buttonStyle(.plain)
+        } else {
+            content
+        }
+    }
+
+    private func statContent(_ value: String, subtitle: String, symbol: String, compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 5) {
+                Image(systemName: symbol).font(.system(size: 13))
+                    .foregroundStyle(symbol == "star.fill" ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.secondary)
+                    .accessibilityHidden(true)
+                Text(value).font(CoffeePeekNativeStyle.font(14, weight: "SemiBold"))
+                    .fixedSize(horizontal: compact, vertical: false)
+            }.foregroundStyle(CoffeePeekNativeStyle.foreground)
+            Text(subtitle).font(CoffeePeekNativeStyle.font(11, relativeTo: .caption2))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                .fixedSize(horizontal: compact, vertical: false)
+        }
+        .frame(maxWidth: .infinity, minHeight: 46, alignment: .leading)
+        .padding(8)
+        .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 14))
+        .overlay { RoundedRectangle(cornerRadius: 14).strokeBorder(CoffeePeekNativeStyle.border).allowsHitTesting(false) }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+
+    private var status: some View {
+        VStack(spacing: 16) {
+            if state.loading { CoffeePeekNativeLoader(label: text("loading")) }
+            else { Text(text("error")).font(CoffeePeekNativeStyle.font(20, weight: "SemiBold")); recovery }
+        }.padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var recovery: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(text("error-body")).foregroundStyle(CoffeePeekNativeStyle.secondary)
+            CoffeePeekNativeActionButton(title: text("retry")) { actions.call("retry") }
+        }.padding(.horizontal, 16)
+    }
+
+    private var checkIns: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            shopDetailCheckInsHeader(title: text("check-ins"), label: text("all-check-ins"),
+                showAll: !state.rows.isEmpty, onOpen: { actions.call("check-ins") })
+                .padding(.horizontal, 16)
+            if !state.rows.isEmpty {
+                ShopCheckInListRatings(overall: state.overall, count: state.checkInCount, isSample: state.sample,
+                    breakdown: state.breakdown, strings: ShopCheckInListStrings(languageTag: state.languageTag))
+                    .padding(.horizontal, 16)
+                checkInCarousel
+            }
+            if state.rows.isEmpty { Text(text("checkins-empty")).padding(.horizontal, 16) }
+            if !state.loggedIn && !state.rows.isEmpty {
+                CoffeePeekGuestAccountCard(prompt: text("guest"), loginTitle: text("sign-in"),
+                    noAccountPrompt: text("no-account"), registerTitle: text("register"),
+                    login: { actions.call("sign-in") }, register: { actions.call("register") })
+                    .padding(.horizontal, 16)
+            }
+        }
+    }
+
+    private var checkInWidth: CGFloat {
+        let available = max(1, viewportWidth - 32)
+        let multiple = state.rows.count + state.hiddenCheckIns > 1
+        if !state.loggedIn && multiple { return min(320, max(1, available - 68)) }
+        return multiple ? min(320, available) : available
+    }
+
+    private var checkInCarousel: some View {
+        ScrollView(.horizontal) {
+            HStack(alignment: .top, spacing: 12) {
+                ForEach(state.rows) { row in card(row).frame(width: checkInWidth).fixedSize(horizontal: false, vertical: true) }
+                ForEach(0..<state.hiddenCheckIns, id: \.self) { _ in
+                    ShopCheckInGuestPlaceholder().frame(width: checkInWidth)
+                }
+            }.padding(.horizontal, 16)
+        }.scrollIndicators(.hidden)
+    }
+
+    private func footer(_ details: IosShopDetails) -> some View {
+        HStack(spacing: 12) {
+            if details.canRoute {
+                actionButton("arrow.triangle.turn.up.right.diamond", label: text("route"), name: "route")
+                    .fixedSize().shopDetailExposure("Directions", id: "directions")
+            }
+            Button { actions.call("check-in") } label: {
+                Label(text("check-in"), systemImage: "plus")
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 12)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.black)
+            .shopDetailGlassPrimary()
+            .shopDetailExposure("CheckIn", id: "check-in")
+        }
+        .font(CoffeePeekNativeStyle.font(16, weight: "SemiBold"))
+        .frame(maxWidth: .infinity).padding(.horizontal, 16).padding(.vertical, 12).padding(.bottom, bottomInset)
+    }
+
+    private var priceInformation: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text(text("price")).font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
+                Spacer()
+                Button { actions.call("dismiss-price") } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                    .accessibilityLabel(text("price-dismiss"))
+            }
+            ForEach(state.details?.priceTiers ?? [], id: \.count) { tier in
+                HStack(spacing: 16) {
+                    Text(Array(repeating: "Br", count: Int(tier.count)).joined(separator: " "))
+                    Text(tier.label).frame(maxWidth: .infinity, alignment: .leading)
+                    if tier.selected { Image(systemName: "checkmark").foregroundStyle(CoffeePeekNativeStyle.accent) }
+                }.padding(12).background(tier.selected ? CoffeePeekNativeStyle.accent.opacity(0.15) : .clear,
+                    in: RoundedRectangle(cornerRadius: 16))
+                    .accessibilityValue(tier.selected ? text("price-selected") : "")
+            }
+            Spacer(minLength: 0)
+        }.padding(20).background(CoffeePeekNativeStyle.surface).foregroundStyle(CoffeePeekNativeStyle.foreground)
+    }
+}
+
+private struct ShopHeroPhotoMetadata: View {
+    let kind: String
+    let position: String?
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 8) {
+            Text(kind).font(CoffeePeekNativeStyle.font(11, weight: "Bold", relativeTo: .caption2))
+                .foregroundStyle(CoffeePeekNativeStyle.accent)
+                .multilineTextAlignment(.trailing)
+                .padding(.horizontal, 10).padding(.vertical, 6)
+                .background(.black.opacity(0.3), in: Capsule())
+                .overlay { Capsule().strokeBorder(CoffeePeekNativeStyle.accent, lineWidth: 1) }
+            if let position {
+                Text(position).font(CoffeePeekNativeStyle.font(12, relativeTo: .caption)).foregroundStyle(.white)
+            }
+        }
+    }
+}
+
+#Preview("Shop hero badge light") {
+    ShopHeroPhotoMetadata(kind: "SPECIALTY", position: "1 / 4").padding().background(.gray).preferredColorScheme(.light)
+}
+#Preview("Shop hero badge dark") {
+    ShopHeroPhotoMetadata(kind: "SPECIALTY", position: "1 / 4").padding().background(.black).preferredColorScheme(.dark)
+}
+
+@MainActor
+private func shopDetailCheckInsHeader(title: String, label: String, showAll: Bool, onOpen: @escaping () -> Void) -> some View {
+    HStack {
+        Text(title).font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
+            .accessibilityAddTraits(.isHeader)
+        Spacer()
+        if showAll {
+            CoffeePeekNativeChevronButton(label: label, action: onOpen)
+        }
+    }.foregroundStyle(CoffeePeekNativeStyle.foreground)
+}
+
+@MainActor
+private func shopDetailCheckInsHeaderPreview() -> some View {
+    VStack(spacing: 16) {
+        shopDetailCheckInsHeader(title: "Чекины", label: "Все чекины", showAll: true, onOpen: {})
+        shopDetailCheckInsHeader(title: "Чекины", label: "Все чекины", showAll: false, onOpen: {})
+    }.padding(16).background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Shop check-in header light") { shopDetailCheckInsHeaderPreview().preferredColorScheme(.light) }
+#Preview("Shop check-in header dark") { shopDetailCheckInsHeaderPreview().preferredColorScheme(.dark) }
+#Preview("Shop check-in header accessibility light") {
+    shopDetailCheckInsHeaderPreview().dynamicTypeSize(.accessibility2).preferredColorScheme(.light)
+}
+#Preview("Shop check-in header accessibility dark") {
+    shopDetailCheckInsHeaderPreview().dynamicTypeSize(.accessibility2).preferredColorScheme(.dark)
+}
+
+struct ShopDetailExposureFrame: Equatable { let feature: String; let rect: CGRect }
+struct ShopDetailExposureFrames: PreferenceKey {
+    static var defaultValue: [String: ShopDetailExposureFrame] { [:] }
+    static func reduce(value: inout [String: ShopDetailExposureFrame], nextValue: () -> [String: ShopDetailExposureFrame]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, next in next })
+    }
+}
+extension View {
+    func shopDetailExposure(_ feature: String, id: String, enabled: Bool = true) -> some View {
+        background {
+            if enabled {
+                GeometryReader { geometry in
+                    Color.clear.preference(key: ShopDetailExposureFrames.self,
+                        value: [id: ShopDetailExposureFrame(feature: feature, rect: geometry.frame(in: .named("shop-detail")))])
+                }
+            }
+        }
+    }
+}
+
+
+func shopDetailPreviewData() -> ShopDetailNativeData {
+    var state = ShopDetailNativeData()
+    state.details = IosShopDetails(id: "preview", slug: "preview", title: "CoffeePeek Specialty",
+        summary: "Кофе, свежая выпечка и спокойная атмосфера.", address: "Тихая улица, 12", distance: "350 м",
+        kind: "SPECIALTY", rating: "4.8", reviews: "24 чекина", isOpen: true, canRoute: true, photos: [],
+        roasters: [IosShopDetailRoaster(id: "preview-roaster", name: "Местная обжарка", photo: nil, label: "Открыть обжарщика")],
+        beans: ["Эфиопия", "Бразилия"], equipment: ["V60", "Аэропресс"], scheduleStatus: "Открыто до 22:00",
+        schedule: ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"].enumerated().map {
+            IosShopDetailSchedule(day: $0.element, hours: "09:00 – 22:00", today: $0.offset == 0)
+        },
+        menu: IosShopDetailMenu(groups: [[IosShopDetailMenuItem(id: "flat-white", title: "Флэт уайт", amount: "5,50", currency: "BYN", priceLabel: "5,50 белорусских рублей")]], photos: [], freshness: ["Актуально на 18.11.2026"]),
+        contacts: [IosShopDetailContact(kind: "website", title: "coffeepeek.app", target: "https://coffeepeek.app", copyable: false, label: "Открыть сайт")],
+        features: [IosShopDetailFeature(name: "Wi-Fi", icon: nil),
+            IosShopDetailFeature(name: "Велопарковка", icon: nil)],
+        featureToggle: "Показать все", priceValue: "8 BYN",
+        priceTiers: [IosShopDetailPriceTier(count: 2, label: "Около 8 BYN", selected: true)])
+    state.labels = shopDetailPreviewLabels
+    return state
+}
+
+private var shopDetailPreviewLabels: [String: String] {
+    ["back": "Назад", "share": "Поделиться", "description": "Описание", "roasters": "Обжарщики",
+        "beans": "Кофе", "equipment": "Оборудование", "hours": "Часы работы", "menu": "Меню", "contacts": "Контакты",
+        "features": "Особенности", "route": "Маршрут", "check-in": "Чекин", "check-ins": "Чекины", "price": "Средний чек",
+        "all-check-ins": "Все чекины", "hours-expand": "Показать часы работы", "hours-collapse": "Скрыть часы работы",
+        "distance": "От вас", "checkins-empty": "Станьте первым, кто оставит чекин", "report": "Заметили ошибку?",
+        "report-body": "Помогите нам сделать CoffeePeek лучше"]
+}
+
+@MainActor
+private func shopDetailPreview() -> some View {
+    ShopDetailNativeScreen(state: shopDetailPreviewData(), actions: ShopDetailNativeActions(), topInset: 44, bottomInset: 20,
+        owner: { AnyView(Color.clear.frame(width: 48, height: 48)) }, card: { _ in AnyView(EmptyView()) })
+}
+
+#Preview("Shop detail light") { shopDetailPreview().preferredColorScheme(.light) }
+#Preview("Shop detail dark") { shopDetailPreview().preferredColorScheme(.dark) }

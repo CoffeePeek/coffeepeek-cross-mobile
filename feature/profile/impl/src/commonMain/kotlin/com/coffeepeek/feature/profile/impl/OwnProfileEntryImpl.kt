@@ -67,7 +67,7 @@ private class OwnProfileEntryImpl(
         val model = viewModel(key = "own-profile:$instanceKey") { OwnProfileViewModel(accounts, signOut) }
         OwnProfileScreen(
             vm = model,
-            publicModel = { slug -> viewModel(key = "own-public:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, likes, visibility, snapshots) } },
+            publicModel = { slug -> viewModel(key = "own-public:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, likes, visibility, snapshots, includeCheckIns = false) } },
             authorActions = authorActions, slots = slots, bottomClearance = bottomClearance,
             onEditProfile = onEditProfile, onOpenShop = onOpenShop, onOpenRoaster = onOpenRoaster, onLogin = onLogin,
             onOpenUser = onOpenUser, onOpenFavorites = onOpenFavorites,

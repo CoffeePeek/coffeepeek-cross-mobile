@@ -4,6 +4,7 @@ import com.coffeepeek.feature.notifications.data.createNotificationRepository
 import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.test.runTest
 import java.time.LocalDate
+import kotlinx.serialization.json.jsonObject
 import kotlin.test.*
 
 class SandboxNotificationsBackendTest {
@@ -38,6 +39,20 @@ class SandboxNotificationsBackendTest {
         } finally {
             backend.close()
         }
+    }
+
+    @Test fun cityContractRequiresAnExplicitValueAndSupportsClearing() {
+        val notifications = SandboxNotificationsBackend(LocalDate.parse("2026-10-25"))
+        val path = "/api/v1/me/notifications/city"
+        val put = io.ktor.http.HttpMethod.Put
+        val json = kotlinx.serialization.json.Json
+        assertEquals(io.ktor.http.HttpStatusCode.BadRequest, notifications.handle(path, put, json.parseToJsonElement("{}").jsonObject)?.first)
+        val selected = json.parseToJsonElement("""{"citySlug":"minsk"}""").jsonObject
+        assertEquals(io.ktor.http.HttpStatusCode.NoContent, notifications.handle(path, put, selected)?.first)
+        assertEquals("minsk", notifications.selectedCitySlug)
+        val cleared = json.parseToJsonElement("""{"citySlug":null}""").jsonObject
+        assertEquals(io.ktor.http.HttpStatusCode.NoContent, notifications.handle(path, put, cleared)?.first)
+        assertNull(notifications.selectedCitySlug)
     }
 
     private fun backend() = SandboxBackend(byteArrayOf(1, 2, 3), LocalDate.parse("2026-10-25"))

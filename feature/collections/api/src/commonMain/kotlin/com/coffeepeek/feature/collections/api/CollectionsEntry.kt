@@ -17,7 +17,7 @@ interface CollectionsEntry {
     fun Library(onBack: () -> Unit, onSignIn: () -> Unit, onOpenEditor: (String?) -> Unit, modifier: Modifier)
 
     @Composable
-    fun Editor(id: String?, onBack: () -> Unit, onSignIn: () -> Unit,
+    fun Editor(id: String?, onBack: () -> Unit, onSaved: () -> Unit, onSignIn: () -> Unit,
         onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit,
         onShareText: (String) -> Unit, onShareImages: (List<ByteArray>, String) -> Unit, modifier: Modifier)
 

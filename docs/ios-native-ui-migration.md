@@ -1,10 +1,19 @@
 # Incremental native iOS UI migration
 
+## Integration branch
+
+Start native SwiftUI migration branches from `codex/ios-native` and open their
+pull requests against it. For a stacked pull request, target its open parent
+first and retarget to `codex/ios-native` after that parent lands. GitHub Actions
+runs iOS build verification for migration pull requests into this branch.
+Android CI continues to run for pull requests into `main` and `develop`.
+
 ## Responsibility and current boundary
 
 The application composition module owns route dispatch, UIKit controller lifetime,
 tab selection, and platform chrome. Existing feature UI owns state and actions;
-domain and data contracts remain shared. SwiftUI screens will live in `iosApp`.
+domain and data contracts remain shared. The native app builds SwiftUI sources
+from `iosXtool/CoffeePeek/Sources/CoffeePeek` in Xcode and xtool.
 No new Gradle module is needed for this stage: the existing platform source set
 is the appropriate boundary for UIKit implementations of shared UI contracts.
 
@@ -38,30 +47,54 @@ Public surface added: `NavigationBarAction`, because the shared public CpTopBar
 accepts it. Native controllers, tab-route mapping, and platform hooks are internal.
 There are no new data, domain, DI, Gradle, or Swift framework dependencies.
 
-## Remaining migration sequence
+## Stage 2 — Theme settings
 
-1. SwiftUI settings pilot: expose feature state/actions and a cancellable state
-   subscription; ensure main-thread delivery and screen-owned lifetime. Keep
-   repositories and DTOs behind the feature boundary. Move settings ownership
-   incrementally before adding a SwiftUI consumer.
-2. Profile and forms: SwiftUI Form/List/TextEditor, focus management, validation,
-   and keyboard interaction. Preserve credential content types and reuse the
-   existing native photo pickers.
-3. Search/feed/shop/check-in screen content, native refresh, and photo viewer.
-   Preserve CoffeePeek branding and the existing MapLibre engine.
+The `ThemeSettings` route now hosts a SwiftUI list through `UIHostingController`.
+The existing UIKit container owns push/pop, safe areas, stack restoration and
+the `settings` screen impression. The native list inherits the app appearance
+from the UIKit shell and uses the current app language for Russian and Belarusian
+strings. The Android destination continues to render the Compose screen.
+
+The Swift-facing `IosThemeSettings` adapter reads and writes through `AppThemePort`.
+Both renderers use the same `ThemeManager` and persisted `theme_mode` setting.
+The subscription delivers Kotlin updates on the iOS main thread and SwiftUI
+cancels it when the screen disappears. There are no additional packages or
+Gradle modules.
+
+### Verification on 2026-11-16
+
+- Source `8b559dd86` plus the `codex/swiftui-theme` working changes. Android
+  `directDebug` assembled on Windows with JDK 17. The packaged DEX check passed
+  for `com.coffeepeek.debug`, version `1.2.0.3035-debug` (3035). Settings ran
+  42 tests in six suites, with zero failures, skips or retries. No APK was
+  installed or launched.
+- Static checks verified both iOS entry points, Xcode and xtool resource wiring,
+  and seven matching localization keys in each language. The SwiftUI previews
+  and manual checks require Xcode.
+- Gradle skipped application Kotlin/Native compilation and native test
+  compilation on Windows because the app graph includes the Shelf SwiftPM
+  cinterop. CI is configured to run the two Theme bridge contract tests.
+- On macOS, build `iosApp` and run its iOS contract tests. On the simulator, check
+  System, Light and Dark, persistence after relaunch, an iOS appearance change
+  in System mode, both languages, Dynamic Type, VoiceOver, Back, and completed
+  and cancelled edge swipes. Check the surrounding Compose screen after each
+  theme change and verify the existing screen impression with a test sink.
+
+The [SwiftUI execution plan](IOS_SWIFTUI_EXECUTION_PLAN.md) lists the remaining
+iOS surfaces, dependencies, and work packages for parallel implementation.
 
 ## Risks and verification
 
-Retain iOS 15 compatibility. Do not introduce a second navigation stack for a
+Retain the current iOS deployment target. Do not introduce a second navigation stack for a
 single destination, duplicate safe-area padding, or bypass feature APIs from Swift.
 Check custom back actions, authentication resets, deep links, and pending map/tab
 selection after each navigation change.
 
-Compilation on Windows verifies Kotlin/Native API signatures, not UIKit runtime
-layout or gesture arbitration. Required device checks: tab state retention;
+Windows can cross-compile Kotlin libraries whose dependencies support it.
+Xcode verifies the Swift interface. Required device checks: tab state retention;
 cancelled swipe-back; editor back; password recovery email request and web reset;
 open shop on map from another tab; keyboard dismissal and search cancellation;
-large accessibility text; dark/light theme; iPad rotation; iOS 15 and iOS 26 bars.
+large accessibility text; dark/light theme; iPad rotation; and current iOS bars.
 
 References:
 - https://developer.apple.com/documentation/uikit/uitabbarcontroller

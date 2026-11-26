@@ -18,7 +18,9 @@ import com.coffeepeek.feature.profile.impl.ui.compose.EditProfileScreen
  * The edit form. The ViewModel (form draft, picked avatar, save progress) lives in the host's ViewModel store, so it survives rotation and
  * theme changes; the caller owns navigation. The app supplies the own-account port, the writes and the picker/image slots.
  */
-fun createEditProfileEntry(accounts: ProfileAccountPort, edit: ProfileEditPort, slots: EditProfileSlots): EditProfileEntry =
+fun createEditProfileEntry(
+    accounts: ProfileAccountPort, edit: ProfileEditPort, slots: EditProfileSlots,
+): EditProfileEntry =
     object : EditProfileEntry {
         @Composable
         override fun Content(onBack: () -> Unit, onOpenAccountDeletion: () -> Unit, modifier: Modifier) {

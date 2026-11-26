@@ -12,6 +12,43 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NotificationNavigationTest {
+    @Test fun historyNotificationRequestsAllCheckInsWithoutRestoringCollectionsOrADateFilter() = runTest {
+        val feature = Feature().apply { target = { NotificationDestination.CheckIns } }
+        var historyRequests = 0
+        val navigation = NotificationNavigation(feature, Contributions(), { "alice" }, { destination ->
+            openNotificationDestination(destination, { historyRequests++ }, { error("must use the profile intent") })
+        }, { error("unexpected") })
+        assertTrue(navigation.open("notice", "alice", 4))
+        assertEquals(1, historyRequests)
+    }
+
+    @Test fun postNotificationPreservesItsDetailLinkWithoutResettingProfile() = runTest {
+        val feature = Feature().apply { target = { NotificationDestination.CheckIn("post") } }
+        val opened = mutableListOf<Navigator.Screen>()
+        val navigation = NotificationNavigation(feature, Contributions(), { "alice" }, { destination ->
+            openNotificationDestination(destination, { error("must not reset profile") }, opened::add)
+        }, { error("unexpected") })
+        assertTrue(navigation.open("notice", "alice", 4))
+        assertEquals(listOf<Navigator.Screen>(Navigator.Screen.CheckInDetail("post")), opened)
+    }
+
+    @Test fun checkInHistoryNotificationOpensTheUnifiedProfile() = runTest {
+        val feature = Feature().apply { target = { NotificationDestination.CheckIns } }
+        val opened = mutableListOf<Navigator.Screen>()
+        val navigation = NotificationNavigation(feature, Contributions(), { "alice" }, opened::add, { error("unexpected") })
+        assertTrue(navigation.open("notice", "alice", 4))
+        assertEquals(listOf<Navigator.Screen>(Navigator.Screen.ProfileTab), opened)
+        assertEquals(listOf("notice"), feature.reads)
+    }
+
+    @Test fun individualCheckInNotificationStillOpensItsDetail() = runTest {
+        val feature = Feature().apply { target = { NotificationDestination.CheckIn("post") } }
+        val opened = mutableListOf<Navigator.Screen>()
+        val navigation = NotificationNavigation(feature, Contributions(), { "alice" }, opened::add, { error("unexpected") })
+        assertTrue(navigation.open("notice", "alice", 4))
+        assertEquals(listOf<Navigator.Screen>(Navigator.Screen.CheckInDetail("post")), opened)
+    }
+
     @Test fun correctionOpensTheCurrentShopInsteadOfTheRequestAsChosenByTheUser() = runTest {
         val feature = Feature().apply { target = { NotificationDestination.ShopChange("change") } }
         val contributions = Contributions()

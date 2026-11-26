@@ -71,14 +71,7 @@ import com.coffeepeek.feature.community.impl.timeline.CommunityViewModel
 import com.coffeepeek.feature.community.impl.timeline.MessageKind
 
 /** What the screen asks the caller to do; navigation and the creation flow are not decided here. */
-internal class CommunityCallbacks(
-    val onSignIn: () -> Unit,
-    val onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
-    val onOpenShop: (slug: String) -> Unit,
-    val onEditHome: (id: String) -> Unit,
-    val onOpenPost: (id: String) -> Unit,
-    val onOpenCoffee: (slug: String) -> Unit,
-)
+internal typealias CommunityCallbacks = com.coffeepeek.feature.community.api.CommunityNavigation
 
 @Composable
 internal fun CommunityScreen(

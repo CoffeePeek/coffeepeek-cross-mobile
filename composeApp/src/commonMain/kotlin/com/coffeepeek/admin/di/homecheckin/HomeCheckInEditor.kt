@@ -26,11 +26,10 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
-import com.coffeepeek.feature.homecheckin.impl.createHomeCheckInEditorEntry
 import com.coffeepeek.feature.homecheckin.impl.ui.data.*
 import org.jetbrains.compose.resources.painterResource
 
-/** Android composition reuses the current catalogue, platform picker, artwork and consent-aware tracker. */
+/** Application composition reuses the current catalogue, platform picker, artwork and consent-aware tracker. */
 internal fun appHomeCheckInEditor(
     lease: CheckInHistorySession,
     repository: HomePreparationRepository,
@@ -41,18 +40,10 @@ internal fun appHomeCheckInEditor(
     shelfBags: ShelfHomeCheckInBags? = null,
 ): HomeCheckInEditorEntry {
     var handoff = inheritedTracker
-    return createHomeCheckInEditorEntry(AppHomeCheckInRepository(lease, repository),
+    return platformHomeCheckInEntry(AppHomeCheckInRepository(lease, repository),
         AppHomeCheckInCatalog(lease, picker, methods, shelfBags),
         { lease.isLoggedIn && lease.isCurrent() }, appHomeCheckInDates(),
-        HomeCheckInEditorMedia(
-            { Image(painterResource(Res.drawable.checkin_rating_coffee), null, it, contentScale = ContentScale.Crop) },
-            { Image(painterResource(CoffeePeekIllustrations.CatalogSearch), null, it) },
-            { name, modifier -> Icon(painterResource(brewMethodIcon(name)), null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-            { photo, modifier, fullSize ->
-                CoffeePeekImage(photo.bytes, modifier = modifier, contentScale = if (fullSize) ContentScale.Fit else ContentScale.Crop)
-            },
-            // Shelf cards are owner-only: the protected loader adds this session.
-            { url, modifier -> CoffeePeekImage(url, modifier = modifier, contentScale = ContentScale.Fit) }),
+        appHomeCheckInMedia(),
         AppHomeCheckInPhotoPicker(),
         analytics = { editing ->
             val inherited = if (!editing) handoff.also { handoff = null } else null
@@ -72,3 +63,13 @@ internal fun appHomeCheckInDates() = HomeCheckInEditorDates(
 /** UTC midnight of an ISO `yyyy-MM-dd` date, or null when the text is not one. */
 @OptIn(ExperimentalTime::class)
 internal fun civilDateMillis(date: String): Long? = runCatching { Instant.parse("${date}T00:00:00Z") }.getOrNull()?.toEpochMilliseconds()
+
+private fun appHomeCheckInMedia() = HomeCheckInEditorMedia(
+    { Image(painterResource(Res.drawable.checkin_rating_coffee), null, it, contentScale = ContentScale.Crop) },
+    { Image(painterResource(CoffeePeekIllustrations.CatalogSearch), null, it) },
+    { name, modifier -> Icon(painterResource(brewMethodIcon(name)), null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+    { photo, modifier, fullSize ->
+        CoffeePeekImage(photo.bytes, modifier = modifier, contentScale = if (fullSize) ContentScale.Fit else ContentScale.Crop)
+    },
+    // Shelf cards are owner-only: the protected loader adds this session.
+    { url, modifier -> CoffeePeekImage(url, modifier = modifier, contentScale = ContentScale.Fit) })

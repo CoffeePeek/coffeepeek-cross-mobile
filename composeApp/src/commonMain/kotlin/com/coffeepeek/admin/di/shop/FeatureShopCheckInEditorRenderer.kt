@@ -51,7 +51,7 @@ internal class FeatureShopCheckInEditorRenderer(
                     onChangeShop = { Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn) },
                     onSubmitted = {},
                     onGoToFeed = { Navigator.popThenSelectTab(Navigator.Screen.CommunityTab) },
-                    onOpenHistory = { Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces) })
+                    onOpenHistory = { Navigator.openProfileCheckIns(popCurrent = true) })
                 detailsResult == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CoffeePeekLoader()
                 }

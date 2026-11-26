@@ -4,7 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
-import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.admin.di.media.PlatformPhotoViewer
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
@@ -36,7 +37,7 @@ internal fun featureCoffeeScreenRenderer(repository: CoffeeRepository): FeatureC
         }
     return FeatureCoffeeScreenRenderer(
         createCoffeeDetailEntry(repository, image,
-            { urls, index, onDismiss -> CoffeePeekPhotoViewer(urls, index, onDismiss = onDismiss) },
+            { urls, index, onDismiss -> PlatformPhotoViewer(CoffeePeekPhotoViewerImages(urls), index, onDismiss = onDismiss) },
             ::utcIsoToLocalDateTime, CoffeeCatalogueAnalytics, CoffeeCatalogueScreenAnalytics),
     )
 }

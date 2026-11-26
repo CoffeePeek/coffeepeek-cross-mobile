@@ -6,32 +6,43 @@ import kotlin.test.assertNull
 
 class ShopCheckInSignInHandoffTest {
     @Test
-    fun authenticationCanResumeTheScannedShopOnlyOnce() {
+    fun authenticationCanResumeTheScannedShopOnlyOnceAfterTheRouteDisposes() {
         val handoff = ShopCheckInSignInHandoff()
-        handoff.begin(ShopCheckInSignInHandoff.Request("marks"))
+        var activeSession = false
+        val attempt = handoff.attempt("marks") { activeSession }
+        attempt.begin()
 
+        activeSession = true
+        attempt.dispose()
         assertEquals(Navigator.Screen.ShopCheckInEditor("marks"), handoff.take())
         assertNull(handoff.take())
     }
 
     @Test
-    fun cancellingTheCurrentSignInDiscardsItsCheckIn() {
+    fun explicitlyCancellingTheCurrentSignInDiscardsItsCheckIn() {
         val handoff = ShopCheckInSignInHandoff()
-        val request = ShopCheckInSignInHandoff.Request("marks")
-        handoff.begin(request)
-        handoff.cancel(request)
+        val attempt = handoff.attempt("marks") { true }
+        attempt.begin()
+        attempt.cancel()
+        assertNull(handoff.take())
+    }
 
+    @Test
+    fun leavingSignInWithoutAnActiveSessionDiscardsItsCheckIn() {
+        val handoff = ShopCheckInSignInHandoff()
+        val attempt = handoff.attempt("marks") { false }
+        attempt.begin()
+        attempt.dispose()
         assertNull(handoff.take())
     }
 
     @Test
     fun disposalOfAnOlderScanCannotCancelANewerScanOfTheSameShop() {
         val handoff = ShopCheckInSignInHandoff()
-        val older = ShopCheckInSignInHandoff.Request("marks")
-        handoff.begin(older)
-        handoff.begin(ShopCheckInSignInHandoff.Request("marks"))
-        handoff.cancel(older)
-
+        val older = handoff.attempt("marks") { false }
+        older.begin()
+        handoff.attempt("marks") { true }.begin()
+        older.dispose()
         assertEquals(Navigator.Screen.ShopCheckInEditor("marks"), handoff.take())
     }
 }

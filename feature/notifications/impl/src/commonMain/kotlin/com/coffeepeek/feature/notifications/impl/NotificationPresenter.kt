@@ -9,14 +9,16 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.time.TimeSource
 
 /** The notification feature of the application: [repository], [account] and [platform] are supplied by the composition root. */
-fun createNotificationFeature(repository: NotificationRepository, account: NotificationAccount, platform: PushDevicePlatform): NotificationFeature =
-    NotificationPresenter(repository, account, platform)
+fun createNotificationFeature(repository: NotificationRepository, account: NotificationAccount,
+    platform: PushDevicePlatform, city: NotificationCity): NotificationFeature =
+    NotificationPresenter(repository, account, platform, city = city)
 
 internal class NotificationPresenter(
     private val repository: NotificationRepository,
     private val account: NotificationAccount,
     private val platform: PushDevicePlatform,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    private val city: NotificationCity,
 ) : NotificationFeature {
     private val lock = Mutex()
     private val mutable = MutableStateFlow(NotificationInboxState())
@@ -26,6 +28,9 @@ internal class NotificationPresenter(
     private var loadJob: Job? = null
     private var settingsJob: Job? = null
     private var readJob: Job? = null
+    private var cityJob: Job? = null
+    private val cityRefresh = MutableStateFlow(0L)
+    private val cityLock = Mutex()
     private val pendingReadIds = MutableStateFlow<Set<String>>(emptySet())
     private var refreshPending = false
     private fun account() = account.userId
@@ -34,16 +39,7 @@ internal class NotificationPresenter(
 
     init {
         scope.launch {
-            account.observeUserId().distinctUntilChanged().collect { user ->
-                loadJob?.cancel(); settingsJob?.cancel(); readJob?.cancel()
-                pendingReadIds.value = emptySet()
-                refreshPending = false
-                loggingOut = false
-                activityAt = null
-                mutable.value = NotificationInboxState(accountId = user, generation = state.value.generation + 1)
-                platform.setAccount(user)
-                if (user != null) foreground()
-            }
+            account.observeUserId().distinctUntilChanged().collect(::accountChanged)
         }
         scope.launch {
             var receivedRevision = platform.state.value.notificationRevision
@@ -55,6 +51,41 @@ internal class NotificationPresenter(
                 }
                 syncDevice()
             }
+        }
+    }
+
+    private fun accountChanged(user: String?) {
+        loadJob?.cancel()
+        settingsJob?.cancel()
+        readJob?.cancel()
+        cityJob?.cancel()
+        pendingReadIds.value = emptySet()
+        refreshPending = false
+        loggingOut = false
+        activityAt = null
+        mutable.value = NotificationInboxState(accountId = user, generation = state.value.generation + 1)
+        platform.setAccount(user)
+        observeCity(state.value)
+        if (user != null) foreground()
+    }
+
+    private fun observeCity(snapshot: NotificationInboxState) {
+        if (snapshot.accountId == null) return
+        cityJob = scope.launch {
+            combine(city.observeSelectedCity(), cityRefresh) { selection, _ -> selection }
+                .conflate()
+                .collect { selection -> syncCity(snapshot, selection) }
+        }
+    }
+
+    private suspend fun syncCity(snapshot: NotificationInboxState, selection: NotificationCitySelection) = cityLock.withLock {
+        if (!current(snapshot)) return@withLock
+        try {
+            repository.setCity(selection.citySlug)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            // No success is cached: retry on foreground entry or the next selected city.
         }
     }
 
@@ -85,6 +116,7 @@ internal class NotificationPresenter(
     }
 
     override fun foreground() {
+        cityRefresh.update { it + 1 }
         scope.launch {
             syncDevice(refreshSettings = true)
             val snapshot = state.value
@@ -235,7 +267,10 @@ internal class NotificationPresenter(
 
     override suspend fun beforeLogout() {
         loggingOut = true
-        loadJob?.cancel(); settingsJob?.cancel(); readJob?.cancel()
+        cityJob?.cancel()
+        loadJob?.cancel()
+        settingsJob?.cancel()
+        readJob?.cancel()
         pendingReadIds.value = emptySet()
         mutable.value = NotificationInboxState(generation = state.value.generation + 1)
         try {

@@ -142,7 +142,8 @@ private fun ShelfAddStepBody(
     val openCamera = { onAction(ShelfAddAction.OpenCamera) }
     val photo = state.photo
     when {
-        step == ShelfAddStep.Intro || photo == null -> ShelfScanIntro(openCamera, onGallery, modifier)
+        step == ShelfAddStep.Intro || photo == null -> ShelfScanIntro(openCamera, onGallery, modifier,
+            enabled = state.scanner != ShelfScannerStatus.Disabled)
         step == ShelfAddStep.Preparing -> ShelfScanPreparation(photo.bytes, state.scanner,
             { onAction(ShelfAddAction.DownloadScanner) }, openCamera, onGallery, modifier)
         step == ShelfAddStep.Scanning || step == ShelfAddStep.Revealing -> ShelfScanProgress(photo.bytes, state.stagesDone,

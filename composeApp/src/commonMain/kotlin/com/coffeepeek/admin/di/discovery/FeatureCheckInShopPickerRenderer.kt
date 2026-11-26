@@ -15,7 +15,6 @@ import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.shop.api.PublicShopPreviews
 import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.discovery.data.repository.createDiscoveryRepository
-import com.coffeepeek.feature.discovery.impl.createCheckInShopPickerEntry
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
@@ -27,7 +26,9 @@ internal class FeatureCheckInShopPickerRenderer(
     private val favorites: FavoritesRepository, private val city: PreferenceDiscoveryCity,
     private val location: AppDiscoveryLocation,
     private val history: CheckInHistoryRepository, private val details: ShopDetailsRepository,
-) : CheckInShopPickerRenderer {
+) : CheckInShopPickerRenderer, NativeCheckInShopPickerSessionFactory {
+    override fun createNativeSession(session: ShopBrowsingHostSession, history: CheckInHistorySession) =
+        assembly(session).nativeSession(picker = true, recentShops = recent(session, history))
     @Composable
     override fun Content() {
         ShopBrowsingHost("check-in-shop-picker", sessions) { session -> Picker(session) }
@@ -57,13 +58,18 @@ internal class FeatureCheckInShopPickerRenderer(
             { if (session.lease.isCurrent()) Navigator.navigate(Navigator.Screen.Auth) }, Modifier)
     }
 
-    private fun entry(session: ShopBrowsingHostSession, historySession: CheckInHistorySession) =
+    private fun assembly(session: ShopBrowsingHostSession) =
         AppDiscoveryFavorites(session.lease.favorites(favorites)).let { favoriteAdapter ->
-            createCheckInShopPickerEntry(
+            AppDiscoverySessions(
                 createDiscoveryRepository(client, favoriteAdapter::favoriteIds, roasterEntries(catalog)),
                 favoriteAdapter, city, location,
-                SessionDiscoveryAccount(sessions), ShopDiscoveryDetails(shops), AppDiscoveryAnalytics(), discoveryHost(),
-                recentShops = RecentCheckInShops(historySession.bind(history), session.lease.details(details)),
+                SessionDiscoveryAccount(sessions), ShopDiscoveryDetails(shops),
             )
         }
+
+    private fun recent(session: ShopBrowsingHostSession, historySession: CheckInHistorySession) =
+        RecentCheckInShops(historySession.bind(history), session.lease.details(details))
+
+    private fun entry(session: ShopBrowsingHostSession, historySession: CheckInHistorySession) =
+        assembly(session).pickerEntry(discoveryHost(), recent(session, historySession))
 }

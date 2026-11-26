@@ -13,6 +13,7 @@ internal enum class ShelfAddStep { Intro, Camera, Preparing, Scanning, Revealing
 
 /** The scanner's models are prepared only when a selected photo needs automatic processing. */
 internal sealed interface ShelfScannerStatus {
+    data object Disabled : ShelfScannerStatus
     data object Checking : ShelfScannerStatus
     data object Ready : ShelfScannerStatus
     data class NeedsDownload(val bytes: Long) : ShelfScannerStatus

@@ -80,7 +80,7 @@
     <string name="community_report_sent">Жалоба отправлена</string>
     <string name="community_edit_saved">Чек-ин сохранён</string>
 
-    <string name="community_post_title">Публикация</string>
+    <string name="community_post_title">Чекин</string>
     <string name="community_back">Назад</string>
     <string name="community_post_unavailable_title">Публикация недоступна</string>
     <string name="community_post_unavailable_body">Запись недоступна. Возможно, автор скрыл или удалил её.</string>

@@ -17,3 +17,16 @@ This slice starts from `develop` at `3374e91bd428faccee46f900bf853a818adb0470`.
 - The Android and iOS MapLibre adapters use the existing OpenFreeMap vector source. Only subway stations appear as an M badge, from zoom 12, matching the default city camera and the lowest zoom at which the tiles contain stations. The basemap handles collisions. Manual review should cover Minsk below zoom 12 and at zooms 12 through 16, light and dark styles, zones and coffee pins.
 - Login and registration draw behind the system bars. The close button stays below the top inset and the scroll content can clear the bottom inset or keyboard. Check login, all registration steps, back navigation, short windows and large fonts in Sandbox.
 - The guest-only revision `3a464e49` passed [Android CI](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/42181028869), including both Debug flavors, unit tests and lint. The map and auth changes require a fresh build on both platforms.
+
+## Native guest sign-in sizing, 2026-11-25
+
+The pinned guest-feed CTA and the empty guest-state CTA now use the existing
+`CoffeePeekNativeActionButton` with the feature's 16-point label and intrinsic
+vertical size. The previous system bordered-prominent/large styling is removed.
+Existing sticky-inset measurement, login action, feed data and guest/session rules
+remain unchanged. Full native Debug 3224 compilation/linking passed and the app
+installed/launched on the agreed iPhone15,4 / iOS 27.0.1. All 72 Community unit tests
+in seven suites executed with zero failures, errors or skips; Android assembly/DEX
+passed. Manual guest-feed sizing, scrolling, light/dark, large text and back from
+login remain open; the device session stopped when the user began entering login
+credentials. No real account writes or automated UI tests were used.

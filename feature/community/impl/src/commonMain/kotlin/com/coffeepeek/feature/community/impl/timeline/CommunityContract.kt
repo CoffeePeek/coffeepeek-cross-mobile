@@ -45,6 +45,8 @@ internal data class CommunityState(
     val isLoggedIn: Boolean? = null,
     /** Bumped when the account or the timeline scope changes; late answers for an older generation are dropped. */
     val sessionGeneration: Long = 0,
+    /** Native UI lifetime: account replacement only, never refresh or timeline/filter changes. */
+    val accountEpoch: Long = 0,
     val items: List<CommunityPost> = emptyList(),
     val confirmedSaves: List<String> = emptyList(),
     val firstPageCount: Int? = null,

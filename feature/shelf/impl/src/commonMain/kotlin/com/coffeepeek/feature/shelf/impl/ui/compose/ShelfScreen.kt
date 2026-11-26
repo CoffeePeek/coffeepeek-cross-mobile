@@ -27,8 +27,11 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,7 +77,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun ShelfScreen(
     viewModel: ShelfViewModel, signedIn: Boolean, image: ShelfImage, bottomClearance: Dp, modifier: Modifier,
-    header: @Composable ColumnScope.() -> Unit, visibilitySettings: @Composable () -> Unit, onEvent: (ShelfEvent) -> Unit,
+    header: @Composable ColumnScope.() -> Unit, settings: @Composable (onDismiss: () -> Unit) -> Unit,
+    onEvent: (ShelfEvent) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentEvent by rememberUpdatedState(onEvent)
@@ -83,15 +87,16 @@ internal fun ShelfScreen(
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { currentEvent(it) } }
     }
     LaunchedEffect(viewModel, signedIn) { if (signedIn) viewModel.onAction(ShelfAction.Refresh) }
-    ShelfScreenContent(state, signedIn, viewModel::onAction, image, modifier, bottomClearance, header, visibilitySettings)
+    ShelfScreenContent(state, signedIn, viewModel::onAction, image, modifier, bottomClearance, header, settings)
 }
 
 @Composable
 internal fun ShelfScreenContent(
     state: ShelfState, signedIn: Boolean, onAction: (ShelfAction) -> Unit, image: ShelfImage,
     modifier: Modifier = Modifier, bottomClearance: Dp = 0.dp, header: @Composable ColumnScope.() -> Unit = {},
-    visibilitySettings: @Composable () -> Unit = {},
+    settings: @Composable (onDismiss: () -> Unit) -> Unit = {},
 ) {
+    var settingsOpen by rememberSaveable { mutableStateOf(false) }
     val drag = remember { ShelfDragState() }
     val tiles = rememberShelfTiles(image)
     LaunchedEffect(state.bags) { tiles.retain(state.bags.mapTo(HashSet()) { it.id }) }
@@ -99,7 +104,9 @@ internal fun ShelfScreenContent(
     ShelfMessageEffect(state.message, snackbar, onAction)
     ShelfArchiveDropEffect(drag, state)
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ShelfScrollContent(state, signedIn, drag, tiles, image, onAction, bottomClearance, header, visibilitySettings)
+        ShelfScrollContent(state, signedIn, drag, tiles, image, onAction, bottomClearance, header)
+        if (signedIn && !drag.active) ShelfSettingsButton({ settingsOpen = true },
+            Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = bottomClearance + 20.dp))
         AnimatedVisibility(drag.active, Modifier.align(Alignment.BottomCenter), enter = slideInVertically { it / 2 } + fadeIn(),
             exit = slideOutVertically { it / 2 } + fadeOut()) {
             ShelfFinishZone(drag.overZone, Modifier.padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = bottomClearance + CoffeePeekDimens.spacing3)
@@ -108,6 +115,7 @@ internal fun ShelfScreenContent(
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance))
         ShelfLiftedBag(state.bags, drag, tiles, Modifier.matchParentSize())
     }
+    if (signedIn && settingsOpen) settings { settingsOpen = false }
     ShelfFinishSummary(state, image, onAction, onDismissed = drag::archiveCancelled)
 }
 
@@ -115,7 +123,7 @@ internal fun ShelfScreenContent(
 private fun ShelfScrollContent(
     state: ShelfState, signedIn: Boolean, drag: ShelfDragState, tiles: ShelfTiles, image: ShelfImage,
     onAction: (ShelfAction) -> Unit, bottomClearance: Dp,
-    header: @Composable ColumnScope.() -> Unit, visibilitySettings: @Composable () -> Unit,
+    header: @Composable ColumnScope.() -> Unit,
 ) {
     val scroll = rememberScrollState()
     val viewport = remember { arrayOfNulls<Rect>(1) }
@@ -124,9 +132,6 @@ private fun ShelfScrollContent(
         .padding(bottom = bottomClearance + 96.dp)) {
         header()
         Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4).padding(top = CoffeePeekDimens.spacing3)) {
-            ShelfHeader({ onAction(ShelfAction.OpenArchive) }.takeIf { signedIn },
-                visibilitySettings = visibilitySettings.takeIf { signedIn })
-            ShelfSummaryRow(state.summary.takeIf { signedIn && state.loaded }, drag.active)
             ShelfBody(state, signedIn, drag, tiles, image, onAction)
         }
     }
@@ -147,7 +152,7 @@ private fun ShelfBody(
             CoffeePeekLoader(stringResource(Res.string.shelf_loading))
         }
         state.bags.isEmpty() -> ShelfInvitation(stringResource(Res.string.shelf_empty_title), stringResource(Res.string.shelf_empty_body),
-            stringResource(Res.string.shelf_scan_bag), { onAction(ShelfAction.AddBag) }, width)
+            modifier = width)
         else -> ShelfShelves(state.bags, state.arrivingId, drag, tiles, image, onAction)
     }
 }

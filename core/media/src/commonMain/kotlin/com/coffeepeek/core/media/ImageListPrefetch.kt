@@ -24,7 +24,8 @@ fun PrefetchListPhotos(
     PrefetchPhotos(upcoming)
 }
 
-internal fun upcomingPhotoUrls(
+/** Shared by Compose and native lists; callers supply actually visible item keys. */
+fun upcomingPhotoUrls(
     photosByItem: List<Pair<String, List<String>>>,
     visibleKeys: List<Any>,
     atStart: Boolean,
