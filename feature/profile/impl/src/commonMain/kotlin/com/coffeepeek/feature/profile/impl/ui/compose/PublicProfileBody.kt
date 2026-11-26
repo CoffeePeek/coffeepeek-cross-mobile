@@ -95,6 +95,7 @@ private fun PublicProfileLoadedContent(state: PublicProfileState, profile: Publi
                 checkInList, modifier, own?.bottomContentPadding ?: 20.dp, header)
         },
         collections = { PublicProfileCollections(profile, viewingOwn, slots, own) },
+        onOpenCollections = own?.onOpenFavorites ?: slots.onOpenOwnCollections.takeIf { viewingOwn },
         shelf = { slots.shelfPreview(profile.slug, viewingOwn) },
         modifier = Modifier.fillMaxSize().then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
         ownerShelf = own?.shelf, ownerHistory = own?.history, bottomPadding = own?.bottomContentPadding ?: 20.dp,
@@ -140,11 +141,13 @@ private fun PublicProfileRefreshErrors(state: PublicProfileState, viewingOwn: Bo
 private fun PublicProfileCollections(profile: PublicProfile, viewingOwn: Boolean, slots: ProfileSlots, own: OwnProfileExtras?) {
     when {
         own != null -> own.favoritesPreview {
-            ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = own.onOpenFavorites)
+            Box(Modifier.padding(horizontal = 16.dp)) {
+                ProfileSectionHeading(stringResource(Res.string.profile_section_favorites))
+            }
         }
         viewingOwn -> Column {
             Box(Modifier.padding(horizontal = 16.dp)) {
-                ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = slots.onOpenOwnCollections)
+                ProfileSectionHeading(stringResource(Res.string.profile_section_favorites))
             }
             slots.ownerCollection()
         }

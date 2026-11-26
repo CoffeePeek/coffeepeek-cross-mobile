@@ -353,3 +353,51 @@ b6af7d9b0f3f6f6f754a20742296cf7dbade69ce658cc77e3f0a85ac3cf8dcfd).
 The native snapshot/session test changes have not been compiled or executed;
 Kotlin/Native and full iOS validation remain pending. Previews were not rendered.
 No device, real account, backend write or TestFlight validation was performed.
+
+### Android profile parity with native iOS — 2026-11-26
+
+User-requested checkpoint `codex/migration-android-profile-parity` starts from
+`02fde81e362a10860f12f7a54277c7556c55b3ef` in develop. This is presentation
+parity for the existing owner profile, not a new feature or navigation migration.
+The native reference is `OwnProfileScreen.swift` and `ShelfNativeGridScreen.swift`.
+
+Verification plan before edits: preserve profile tab/calendar scroll ownership,
+collection cover caching and editor return/cancel behavior, shelf drag/finish/undo,
+archive search and account/session guards. Collections owns its square two-column
+cards; Profile owns the single floating full-library entry above navigation;
+Shelf owns its floating settings control and searchable archive modal. Application
+composition remains wiring and supplies the existing callbacks and nav clearance.
+No new Gradle boundary or cross-feature implementation dependency is needed.
+
+Run the existing Shelf, Collections and Profile unit/contract suites, compile the
+application through directSandbox assembly, and require packaged runtime classes,
+Sandbox isolation and function-body checks. Check resource-key parity and paired
+colocated previews. IDE tools are unavailable in this session. Previews may be
+compiled but must not be reported as rendered. No automated UI/instrumented tests,
+device install/launch, live-account write or production analytics is authorized by
+this verification plan. Manual themes, narrow/large-text layouts, accessibility,
+modal placement/IME, tab scroll and back/cancel remain device acceptance gates.
+The already running iOS TestFlight 2.0 (3398) uses the prior source and is unaffected.
+
+Verification on the Windows/JDK 17 host, base 02fde81 plus this patch:
+Collections impl 7 suites/110 cases, Profile impl 10 suites/110 cases and Shelf
+impl 11 suites/89 cases, 309 total, zero failures/errors/skips. Collections/Profile
+ran after their final edits. The final Shelf rerun followed the modal first-event
+guard; no failed test or build was retried. Affected Android lint reports contain
+zero issues. Function limits passed (125 recorded, zero new), with no baseline
+extension or Gradle/dependency changes. RU/BE resource keys match in all three
+features and composition. Colocated fake light/dark previews compile.
+
+Both initial integration and final-guard directSandbox assemblies passed,
+including packaged DEX runtime-class and Sandbox isolation checks. The local APK
+is com.coffeepeek.sandbox, 1.2.2.3398-sandbox / 3398 (source base plus working patch),
+SHA-256: 2ed4033053cb5ec4b7637f87e970550571045691c7697e75436d7aa10e3f948d.
+
+No preview was rendered and no device was installed or launched. Studio tools
+were unavailable; the read-only ADB inventory could not connect to its daemon,
+so no manual/device acceptance is implied. The manual gates listed above remain
+open, as does compilation of this new common UI on a macOS/native runner.
+Existing Preview and expect/actual compiler deprecation warnings remain; affected
+lint reports are clean. Analytics inventory found the existing favoritesOpened
+callback and no Shelf event producer in these changed presentation paths; the
+new single entry reuses that callback without emitting new production events.

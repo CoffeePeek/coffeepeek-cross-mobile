@@ -26,6 +26,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.ShelfAddScreen
 import com.coffeepeek.feature.shelf.impl.ui.compose.ShelfArchiveScreen
 import com.coffeepeek.feature.shelf.impl.ui.compose.ShelfBagScreen
 import com.coffeepeek.feature.shelf.impl.ui.compose.ShelfScreen
+import com.coffeepeek.feature.shelf.impl.ui.compose.ShelfSettingsSheet
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfAddEvent
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveEvent
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagEvent
@@ -78,7 +79,8 @@ internal class ShelfApiImpl(
     ) {
         key(this) {
             val model = viewModel(key = "shelf:$instanceKey") { ShelfViewModel(repository, calendar, arrivals, bags) }
-            ShelfScreen(model, signedIn, ports.image, bottomClearance, modifier, header, visibilitySettings) { event ->
+            ShelfScreen(model, signedIn, ports.image, bottomClearance, modifier, header,
+                settings = { dismiss -> ShelfSettingsSheet(::archiveModel, ports.image, visibilitySettings, dismiss, onOpenBag) }) { event ->
                 when (event) {
                     ShelfEvent.OpenArchive -> onOpenArchive()
                     ShelfEvent.SignIn -> onSignIn()

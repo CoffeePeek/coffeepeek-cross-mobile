@@ -595,3 +595,19 @@ Function-body verification passed before and after regeneration, 125 recorded,
 zero new; the new root-event helper only reduced BaseNavigator 146→145.
 Koin appModule remains 70. No device or live state was touched; Kotlin/Native and
 macOS UI compilation/execution remain pending.
+
+### Android profile grid parity — 2026-11-26
+
+OwnerProfile now uses keyed rows of two square SavedCollectionCards inside the
+profile's existing vertical scroll, with an empty second cell for an odd count.
+The full library and its shimmer use GridCells.Fixed(2). Cover/image cache,
+ViewModel, saved completion and picker/cancel behavior are unchanged.
+
+Profile owns a single floating glass full-library entry above navigation. The
+inline All action, root visibility gear/sheet and last ProfileDisplayPreferences
+wrapper are removed. The existing callback still owns navigation and the existing
+favoritesOpened analytics event; this adds no event producer or consent policy.
+The shared ProfilePreference contract is retained for the native/API boundary.
+Paired grid/control/section/collection-pane previews use fake state and compile
+without requiring an account. Full verification evidence and manual gates are in
+`../profile/PROFILE_TABS_PLAN.md` under Android profile parity.

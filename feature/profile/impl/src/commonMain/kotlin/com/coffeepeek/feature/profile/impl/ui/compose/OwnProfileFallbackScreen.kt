@@ -80,10 +80,13 @@ private fun OwnProfileFallbackContent(
         checkIns = {},
         collections = {
             slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster) {
-                ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), callbacks.openFavorites)
+                Box(Modifier.padding(horizontal = 16.dp)) {
+                    ProfileSectionHeading(stringResource(Res.string.profile_section_favorites))
+                }
             }
         },
         shelf = { OwnProfileFallbackShelf(callbacks.editProfile) },
+        onOpenCollections = callbacks.openFavorites,
         modifier = Modifier.fillMaxSize(), ownerShelf = slots.shelf, ownerHistory = history, bottomPadding = bottomPadding,
     ) {
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
