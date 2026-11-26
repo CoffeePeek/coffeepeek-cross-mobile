@@ -14,8 +14,10 @@ internal class OwnershipAccess(private val repository: BusinessOwnershipReposito
     private var businesses: Map<Pair<BusinessKind, String>, String> = emptyMap()
     private val mutex = Mutex()
     private var switching = false
+    private var resetEpoch = 0L
 
     fun reset() {
+        resetEpoch++
         identity = account.current()
         businesses = emptyMap()
         state.value = BusinessSessionState()
@@ -29,15 +31,23 @@ internal class OwnershipAccess(private val repository: BusinessOwnershipReposito
     suspend fun refresh() = mutex.withLock { refreshLocked() }
     suspend fun switchMode() {
         if (switching) return
+        val requestedOwner = account.current()
+        val requestedEpoch = resetEpoch
+        val nextBusinessMode = !state.value.businessMode
         switching = true
         try {
             // The flag write must not interleave with a concurrent refresh: refresh() republishes
             // the whole state from the value it read before the flip and would silently undo it.
             mutex.withLock {
-                if (state.value.businessMode) state.value = state.value.copy(businessMode = false)
+                if (!isCurrent(requestedOwner, requestedEpoch)) return@withLock
+                if (!nextBusinessMode) state.value = state.value.copy(businessMode = false)
                 else {
+                    if (requestedOwner != identity) reset()
+                    val publicationEpoch = resetEpoch
                     refreshLocked()
-                    if (state.value.hasBusinesses) state.value = state.value.copy(businessMode = true)
+                    if (isCurrent(requestedOwner, publicationEpoch) && state.value.hasBusinesses) {
+                        state.value = state.value.copy(businessMode = true)
+                    }
                 }
             }
         } finally { switching = false }
@@ -47,10 +57,11 @@ internal class OwnershipAccess(private val repository: BusinessOwnershipReposito
         val owner = account.current()
         if (owner != identity) reset()
         if (owner == null) return
+        val requestEpoch = resetEpoch
         try {
             val owned = BusinessKind.entries.flatMap { loadAll(it) }.toMap()
-            if (owner != account.current()) {
-                reset()
+            if (!isCurrent(owner, requestEpoch)) {
+                if (owner != account.current()) reset()
                 return
             }
             businesses = owned
@@ -61,6 +72,7 @@ internal class OwnershipAccess(private val repository: BusinessOwnershipReposito
             // the last known session stays until the next successful refresh.
         }
     }
+    private fun isCurrent(owner: String?, epoch: Long) = owner == account.current() && epoch == resetEpoch
     private suspend fun loadAll(kind: BusinessKind): List<Pair<Pair<BusinessKind, String>, String>> {
         val result = mutableListOf<Pair<Pair<BusinessKind, String>, String>>()
         var page = 1

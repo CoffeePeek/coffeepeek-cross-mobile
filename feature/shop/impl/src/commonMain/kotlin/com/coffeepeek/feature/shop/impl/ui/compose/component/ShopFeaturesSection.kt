@@ -110,13 +110,15 @@ private fun ShopFeaturesToggle(count: Int, expanded: Boolean, onToggle: () -> Un
     }
 }
 
-@Preview @Composable private fun ShopFeaturesSectionLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopFeaturesSection(previewFeatures(), expanded = false, onToggle = {})
+@Composable
+private fun ShopFeaturesSectionPreview(dark: Boolean, expanded: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    ShopFeaturesSection(previewFeatures(), expanded = expanded, onToggle = {})
 }
 
-@Preview @Composable private fun ShopFeaturesSectionDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopFeaturesSection(previewFeatures(), expanded = true, onToggle = {})
-}
+@Preview @Composable private fun ShopFeaturesCollapsedLightPreview() = ShopFeaturesSectionPreview(false, false)
+@Preview @Composable private fun ShopFeaturesCollapsedDarkPreview() = ShopFeaturesSectionPreview(true, false)
+@Preview @Composable private fun ShopFeaturesExpandedLightPreview() = ShopFeaturesSectionPreview(false, true)
+@Preview @Composable private fun ShopFeaturesExpandedDarkPreview() = ShopFeaturesSectionPreview(true, true)
 
 private fun previewFeatures() = listOf(
     ShopFeature("Эспрессо", "espresso", true),

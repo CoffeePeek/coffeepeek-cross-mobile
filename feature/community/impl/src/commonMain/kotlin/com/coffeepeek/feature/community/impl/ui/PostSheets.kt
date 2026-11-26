@@ -294,10 +294,13 @@ private fun TextArea(value: String, onChange: (String) -> Unit, placeholder: Str
 @Preview @Composable private fun EditSheetLightPreview() = EditSheetPreview(false)
 @Preview @Composable private fun EditSheetDarkPreview() = EditSheetPreview(true)
 
-@Composable private fun ReportSheetPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+@Composable private fun ReportSheetPreview(dark: Boolean, sending: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     androidx.compose.material3.Surface {
-        ReportSheetContent(ReportForm("Нарушение", ReportIssue.Empty, failed = false, failure = null, isSending = false), ReportCallbacks({}, {}, {}))
+        ReportSheetContent(ReportForm("Нарушение", if (sending) null else ReportIssue.Empty,
+            failed = false, failure = null, isSending = sending), ReportCallbacks({}, {}, {}))
     }
 }
 @Preview @Composable private fun ReportSheetLightPreview() = ReportSheetPreview(false)
 @Preview @Composable private fun ReportSheetDarkPreview() = ReportSheetPreview(true)
+@Preview @Composable private fun ReportSheetSendingLightPreview() = ReportSheetPreview(false, sending = true)
+@Preview @Composable private fun ReportSheetSendingDarkPreview() = ReportSheetPreview(true, sending = true)
