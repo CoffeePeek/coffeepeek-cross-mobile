@@ -164,6 +164,7 @@ private fun appModule(
         com.coffeepeek.feature.notifications.impl.createNotificationFeature(
             com.coffeepeek.feature.notifications.data.createNotificationRepository(get<ApiClients>().client),
             com.coffeepeek.admin.di.notifications.SessionNotificationAccount(get()), com.coffeepeek.admin.notifications.NativePushBridge,
+            com.coffeepeek.admin.di.notifications.PreferenceNotificationCity(get()),
         )
     }
     single<BrewMethodCatalog> { BrewMethodCatalogAdapter(get()) }

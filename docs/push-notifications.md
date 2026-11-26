@@ -99,8 +99,13 @@ and badge. Errors preserve the previous list and expose retry actions.
 
 Types include approval/rejection for shops and roasters, check-in moderation,
 correction moderation, newly published shops, general messages and existing inactivity
-reminders. Newly published shops are announced to all active CoffeePeek accounts;
-push delivery still respects opt-out. History remains available with push disabled.
+reminders. Newly published shops are announced only to active accounts whose synchronized
+selected city matches the shop's city; push delivery still respects opt-out. The current
+city comes from the existing manual/automatic application selection. A loading selection
+never clears the saved server city, and resolved empty means explicit null. The dedicated
+PUT /api/v1/me/notifications/city contract is independent of device/push preferences;
+deploy [the backend companion](https://github.com/CoffeePeek/coffeepeek-backend/pull/381)
+before this client. History remains available with push disabled.
 The backend retains the existing policy of purging rows 30 days after push expiry.
 
 Before explicit logout the app attempts device removal with a three-second bound while

@@ -53,3 +53,69 @@ Errors retain the sheet for retry. Deploy the additive Account endpoint before t
 - `:feature:notifications:impl:testDebugUnitTest`: 34 tests passed, 0 failed, no retries. This includes multiple simultaneous read receipts and an account change during a pending write.
 - `:composeApp:assembleDirectSandbox`: passed with `--max-workers=6`. Sandbox isolation and packaged DEX runtime-class checks passed.
 - Paired light/dark previews remain beside both row and sheet implementations; the row previews use a long message. IDE preview rendering and manual light/dark, large text, accessibility, scroll, back and modal checks were not run. iOS compilation and live backend acceptance remain unverified.
+
+## Selected city audience — issue #412
+
+`NotificationCity` is a narrow application-supplied port over the existing current city.
+It emits resolved selections only: absence of an initial emission means loading, while
+`NotificationCitySelection(null)` means a genuinely empty resolved selection. The shared
+`CityPreference` publishes this replay after its existing manual/automatic resolution;
+Settings and Discovery keep the same selection rules and persistence. The composition
+adapter does not load a catalog, request coordinates or ask for location permission.
+Both Android and native iOS receive the same common Kotlin synchronization.
+
+The signed-in account sends `PUT /api/v1/me/notifications/city` with the required nullable
+`citySlug` field. Explicit null is serialized; only HTTP 204 is accepted. An unavailable
+endpoint or a rejected city remains a failure and is retried on foreground entry or the
+next selection. City synchronization works with push disabled, no OS permission or an
+unavailable provider, and does not change the saved push/category preference.
+
+A collector belongs to the notification account generation and is canceled on account
+change or logout. Pending city changes conflate to the latest value. A separate city-write
+mutex serializes requests across generations: if an old transport ignores cancellation,
+it finishes before the current generation writes its latest city. The current account is
+checked after taking that mutex. Inbox loads, device registration and login do not wait
+for it. Existing analytics events, exposure ownership and native Firebase transport stay
+unchanged; no new telemetry or provider requests are introduced.
+
+Backend companion: [coffeepeek-backend#381](https://github.com/CoffeePeek/coffeepeek-backend/pull/381).
+Apply its Account migration and deploy the Account city contract/consumers before updated
+Shops producers and this client. The server owns recipient filtering and queued-delivery
+checks; a foreground-only client filter cannot enforce background notification delivery.
+Older device/push contracts are preserved.
+
+Verification plan: execute notification data/presenter unit contracts, passive composition
+adapter and Sandbox backend regressions; build DirectSandbox including DEX/runtime-class
+and manifest isolation checks; run `verifyFunctionBodyLimits`. Cover loading versus empty,
+automatic/manual changes, HTTP 404/503, cancellation, A→B→A with a noncancellable old write,
+latest-city completion order, and unchanged push controls. No UI/instrumented tests,
+phone deployment, real accounts, production analytics or live FCM/APNs calls are planned.
+
+### City sync verification — 2026-11-26
+
+Source: `codex/migration-412-selected-city-sync`, fast-forwarded from the initial worktree
+base `43dfcc43f` to the published reconciliation parent `a030f9ac39c3b74f22086345ad196e198f116eb3`
+before verification. No root checkout files were changed.
+
+- Notification data: 7 executed tests in 2 suites; notification impl: 42 in 5 suites.
+- Application DirectDebug non-UI unit tests: 744 executed tests in 168 suites, including
+  the passive CityPreference adapter and Sandbox city transport. Total: 793 cases in
+  175 suites, zero failures/errors/skips. Data tests executed in the first attempt and
+  remained up-to-date in the successful retry; no failed test case was retried.
+- The first new presenter-test compilation failed because expected nullable pairs needed
+  explicit generic types. This fixture-only error was corrected before the passing run.
+- `verifyFunctionBodyLimits` passed with 125 recorded entries and zero new violations.
+- `assembleDirectSandbox`, Sandbox manifest isolation and packaged DEX runtime-class checks
+  passed. Built APK: `com.coffeepeek.sandbox`, version `1.2.2.3387-sandbox`, code 3387.
+  No device was selected and no APK was installed or launched.
+- Existing Compose Preview deprecation, experimental-test opt-in and native symbol stripping
+  warnings remain. No new UI/resources or Gradle dependencies were introduced.
+
+Shared tests prove loading does not clear a server city, resolved null serializes explicitly,
+failed/404 requests are retried, and NonCancellable old minsk completion precedes the current
+brest write after A→B→A. The city mutex is separate from device synchronization, while account
+and notification-generation guards remain in force. This change adds no analytics events.
+
+Native macOS/iOS compilation, manual UI review, real backend persistence and FCM/APNs delivery
+were not exercised locally. Sandbox and in-memory contracts do not certify those gates.
+No UI/instrumented/screenshot test, real-account write, live push, merge or deployment ran.
