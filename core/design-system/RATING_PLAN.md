@@ -219,3 +219,13 @@ Both light/dark previews include editable captions at normal and 96 dp widths.
 These previews are authored, not rendered acceptance; root compilation and the
 existing unit/contract checks remain the planned validation. No UI tests were
 added.
+
+Root verification, 2026-11-27 (Windows/JDK 17), source e149e584a:
+Design-system JVM unit tests executed 82 cases across 22 suites, zero failures,
+errors or skips. Function limits passed (125 recorded, zero new). Direct Sandbox
+assembly compiled the affected feature consumers and passed packaged runtime-class
+and isolation checks. Artifact: com.coffeepeek.sandbox, 1.2.2.3425-sandbox / 3425.
+Lint has zero errors and nine pre-existing warnings in unchanged Android platform
+wrappers (eight ComposableNaming, one non-lambda offset); the rating source adds
+no lint warning. No device, rendered preview, live account or UI/instrumented test
+ran. Native/macOS compilation remains a remote gate on the final head.
