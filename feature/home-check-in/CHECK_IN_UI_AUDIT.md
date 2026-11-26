@@ -140,3 +140,16 @@ compilation on its selected runner. This preparation runs no Gradle, device,
 automated UI/instrumented/screenshot test, account write or production analytics.
 Previews are fake and are not claimed rendered. Small windows, large text,
 keyboard, paired actions and back/cancel remain manual acceptance gates.
+
+Root verification, 2026-11-27 (Windows/JDK 17), integration source 8f21275fc:
+Selected JVM reports contain 318 passing cases across 31 suites: Community 88,
+Home Check-In 99, Shop 118 and Content Report 13, zero failures/errors/skips.
+Affected Community/Home Check-In/Shop lint reports have zero issues. Function
+limits passed (125 recorded, zero new), and Direct Sandbox assembly, packaged
+runtime classes and isolation passed. Logs distinguish executed from cached
+unit tasks. No device, preview rendering, live account or UI/instrumented test
+ran. Native/macOS compilation remains a separate remote gate on the final head.
+All four selected JVM tasks executed in this run (not cached/up-to-date).
+Sandbox artifact identity: com.coffeepeek.sandbox, 1.2.2.3409-sandbox / 3409,
+from the integration source above plus its working patch. Existing compiler
+Preview/expect-actual deprecations remain; affected lint reports are clean.
