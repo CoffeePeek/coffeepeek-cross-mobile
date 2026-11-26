@@ -14,11 +14,13 @@ import io.ktor.http.*
 import io.ktor.utils.io.readRemaining
 import kotlinx.io.readByteArray
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
 
 internal class HttpCollectionsRepository(private val client: HttpClient, private val publicClient: HttpClient,
     private val apiBaseUrl: String, private val account: CollectionsAccount,
     private val pinRequest: (HttpRequestBuilder, String) -> Unit) : CollectionsRepository {
+    private val photos = CollectionImageMemoryCache(account, CoroutineScope(client.coroutineContext))
     override suspend fun favorites(): Result<List<CollectionPlace>> = owned { owner ->
         envelope<List<CollectionPlaceDto>>(client.get(api("/api/v1/favorites")) { pinRequest(this, owner) })
             .mapNotNull { collectionPlace(it, apiBaseUrl) }.distinctBy(CollectionPlace::key).let(CollectionRules::orderedPlaces)
@@ -50,13 +52,18 @@ internal class HttpCollectionsRepository(private val client: HttpClient, private
         if (parsed.protocol != URLProtocol.HTTPS || parsed.user != null || parsed.password != null) return null
         return try {
             withTimeoutOrNull(8_000) {
-                publicClient.prepareGet(parsed).execute { response ->
-                    if (!response.status.isSuccess() || response.contentLength()?.let { it > 2_000_000 } == true) null
-                    else response.bodyAsChannel().readRemaining(2_000_001L).readByteArray().takeIf { it.size <= 2_000_000 }
-                }
+                photoBytes(parsed)
             }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { null }
+    }
+
+    override suspend fun photo(url: String, imageKey: String): ByteArray? =
+        photos.read("$imageKey:$url") { photo(url) }
+
+    private suspend fun photoBytes(url: Url): ByteArray? = publicClient.prepareGet(url).execute { response ->
+        if (!response.status.isSuccess() || response.contentLength()?.let { it > 2_000_000 } == true) null
+        else response.bodyAsChannel().readRemaining(2_000_001L).readByteArray().takeIf { it.size <= 2_000_000 }
     }
 
     private suspend fun <T> owned(block: suspend (String) -> T): Result<T> = request {

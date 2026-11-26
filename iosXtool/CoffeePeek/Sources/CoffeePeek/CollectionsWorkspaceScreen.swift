@@ -630,20 +630,19 @@ struct WorkspaceCover: View {
     let id: String
     let version: Int32
     @State private var image: UIImage?
-    @State private var url: String?
     @State private var observation: IosCollectionsWorkspaceObservation?
     var body: some View {
         ZStack {
             CoffeePeekPhotoPlaceholder()
             if let image { Image(uiImage: image).resizable().scaledToFill() }
-            else if let url { WorkspacePhoto(workspace: workspace, url: url) }
         }.accessibilityHidden(true)
             .onAppear {
                 guard observation == nil else { return }
-                observation = workspace.loadCover(id: id, version: version) { data, remote in
-                    image = data.flatMap { UIImage(data: $0 as Data) }; url = remote
+                guard workspace.current().accountVersion == version else { image = nil; return }
+                observation = workspace.loadCover(id: id, version: version) { data, _ in
+                    image = data.flatMap { coffeePeekNativeThumbnail($0 as Data) }
                 }
-            }.onDisappear { observation?.cancel(); observation = nil; image = nil; url = nil }
+            }.onDisappear { observation?.cancel(); observation = nil }
     }
 }
 

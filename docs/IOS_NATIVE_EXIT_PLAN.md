@@ -646,3 +646,30 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   uninstall or downgrade were used for this verification. Local diagnostics
   remain outside tracked sources. TestFlight upload and Apple processing are
   the next delivery steps; no upload is claimed in this checkpoint.
+
+### Device feedback follow-up after 3237 (2026-11-26)
+
+- The owner supplied new device evidence: shelf captions/counts and toolbar
+  settings were unwanted, the first settings presentation was incomplete and
+  oversized, collection covers refetched across navigation, and outgoing catalog
+  content overlapped the landing screen during mode changes.
+- TestFlight run 45778699553 for 1.2.2 (3239) was cancelled while archiving.
+  Upload to App Store Connect was skipped and temporary signing cleanup passed;
+  no Apple upload or processing success is claimed for that run.
+- A new child checkpoint, codex/migration-ios-native-ui-polish, starts from
+  native tip 2cb9757df0759db77d0e62581831e3b3ae9992b7. The four requests are
+  implemented in separate delegated tasks, with shared-file handoffs for shelf
+  layout and settings presentation.
+- Preserve Kotlin business/data ownership, account/revision-scoped cover access,
+  the archive handoff and dismissal guard, stable map ownership, lazy lists,
+  accessibility names and Reduce Motion. UI remains Swift 6 with complete strict
+  concurrency; no timer, GCD, unchecked Sendable or nonisolated workaround is
+  permitted for these fixes.
+- Verification plan: non-UI cache contracts for hits, revisions, account
+  lifetimes and stale completions; affected Kotlin tests and Android directDebug
+  assembly/DEX/function limits; fresh Kotlin framework and full Swift 6 ARM64
+  compile/link; macOS verification and read-only same-device review of first
+  sheet open/reopen, controls above the real tab safe area, cover returns and
+  scrolled/rapid catalog transitions. No UI automation or real account writes.
+  After verification, send a replacement TestFlight build and observe its exact
+  Apple processing result.

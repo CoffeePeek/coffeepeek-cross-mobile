@@ -55,13 +55,14 @@ private struct OwnProfileScreen: View {
                         menu.padding(.horizontal, 16).padding(.top, model.headerTopInset).id("own-profile-top")
                         profileContent(viewport: geometry.size.height, width: geometry.size.width)
                     }
-                    .padding(.bottom, 100)
+                    .padding(.bottom, 16)
                     .ownProfileCalendarAnimation(model.activity)
                 }
                 .accessibilityIdentifier("own-profile")
                 .onChange(of: model.scrollRevision) { _, _ in proxy.scrollTo("own-profile-top", anchor: .top) }
             }
         }
+        .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) { sectionControl }
         .ignoresSafeArea(.container, edges: [.top, .leading, .trailing])
         .font(CoffeePeekNativeStyle.font(15))
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
@@ -76,6 +77,26 @@ private struct OwnProfileScreen: View {
         }
         .sheet(isPresented: model.connectionsPresented) {
             OwnProfileConnectionsSheet(model: model)
+        }
+    }
+
+    @ViewBuilder
+    private var sectionControl: some View {
+        if model.state.active && model.state.identity != nil {
+            switch model.selected {
+            case .shelf:
+                if let presenter = model.shelf as? CoffeePeekNativeShelfSettingsPresenting {
+                    OwnProfileFloatingSectionControl(symbol: "gearshape",
+                        label: ShelfNativeStrings(model.strings.languageTag)["shelf_settings"],
+                        action: presenter.showShelfSettings)
+                }
+            case .collections:
+                OwnProfileFloatingSectionControl(symbol: "chevron.right",
+                    label: model.strings["profile_section_all_collections"],
+                    action: model.profile.openCollections)
+            case .checkIns:
+                EmptyView()
+            }
         }
     }
 
@@ -149,17 +170,9 @@ private struct OwnProfileScreen: View {
             checkInsTab
         case .collections:
             VStack(alignment: .leading, spacing: 8) {
-                Button(action: model.profile.openCollections) {
-                    HStack {
-                        Text(model.strings[OwnProfileTab.collections.rawValue])
-                            .font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
-                        Spacer()
-                        Image(systemName: "chevron.right").frame(width: 44, height: 44).shopDetailGlassCircle()
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain).padding(.horizontal, 16)
-                .accessibilityLabel(model.strings["profile_section_all_collections"])
+                Text(model.strings[OwnProfileTab.collections.rawValue])
+                    .font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
+                    .padding(.horizontal, 16)
                 if let collections = model.collections {
                     OwnProfileEmbedded(controller: collections, fitsContent: true)
                 }
@@ -172,6 +185,52 @@ private struct OwnProfileScreen: View {
             }
         }
     }
+}
+
+private struct OwnProfileFloatingSectionControl: View {
+    let symbol: String
+    let label: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol).font(.system(size: 20, weight: .medium)).frame(width: 48, height: 48)
+        }
+        .buttonStyle(.plain).shopDetailGlassCircle()
+        .foregroundStyle(CoffeePeekNativeStyle.foreground)
+        .accessibilityLabel(label)
+        .padding(.horizontal, 16).padding(.vertical, 12)
+    }
+}
+
+@MainActor
+private func ownProfileFloatingControlsPreview(barHeight: CGFloat) -> some View {
+    let strings = OwnProfileStrings(languageTag: "ru")
+    return ScrollView {
+        VStack(spacing: 20) {
+            Text(strings[OwnProfileTab.collections.rawValue]).font(.title2)
+            ForEach(0..<4) { _ in
+                RoundedRectangle(cornerRadius: 16).fill(CoffeePeekNativeStyle.surfaceVariant).frame(height: 80)
+            }
+        }.padding(16)
+    }
+    .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) {
+        OwnProfileFloatingSectionControl(symbol: "chevron.right",
+            label: strings["profile_section_all_collections"], action: {})
+    }
+    .safeAreaInset(edge: .bottom, spacing: 0) {
+        Label(strings["profile_title"], systemImage: "person.crop.circle")
+            .frame(maxWidth: .infinity).frame(height: barHeight)
+            .background(CoffeePeekNativeStyle.surfaceVariant)
+    }
+    .background(CoffeePeekNativeStyle.background).foregroundStyle(CoffeePeekNativeStyle.foreground)
+}
+
+#Preview("Floating profile controls light") {
+    ownProfileFloatingControlsPreview(barHeight: 83).preferredColorScheme(.light)
+}
+#Preview("Floating profile controls dark") {
+    ownProfileFloatingControlsPreview(barHeight: 110).preferredColorScheme(.dark).environment(\.dynamicTypeSize, .accessibility2)
 }
 
 @MainActor
