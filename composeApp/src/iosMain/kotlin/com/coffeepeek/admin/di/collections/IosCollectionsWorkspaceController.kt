@@ -36,7 +36,7 @@ internal fun iosCollectionsWorkspaceContent(factory: (IosCollectionsWorkspace, S
             { Navigator.navigate(Navigator.Screen.Auth) },
             { Navigator.navigate(Navigator.Screen.CollectionEditor(it)) },
             { Navigator.navigate(Navigator.Screen.SavedPublicCollection(it)) },
-            ::openCollectionShop, ::openCollectionRoaster, ShareHelper::shareText), photos = snapshots)
+            ::openCollectionShop, ::openCollectionRoaster, ShareHelper::shareText, onSaved = Navigator::returnToProfile), photos = snapshots)
         factory(session, language())
     }
 }

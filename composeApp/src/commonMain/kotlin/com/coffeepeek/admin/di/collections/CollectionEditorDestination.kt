@@ -10,6 +10,7 @@ import org.koin.compose.koinInject
 @Composable
 internal fun CollectionEditorDestination(id: String?) {
     koinInject<CollectionsEntry>().Editor(id, onBack = Navigator::popBack,
+        onSaved = Navigator::returnToProfile,
         onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
         onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
         onOpenRoaster = { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) },

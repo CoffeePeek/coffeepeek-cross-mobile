@@ -14,6 +14,7 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
     private val target: SavedCollectionTarget? = null, private val profileSlug: String? = null) :
     MviViewModel<SavedCollectionsState, SavedCollectionsAction, SavedCollectionsEvent>(initialSavedState(saved, account, mode, target)) {
     private var generation = 0
+    private var owner: String? = null
     private var work: Job? = null
     private var reloadPending = false
 
@@ -79,6 +80,7 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
 
     private suspend fun resetAccount(owner: String?) {
         generation++
+        this.owner = owner
         reloadPending = false
         work?.cancel()
         clearCover()
@@ -244,7 +246,10 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
                 selectedPlaces = value?.places?.map { it.key }?.toSet() ?: selectedPlaces,
                 failure = result.exceptionOrNull()?.let(::failureFor))
         }
+        if (result.isSuccess && isCurrentSave(epoch)) sendEvent(SavedCollectionsEvent.Saved(epoch))
     }
+
+    internal fun isCurrentSave(epoch: Int): Boolean = epoch == generation && owner != null && owner == account.currentId()
 
     private fun metadata() = SavedCollectionMetadata(currentState.title, currentState.description,
         currentState.visibility, currentState.uploadedCover, currentState.removeCover)

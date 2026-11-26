@@ -43,10 +43,10 @@ private class CollectionsEntryImpl(private val repository: CollectionsRepository
     }
 
     @Composable
-    override fun Editor(id: String?, onBack: () -> Unit, onSignIn: () -> Unit, onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit,
+    override fun Editor(id: String?, onBack: () -> Unit, onSaved: () -> Unit, onSignIn: () -> Unit, onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit,
         onShareText: (String) -> Unit, onShareImages: (List<ByteArray>, String) -> Unit, modifier: Modifier) {
         SavedContent(SavedCollectionsMode.Editor, id = id,
-            callbacks = CollectionsCallbacks(onBack, onSignIn, onOpenShop, onOpenRoaster, onShareText, onShareImages), modifier = modifier)
+            callbacks = CollectionsCallbacks(onBack, onSignIn, onOpenShop, onOpenRoaster, onShareText, onShareImages, onSaved), modifier = modifier)
     }
 
     @Composable

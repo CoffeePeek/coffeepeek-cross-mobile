@@ -149,6 +149,7 @@ private fun RootNavHost(
         data class SelectTab(val tab: Screen) : NavEvent
         data object PopBack : NavEvent
         data object NavigateUp : NavEvent
+        data object ReturnToProfile : NavEvent
     }
 
     @Serializable
@@ -384,6 +385,13 @@ private fun RootNavHost(
         navigatorScope.launch { _navigationEvents.emit(NavEvent.PopBack) }
     }
 
+    fun returnToProfile() {
+        consumeProfileShelf()
+        consumeProfileCheckIns()
+        consumeTabSelection()
+        navigatorScope.launch { _navigationEvents.emit(NavEvent.ReturnToProfile) }
+    }
+
     fun closeAuth() {
         popBack()
     }
@@ -517,18 +525,7 @@ private fun RootNavHost(
         }
 
         LaunchedEffect(Unit) {
-            sessionEvents.onEach { event ->
-                when (event) {
-                    is NavEvent.PopBack -> nav.popBackStack()
-                    is NavEvent.NavigateUp -> nav.navigateUp()
-                    is NavEvent.NavigateTo -> {
-                        if (event.screen.isHandledByRootNav()) {
-                            nav.navigateFromRoot(event.screen)
-                        }
-                    }
-                    else -> Unit
-                }
-            }.launchIn(this)
+            sessionEvents.onEach { nav.handleRootEvent(it) }.launchIn(this)
         }
 
         val shopPhotoUnderStatusBar = currentEntry?.destination?.let {
@@ -764,6 +761,19 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
         }
         val existing = stack.getOrNull(existingProfileIndex(stack, screen))
         if (existing != null) popBackStack(existing, inclusive = false) else navigate(screen)
+    }
+
+    private fun NavHostController.handleRootEvent(event: NavEvent) {
+        when (event) {
+            NavEvent.PopBack -> popBackStack()
+            NavEvent.NavigateUp -> navigateUp()
+            NavEvent.ReturnToProfile -> {
+                popBackStack<Screen.Main>(inclusive = false)
+                selectTab(Screen.ProfileTab)
+            }
+            is NavEvent.NavigateTo -> if (event.screen.isHandledByRootNav()) navigateFromRoot(event.screen)
+            is NavEvent.SelectTab -> Unit
+        }
     }
 
     @Composable

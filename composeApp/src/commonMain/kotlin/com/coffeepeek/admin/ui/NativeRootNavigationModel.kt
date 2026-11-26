@@ -32,6 +32,7 @@ internal class NativeRootNavigationModel(private var loggedIn: Boolean, business
             if (it.size > 1) it.dropLast(1) else it
         })
         is Navigator.NavEvent.SelectTab -> select(event.tab, reset = true)
+        Navigator.NavEvent.ReturnToProfile -> returnToProfile()
         is Navigator.NavEvent.NavigateTo -> navigate(event.screen.profileDestination(loggedIn))
     }
 
@@ -62,6 +63,17 @@ internal class NativeRootNavigationModel(private var loggedIn: Boolean, business
             else actual.stacks
         return actual.copy(selected = index, stacks = stacks)
     }
+
+    private fun returnToProfile(): NativeRootStacks {
+        val profile = select(Navigator.Screen.ProfileTab, reset = true)
+        if (profile.selected != nativeTabIndex(Navigator.Screen.ProfileTab)) return actual
+        return profile.copy(stacks = profile.stacks.mapIndexed { index, stack ->
+            if (index == actual.selected) stack.dropLastWhile { it.screen.isCollectionEditorOverlay() } else stack
+        })
+    }
+
+    private fun Navigator.Screen.isCollectionEditorOverlay(): Boolean = this is Navigator.Screen.CollectionEditor ||
+        this == Navigator.Screen.CollectionsLibrary || this == Navigator.Screen.CollectionsComposer
     private fun withStack(stack: List<NativeRootEntry>) = actual.copy(stacks = actual.stacks.mapIndexed { index, previous ->
         if (index == actual.selected) stack else previous
     })

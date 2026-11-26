@@ -216,7 +216,7 @@ internal class IosRootModals(private val root: IosNativeRoot, private val depend
         var signIn = false
         val source = IosCollectionsWorkspace(CollectionsWorkspaceSession(dependencies.get(), dependencies.get(), dependencies.get(),
             CollectionsWorkspaceMode.Picker, null, null, SavedCollectionTarget(kind, request.target.slug), { requests.dismiss(request) },
-            { signIn = true; requests.dismiss(request) }, {}, {}, {}, {}, {}), photos = dependencies.get())
+            { signIn = true; requests.dismiss(request) }, {}, {}, {}, {}, {}, onSaved = {}), photos = dependencies.get())
         requests.presented(request)
         return IosRootPresentation(correlationId("collections"), false, { ui.makeCollectionsWorkspaceController(source, language.current().languageTag) },
             source::close, { requests.dismiss(request) }, { if (signIn) Navigator.navigate(Navigator.Screen.Auth) }, { !source.current().busy })

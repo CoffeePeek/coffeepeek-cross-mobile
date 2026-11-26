@@ -526,3 +526,49 @@ At authoring time these tests are written and await the integration run. Manual
 macOS checks for both languages, themes, large text, VoiceOver, completed and
 cancelled back gestures and editor return remain open. Live account operations
 and private media acceptance require the separately selected test account.
+
+### Editor completion returns to the profile — issue #422, 2026-11-26
+
+Scope: ordinary `CollectionEditor` creation and editing from the full library or
+the owner's profile preview. A successful metadata write and, when changed, item
+replacement emit a separate session-versioned completion. Compose and native
+workspace adapters forward it through `onSaved`; application composition owns the
+profile destination. Failed uploads, metadata conflicts, failed item writes,
+cancellation and obsolete account completions keep the editor from navigating.
+Back, delete and membership commit retain their existing callbacks. Picker quick
+creation remains in the membership picker with its selection and search query;
+it does not emit editor completion.
+
+Android removes the root destinations above retained `Main` before selecting the
+profile. Native navigation resets the profile stack and removes collection editor
+and library destinations from the source tab, retaining unrelated routes in that
+tab. An ordinary profile selection preserves the current profile section.
+Existing route analytics and consent/session ownership are unchanged; this fix
+adds no analytics event, UI text, dependency or persistence path.
+
+Verification plan/source: integration base `43dfcc43f0`, branch
+`codex/migration-422-collection-return-profile`. In-memory unit regressions cover
+create/edit completion, item-write ordering and retry, upload/metadata failure,
+cancelled writes, late cancelled/account responses, obsolete buffered completion,
+native callback adaptation and profile/library/source-tab stack behavior. Existing
+shop/roaster quick-create/cancel contracts remain required.
+
+Windows verification on 2026-11-26, integration base plus this branch's working
+changes, JDK 17.0.20.1 and Android SDK 37, `--max-workers=6`: collections impl
+7 JVM suites/106 cases and application Direct Debug unit 167 suites/743 cases,
+849 cases total, zero failures/errors/skips, no retries. The new save suite has
+11 cases, native workspace callback coverage adds two, and the native navigation
+model adds three. `assembleDirectSandbox`, `verifyDirectSandboxIsolation` and
+`verifyDirectSandboxRuntimeClasses` passed. Built package `com.coffeepeek.sandbox`,
+variant `directSandbox`, version `1.2.2.3385-sandbox`/3385; no APK was deployed.
+Function-body verification passed before and after baseline regeneration:
+125 recorded, zero new. The generated baseline only shrinks BaseNavigator
+154→146 and the already-reduced Koin appModule 73→70; no debt was added.
+Existing Compose Preview deprecation, Gradle/AGP and unrelated test opt-in warnings
+remain. Local logs and build reports were not added to tracked sources.
+
+No device, real-account action, release, UI/instrumented/screenshot test or
+production analytics was used. A macOS native compilation/test gate remains
+pending. Manual Sandbox and native UI review
+remain unverified; existing colocated previews were not rendered here. The private
+Telegram video attached to the issue was not viewed.

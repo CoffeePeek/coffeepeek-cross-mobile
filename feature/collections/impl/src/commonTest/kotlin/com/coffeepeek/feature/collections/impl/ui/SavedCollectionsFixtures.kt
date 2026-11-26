@@ -74,12 +74,14 @@ internal class SavedTestRepository : SavedCollectionsRepository {
     var uploadFailure = false
     var uploadError: Throwable? = null
     var updateFailure: Throwable? = null
+    var itemFailure: Throwable? = null
     var mineFailure: Throwable? = null
     var createFailure: Throwable? = null
     var membershipFailure: Throwable? = null
     var featuredFailure: Throwable? = null
     var mineGate: CompletableDeferred<Unit>? = null
     var createGate: CompletableDeferred<Unit>? = null
+    var itemGate: CompletableDeferred<Unit>? = null
     var mineReads = 0
     var membershipGate: CompletableDeferred<Unit>? = null
     var featuredGate: CompletableDeferred<Unit>? = null
@@ -120,6 +122,8 @@ internal class SavedTestRepository : SavedCollectionsRepository {
     }
     override suspend fun replaceItems(id: String, places: List<CollectionPlace>, revision: Long): Result<SavedCollection> {
         itemWrites++
+        itemGate?.await()
+        itemFailure?.let { return Result.failure(it) }
         value = value.copy(summary = value.summary.copy(itemCount = places.size, revision = revision + 1), places = places)
         return Result.success(value)
     }
