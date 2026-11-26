@@ -27,7 +27,6 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.resources.coffeepeek_rating_description
 import com.coffeepeek.core.designsystem.resources.coffeepeek_rating_choose
-import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import kotlin.math.roundToInt
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -154,7 +153,7 @@ internal fun coffeePeekRatingText(rating: Double): String {
             CoffeePeekRating(4.3, display = CoffeePeekRatingDisplay.Compact)
             CoffeePeekRating(4.0, size = CoffeePeekRatingSize.Large, onRatingChange = {})
             CoffeePeekRating(0.0, size = CoffeePeekRatingSize.Large, onRatingChange = {}, enabled = false)
-            CoffeePeekRating(3.0, modifier = Modifier.width(160.dp), onRatingChange = {})
+            CoffeePeekRating(3.0, modifier = Modifier.width(96.dp), onRatingChange = {})
         }
     }
 }

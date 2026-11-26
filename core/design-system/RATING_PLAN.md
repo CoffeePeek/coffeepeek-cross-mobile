@@ -182,3 +182,28 @@ pending device notes above are historical and superseded by this final result.
 No main/develop merge, live-account/backend acceptance, iOS visual test, actual
 TalkBack session or IDE preview rendering is included. Those are not claimed as
 passed merely because the common Native compilation and fake UI tests pass.
+
+
+## Compact editable stars — PR #430 recovery, 2026-11-27
+
+The owner-approved compact layout supersedes the earlier editable 48 dp target
+policy for this control: each editable target follows its configured star glyph
+(24 dp in the large rating cards), with 4 dp spacing and a row packed from the
+start. Read-only fractional fill, precise value text, localization, enabled and
+selected semantics are preserved. Narrow containers keep horizontal scrolling;
+the existing paired light/dark previews now include a 96 dp editable example.
+The helper remains design-system-owned and adds no dependency or feature state.
+
+Recovery preserves original #430 and #431 history. The earlier #431 merge into
+the closed #430 branch is reversed on this checkpoint so its final diff only
+contains ratings. The original navigation-removal patch is reapplied as the
+next checkpoint after #430 reaches develop; no merged work is discarded.
+
+Verification plan: existing design-system rating/value/sizing unit contracts,
+affected Home Check-In/Shop/Community compilation, function-body limits and a
+directSandbox application assembly with packaged DEX and isolation checks. Root
+coordinates the single host Gradle slot and records actual suite/build results.
+No UI/instrumented/screenshot tests, device launch or live-account write are part
+of this plan. Previews are fake and remain unrendered here; manual compact/narrow
+layout, larger text and screen-reader review remain device gates. Native shared
+compilation is a CI gate, not claimed from a host-skipped Windows task.
