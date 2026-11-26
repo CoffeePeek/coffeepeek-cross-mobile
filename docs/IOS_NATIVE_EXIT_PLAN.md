@@ -701,3 +701,49 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   overrides were removed; ordinary paired interactive previews remain. The
   repeated full Swift 6 complete-strict typecheck passed. Actual system Reduce
   Motion remains a manual device gate.
+
+### Local verification of the 3240 follow-up (2026-11-26)
+
+- Code/test revision: 7c1f39d612806e3ba6af35f5d549ba19791cea9c; fresh
+  Kotlin framework source: c84a1904fc47017c57629f980830527da312e729.
+  Full 121-source Swift 6 complete-strict ARM64 compile/link passed. Unsigned
+  executable SHA-256: ae4b949d2c57953502cbf22cfa9f22c8a2793afb57621d2975c8a10583c78aaa.
+- Collections data executed 62 tests / 4 suites, presentation 89 / 6, and the
+  composition media-scope contract 1 / 1, all without failures or skips. These
+  include the nine new cache/session regressions. A separate older analytics
+  XML was left in the root reports directory and is not counted as executed.
+- The first data run failed its initial derived-cover read: the new MockEngine
+  used a real dispatcher while runTest advanced the virtual image deadline.
+  Only that test transport was pinned to the test scheduler; all cache, revision,
+  URL and request-count assertions remain. The repeated 62-case data run passed.
+- Android directDebug assembly, packaged runtime-class/DEX checks and function
+  limits passed (125 recorded violations, zero new). Android was not installed
+  or launched. Existing compiler deprecations/opt-in warnings remain unchanged.
+- Debug 1.2.2 (3240) was packaged and signature-verified, then installed in place
+  on the same iPhone15,4 / iOS 27.2.1. The first remote launch returned CoreDevice
+  10002; a retry verified startup for three seconds. The main production app was
+  unchanged. The app-only stream retained 30,550 records without checked fatal,
+  constraint, containment or state-publication markers. Diagnostics stay local.
+- The owner was navigating the phone concurrently and explicitly took over
+  testing. Agent touch control was stopped and its session closed. No complete
+  agent review of first sheet open, both themes, accessibility, cover returns
+  or catalog motion is claimed. The owner subsequently authorized merge and
+  TestFlight delivery. No account writes, visibility changes, camera use,
+  logout, data clearing, uninstall or downgrade were performed by the agent.
+- macOS verification run 45788062433 is pending. TestFlight delivery remains
+  pending; the obsolete 3239 run did not upload.
+
+### macOS verification and release authorization (2026-11-26)
+
+- Run 45788062433 passed both jobs for code/test revision
+  7c1f39d612806e3ba6af35f5d549ba19791cea9c: full iOS Simulator Kotlin/Swift
+  build, binary/deployment/Liquid Glass compatibility, both native controller
+  bootstraps, four actual CoreGraphics map-geometry groups and all selected
+  Kotlin Native contract/unit stages. No UI or screenshot test suite ran.
+- The retained Native XML contains 1130 tests / 156 suites, 0 failures and 0 skips. This includes the new collection-data
+  Native suite and actual session media-scope contract. These Native executions
+  are recorded separately from the JVM execution counts above.
+- The owner explicitly instructed merging all completed changes into
+  codex/ios-native and releasing TestFlight. The next documentation-only commit
+  records the verified implementation without changing its production tree.
+  TestFlight upload/Apple processing remain the following delivery gates.
