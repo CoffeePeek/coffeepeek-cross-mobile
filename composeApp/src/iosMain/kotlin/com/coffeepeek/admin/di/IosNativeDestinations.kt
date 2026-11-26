@@ -19,6 +19,7 @@ import com.coffeepeek.admin.di.shop.*
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.RootNavigationOrigin
 import com.coffeepeek.admin.ui.component.NativeReviewDateFormatter
 import com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer
 import com.coffeepeek.core.network.ApiClients
@@ -36,12 +37,13 @@ internal class IosNativeDestinations(private val dependencies: Koin, private val
     parent: CoroutineScope, private val loggedIn: () -> Boolean, private val resetLogin: () -> Unit,
     private val mapExpanded: (Boolean) -> Unit, private val reselections: Flow<Unit>,
     private val registerRefresh: (() -> Unit) -> (() -> Unit),
+    private val navigationOrigin: RootNavigationOrigin,
 ) {
     private val language = dependencies.get<LanguagePort>()
     private val media = IosCatalogueMedia(dependencies.get(), Constants.BASE_URL)
     private val dates = NativeReviewDateFormatter(parent, language.observe().map { it.languageTag })
     private val workspace = iosCollectionsWorkspaceContent(ui.makeCollectionsWorkspaceController, ::languageTag,
-        dependencies.get(), dependencies.get(), dependencies.get())
+        dependencies.get(), dependencies.get(), dependencies.get()) { Navigator.returnToProfile(navigationOrigin) }
     private val shelf = iosShelfFactory(dependencies.get(), dependencies.get(), dependencies.get(), dependencies.get(), language, media)
     private val auth = iosAuthContent(ui.makeAuthController, dependencies.get(),
         IosAuthDestinations(dependencies.get(), dependencies.get(), language))
@@ -57,7 +59,7 @@ internal class IosNativeDestinations(private val dependencies: Koin, private val
     private val home = IosNativeHomeCheckInFactory(dependencies.get(), dependencies.get(), language, dependencies.get())
     private val contributions = contributions()
     private val own = ownProfile()
-    private val public = publicProfile()
+    private val publicProfileController = publicProfile()
     private val guest = iosGuestProfileContent(ui.makeGuestProfileController, language)
     private val edit = IosNativeEditProfileFactory(dependencies.get(), dependencies.get(), language, media)
 
@@ -70,8 +72,8 @@ internal class IosNativeDestinations(private val dependencies: Koin, private val
     private fun profiles(screen: Navigator.Screen): (() -> UIViewController)? = when (screen) {
         Navigator.Screen.ProfileTab -> if (loggedIn()) own else guest
         Navigator.Screen.EditProfile -> edit::controller
-        is Navigator.Screen.UserProfile -> { { public(screen.slug, screen.nickname, screen.avatarUrl, false) } }
-        is Navigator.Screen.UserCheckIns -> { { public(screen.slug, screen.nickname, screen.avatarUrl, true) } }
+        is Navigator.Screen.UserProfile -> { { publicProfileController(screen.slug, screen.nickname, screen.avatarUrl, false) } }
+        is Navigator.Screen.UserCheckIns -> { { publicProfileController(screen.slug, screen.nickname, screen.avatarUrl, true) } }
         else -> null
     }
     private fun catalog(screen: Navigator.Screen): (() -> UIViewController)? = when (screen) {
@@ -129,11 +131,40 @@ internal class IosNativeDestinations(private val dependencies: Koin, private val
         dependencies.get(), dependencies.get<ShopCheckInCreateEntry>() as SessionShopCheckInEntry, language, dependencies.get(), dependencies.get())
     private fun contributions() = iosContributionsContent(ui.makeContributionsController, ::languageTag, dependencies.get(), dependencies.get(),
         iosContributionFormsContent(ui.makeContributionsController, ::languageTag, dependencies.get(), dependencies.get(), dependencies.get(), media))
-    private fun ownProfile() = iosOwnProfileContent(ui.makeOwnProfileController, shelf, dependencies.get(), dependencies.get(), dependencies.get(),
-        dependencies.get(), dependencies.get(), dependencies.get(), dependencies.get(), dependencies.get(), dependencies.get(), dependencies.get(),
-        dependencies.get(), dependencies.get(), language, media, workspace)
-    private fun publicProfile() = iosPublicProfileContent(ui.makePublicProfileController, shelf, dependencies.get(), dependencies.get(),
-        dependencies.get(), dependencies.get(), dependencies.get(), dependencies.get(), language, media, workspace)
+    private fun ownProfile() = iosOwnProfileContent(
+        factory = ui.makeOwnProfileController,
+        shelf = shelf,
+        accounts = dependencies.get(),
+        notifications = dependencies.get(),
+        auth = dependencies.get(),
+        drafts = dependencies.get(),
+        repository = dependencies.get(),
+        checkIns = dependencies.get(),
+        likes = dependencies.get(),
+        visibility = dependencies.get(),
+        snapshots = dependencies.get(),
+        sessions = dependencies.get(),
+        shops = dependencies.get(),
+        homes = dependencies.get(),
+        calendar = dependencies.get(),
+        language = language,
+        media = media,
+        collections = workspace,
+    )
+    private fun publicProfile() = iosPublicProfileContent(
+        factory = ui.makePublicProfileController,
+        shelf = shelf,
+        accounts = dependencies.get(),
+        data = dependencies.get(),
+        checkIns = dependencies.get(),
+        likes = dependencies.get(),
+        visibility = dependencies.get(),
+        blocks = dependencies.get(),
+        snapshots = dependencies.get(),
+        language = language,
+        media = media,
+        collections = workspace,
+    )
     private fun reviewList(id: String) = iosShopCheckInListContent(ui.makeShopCheckInListController, ::languageTag, dependencies.get(),
         dependencies.get(), dependencies.get(), dependencies.get(), dependencies.get(), dependencies.get(), media, dates::format)(id)
     private fun gallery(id: String) = iosShopMenuGalleryContent(ui.makeShopMenuGalleryController, ::languageTag,

@@ -123,5 +123,5 @@ class CollectionsPublicWorkspaceSessionTest {
     private fun session(repository: SavedCollectionsRepository): CollectionsWorkspaceSession =
         CollectionsWorkspaceSession(repository, SavedTestSnapshots(), account, CollectionsWorkspaceMode.Public,
             "public", null, null, { events.add("back") }, {}, {}, {},
-            { events.add("shop:$it") }, { events.add("roaster:$it") }, events::add).also(sessions::add)
+            { events.add("shop:$it") }, { events.add("roaster:$it") }, events::add, onSaved = { events.add("saved") }).also(sessions::add)
 }

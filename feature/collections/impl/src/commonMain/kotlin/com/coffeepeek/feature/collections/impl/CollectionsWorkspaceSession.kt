@@ -22,6 +22,7 @@ class CollectionsWorkspaceSession(
     private val onEditor: (String?) -> Unit, private val onCollection: (String) -> Unit,
     private val onShop: (String) -> Unit, private val onRoaster: (String) -> Unit,
     private val onShare: (String) -> Unit,
+    private val onSaved: () -> Unit,
 ) {
     private val model = SavedCollectionsViewModel(saved, snapshots, account, mode.savedMode(), id, target, profileSlug)
     private val store = ViewModelStore().apply { put("workspace", model) }
@@ -151,6 +152,7 @@ class CollectionsWorkspaceSession(
             SavedCollectionsEvent.Back -> onBack()
             SavedCollectionsEvent.SignIn -> onSignIn()
             SavedCollectionsEvent.CancelExport -> Unit
+            is SavedCollectionsEvent.Saved -> if (model.isCurrentSave(event)) onSaved()
             is SavedCollectionsEvent.Editor -> onEditor(event.id)
             is SavedCollectionsEvent.Place -> if (event.value.kind == CollectionPlaceKind.CoffeeShop) onShop(event.value.slug) else onRoaster(event.value.slug)
             is SavedCollectionsEvent.Share -> onShare(event.value)
