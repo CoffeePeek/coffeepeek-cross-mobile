@@ -43,3 +43,40 @@ new worktree had no local Android SDK path; adding only its ignored `sdk.dir`
 setting resolved that environment issue. No application was installed or run.
 Native Swift/Xcode and device visual acceptance remain separate PR/device
 gates.
+
+## Mode switch integration — PR #417, 2026-11-27
+
+This checkpoint preserves the current ownership boundary while integrating the
+older mode-switch fix with develop 36fd1f38a. Shared Kotlin owns membership reads
+and the mode flag; Android composition owns its existing NavHost. The native
+application starts IosNativeRoot directly, so the retired Compose native-root
+implementation is not restored.
+
+Verification plan before the follow-up edits: keep the Android graph start
+stable across mode recomposition; serialize refresh and switch operations; retain
+cached grants when returning to personal mode, guest denial, account-change
+rejection and coroutine cancellation. Run Ownership impl unit tests and the
+application NativeRootNavigationModel contracts, function-body verification and
+Direct Sandbox assembly with packaged runtime/isolation checks. Root coordinates
+all Gradle work. No automated UI/instrumented tests, device launch or account
+writes are part of this checkpoint; manual mode-switch/back/app-link review and
+macOS native compilation remain separate gates.
+
+Entry trace: BusinessOwnershipEntryImpl.Session/refreshSession and
+switchAccountMode delegate to one OwnershipAccess. Android's
+BusinessModeNavigationEffect navigates the existing graph; its initial start is
+remembered by a small cohesive helper without growing the frozen MainScreen
+body. On native iOS, a mode change replaces the IosNativeRoot owner/model and
+revokes pending navigation acknowledgements. NativeRootController's create tab
+is rejected by shouldSelect; selected callbacks additionally require the current
+generation, readiness, no pending command and membership in visibleTabs. Thus
+the original create-slot-as-navigation crash path is already retired. The native
+bootstrap guard and develop's function baseline are preserved verbatim.
+
+Review scope is Kotlin Compose/KMP and the existing Swift/UIKit routing boundary,
+with account/ownership inputs mapped to ASVS V3/V4/V11. No authentication, server
+permission, TLS, persistence, analytics or public entry contract is changed.
+Read-only review found no new security finding in this slice. Four new non-UI
+contracts cover queued/duplicate/cancelled mode switches and visible native-root
+policy across mode/guest changes. They are authored here and await root-run
+verification; source inspection is not execution evidence.

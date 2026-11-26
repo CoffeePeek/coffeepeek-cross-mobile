@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.catch
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
 
@@ -17,6 +19,8 @@ object ThemeManager {
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
+    private val loaded = MutableStateFlow(false)
+    val ready = loaded.asStateFlow()
     private var settingRepository: SettingRepository? = null
     private var isInitialized = false
 
@@ -26,16 +30,18 @@ object ThemeManager {
         if (isInitialized) return
         isInitialized = true
         settingRepository = repository
-
+        observeTheme(repository)
+    }
+    private fun observeTheme(repository: SettingRepository) {
         scope.launch {
-            repository.readFlow(THEME_MODE_KEY).collect { setting ->
-                val mode = setting?.value
-                    ?.let { value -> runCatching { ThemeMode.valueOf(value) }.getOrNull() }
-                    ?: ThemeMode.SYSTEM
-                if (_themeMode.value != mode) {
-                    _themeMode.value = mode
-                }
+            repository.readFlow(THEME_MODE_KEY).catch {
+                if (it is CancellationException) throw it
+                emit(null)
+            }.collect { setting ->
+                val mode = ThemeMode.entries.firstOrNull { it.name == setting?.value } ?: ThemeMode.SYSTEM
+                _themeMode.value = mode
                 applyPlatformNightMode(mode)
+                loaded.value = true
             }
         }
     }

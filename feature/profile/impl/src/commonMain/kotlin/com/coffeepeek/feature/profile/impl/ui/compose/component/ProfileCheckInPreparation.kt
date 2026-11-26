@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.profile.impl.ui.compose.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,20 +12,20 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekPostShelfBagRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekPostShelfBagTitle
 import com.coffeepeek.core.designsystem.component.coffeePeekPostShelfBagCardImage
-import com.coffeepeek.feature.profile.api.ProfileImage
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.domain.PublicCheckInPreparation
 import com.coffeepeek.feature.profile.impl.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun ProfileCheckInPreparation(preparation: PublicCheckInPreparation?, image: ProfileImage, onCoffee: ((String) -> Unit)? = null) {
+internal fun ProfileCheckInPreparation(preparation: PublicCheckInPreparation?, slots: ProfileSlots) {
     if (preparation == null) return
     val details = preparationDetails(preparation)
-    val bag = preparation.shelfBagCardUrl
-    if (!bag.isNullOrBlank()) {
-        ProfileCheckInBag(preparation, bag, details, image, onCoffee)
+    val bag = preparation.shelfBagCardUrl?.takeIf(String::isNotBlank)
+    if (bag != null) {
+        ProfilePreparationBag(preparation, bag, details, slots)
         return
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -34,26 +35,34 @@ internal fun ProfileCheckInPreparation(preparation: PublicCheckInPreparation?, i
 }
 
 @Composable
-private fun ProfileCheckInBag(preparation: PublicCheckInPreparation, bag: String, details: String,
-    image: ProfileImage, onCoffee: ((String) -> Unit)?) {
-    val name = preparation.beanName?.takeIf(String::isNotBlank) ?: stringResource(Res.string.profile_check_in_shelf_bag)
-    val separator = stringResource(Res.string.profile_check_in_separator)
+private fun preparationDetails(preparation: PublicCheckInPreparation): String = listOfNotNull(
+    preparation.brewMethodCode?.let { profileBrewMethodLabel(it) },
+    preparation.doseGrams?.let { stringResource(Res.string.profile_check_in_dose, it.toString()) },
+    preparation.brewDurationSeconds?.let { stringResource(Res.string.profile_check_in_seconds, it) },
+    preparation.tasteScore?.let { stringResource(Res.string.profile_check_in_taste, it) },
+).joinToString(stringResource(Res.string.profile_check_in_separator))
+
+@Composable
+private fun ProfilePreparationBag(preparation: PublicCheckInPreparation, bag: String, details: String, slots: ProfileSlots) {
+    val open = slots.onOpenCoffee
     val slug = preparation.coffeeProductSlug?.takeIf(String::isNotBlank)
-    val open: (() -> Unit)? = if (onCoffee != null && slug != null) ({ onCoffee(slug) }) else null
-    CoffeePeekPostShelfBagRow(title = { CoffeePeekPostShelfBagTitle(name, preparation.roasterName, separator) },
-        details = details, onClick = open, showChevron = open != null,
-        onClickLabel = if (open != null) stringResource(Res.string.profile_check_in_open_coffee) else null) {
-        image(bag, null, Modifier.coffeePeekPostShelfBagCardImage())
-    }
+    val onCoffee: (() -> Unit)? = if (open != null && slug != null) ({ open(slug) }) else null
+    CoffeePeekPostShelfBagRow(
+        title = { ProfilePreparationTitle(preparation.beanName, preparation.roasterName) },
+        details = details.takeIf(String::isNotBlank),
+        onClick = onCoffee,
+        onClickLabel = stringResource(Res.string.profile_open_coffee).takeIf { onCoffee != null },
+        showChevron = onCoffee != null,
+        card = { slots.logoImage(bag, null, Modifier.coffeePeekPostShelfBagCardImage()) },
+    )
 }
 
 @Composable
-private fun preparationDetails(preparation: PublicCheckInPreparation): String =
-    listOfNotNull(preparation.brewMethodCode?.let { profileBrewMethodLabel(it) },
-        preparation.doseGrams?.let { stringResource(Res.string.profile_check_in_dose, it.toString()) },
-        preparation.brewDurationSeconds?.let { stringResource(Res.string.profile_check_in_seconds, it) },
-        preparation.tasteScore?.let { stringResource(Res.string.profile_check_in_taste, it) })
-        .joinToString(stringResource(Res.string.profile_check_in_separator))
+private fun ProfilePreparationTitle(name: String?, roaster: String?) {
+    val bean = name?.takeIf(String::isNotBlank) ?: stringResource(Res.string.profile_shelf_bag)
+    val separator = stringResource(Res.string.profile_check_in_separator)
+    CoffeePeekPostShelfBagTitle(bean, roaster, separator)
+}
 
 @Composable
 private fun profileBrewMethodLabel(code: String): String = when (code) {
@@ -74,9 +83,14 @@ private fun profileBrewMethodLabel(code: String): String = when (code) {
     else -> code
 }
 
-@Composable private fun PreparationPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    ProfileCheckInPreparation(PublicCheckInPreparation("Эфиопия", "hario-v60", 18.0, 180, 4, "bag", "Sibaristica"),
-        image = { _, _, modifier -> Box(modifier) })
+@Composable private fun PreparationPreview(dark: Boolean, bag: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    val slots = ProfileSlots(image = { _, _, modifier -> Box(modifier.background(MaterialTheme.colorScheme.tertiary)) },
+        photoViewer = { _, _, _, _ -> }, photoPrefetch = { _, _ -> })
+    ProfileCheckInPreparation(PublicCheckInPreparation("Эфиопия", "hario-v60", 18.0, 180, 4,
+        roasterName = "Sibaristica", coffeeProductSlug = if (bag) "ethiopia" else null,
+        shelfBagCardUrl = if (bag) "preview-bag" else null), slots)
 }
 @Preview @Composable private fun PreparationLightPreview() = PreparationPreview(false)
 @Preview @Composable private fun PreparationDarkPreview() = PreparationPreview(true)
+@Preview @Composable private fun PreparationBagLightPreview() = PreparationPreview(false, bag = true)
+@Preview @Composable private fun PreparationBagDarkPreview() = PreparationPreview(true, bag = true)

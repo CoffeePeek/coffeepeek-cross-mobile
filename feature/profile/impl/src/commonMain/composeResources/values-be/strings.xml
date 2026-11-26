@@ -1,5 +1,7 @@
 <resources>
     <string name="profile_title">Профіль</string>
+    <string name="profile_open_coffee">Адкрыць каву ў каталогу</string>
+    <string name="profile_shelf_bag">Пачка з паліцы</string>
     <string name="profile_loading">Загрузка</string>
     <string name="profile_back">Назад</string>
     <string name="profile_close">Закрыць</string>
@@ -25,7 +27,6 @@
     <string name="profile_section_shelf">Паліца</string>
     <string name="profile_shelf_address_required">Каб паказаць тут паліцу, наладзьце адрас профілю</string>
     <string name="profile_section_activity">Актыўнасць</string>
-    <string name="profile_section_all">Усе</string>
     <string name="profile_section_all_description">Усе: %1$s</string>
     <string name="profile_check_ins_failed">Не ўдалося загрузіць чэкіны</string>
     <string name="profile_check_ins_empty">Пакуль няма чэкінаў</string>
@@ -185,6 +186,14 @@
     </plurals>
     <string name="profile_edit_display_preferences">Паказваць у профілі</string>
     <string name="profile_edit_display_shelf">Кававая паліца</string>
+    <string name="profile_edit_camera">Зрабіць фота</string>
+    <string name="profile_edit_gallery">Выбраць з галерэі</string>
+    <string name="profile_connections_followers_one">%1$d падпісчык</string>
+    <string name="profile_connections_followers_few">%1$d падпісчыкі</string>
+    <string name="profile_connections_followers_many">%1$d падпісчыкаў</string>
+    <string name="profile_connections_following_one">%1$d падпіска</string>
+    <string name="profile_connections_following_few">%1$d падпіскі</string>
+    <string name="profile_connections_following_many">%1$d падпісак</string>
     <string name="profile_check_in_like">Паставіць упадабанне. Упадабанняў: %1$d</string>
     <string name="profile_check_in_unlike">Прыбраць упадабанне. Упадабанняў: %1$d</string>
     <string name="profile_check_in_like_failed">Не атрымалася абнавіць упадабанне</string>

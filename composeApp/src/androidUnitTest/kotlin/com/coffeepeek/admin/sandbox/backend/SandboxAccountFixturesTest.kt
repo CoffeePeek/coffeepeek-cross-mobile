@@ -1,8 +1,10 @@
 package com.coffeepeek.admin.sandbox.backend
 
 import com.coffeepeek.core.session.JwtUtils
+import com.coffeepeek.core.network.RefreshRejectedException
 import com.coffeepeek.feature.auth.api.LocalUserData
 import com.coffeepeek.feature.auth.data.createAuthRepository
+import com.coffeepeek.feature.auth.data.createTokenRefresh
 import com.coffeepeek.feature.auth.domain.classifyLoginFailure
 import com.coffeepeek.feature.contributions.data.repository.createContributionCatalogSource
 import com.coffeepeek.feature.contributions.data.repository.createContributionsRepository
@@ -123,14 +125,15 @@ class SandboxAccountFixturesTest {
 
     @Test fun accountFixturesAnswerTheRealAuthServiceAndRecoveryRepository() = runTest { withSandboxFixture(temporary) { backend, client ->
         val sessions = LocalSandboxSession()
-        val auth = createAuthRepository(client.plainClient, client.client, sessions, object : LocalUserData { override suspend fun clear() = Unit })
+        val auth = createAuthRepository(client.plainClient, sessions, object : LocalUserData { override suspend fun clear() = Unit })
 
         // Default: sign-in succeeds with a token whose subject is the Sandbox account; nothing is taken; OAuth stays blocked.
         val login = auth.signIn(" Tester@Example.com ", "any-password").getOrThrow()
         assertEquals("11111111-1111-4111-8111-111111111111", login.userId)
         val stored = assertNotNull(sessions.peekSession())
         assertEquals("11111111-1111-4111-8111-111111111111", JwtUtils.extractUserId(stored.accessToken))
-        assertEquals("sandbox-refresh-token", stored.refreshToken)
+        assertTrue(stored.refreshToken?.isNotBlank() == true)
+        assertEquals("2100-01-01T00:00:00Z", stored.accessTokenExpiresAt.toString())
         assertEquals(false, auth.isEmailTaken("new@example.com").getOrThrow())
         assertTrue(auth.register("Tester", "new@example.com", "password1").isSuccess)
         assertTrue(auth.requestPasswordReset("tester@example.com").isSuccess)
@@ -166,6 +169,24 @@ class SandboxAccountFixturesTest {
         backend.reset(true)
         assertEquals(SandboxAuthPolicy.Works, backend.authPolicy)
     } }
+
+    @Test fun accountFixtureAcceptsOnlyTheLatestNativeRefreshToken() = runTest {
+        withSandboxFixture(temporary) { _, client ->
+            val sessions = LocalSandboxSession()
+            val auth = createAuthRepository(client.plainClient, sessions, object : LocalUserData {
+                override suspend fun clear() = Unit
+            })
+            auth.signIn("tester@example.com", "any-password").getOrThrow()
+            val original = assertNotNull(sessions.peekSession()?.refreshToken)
+            val refresh = createTokenRefresh(client.plainClient)
+            val renewed = refresh.refresh(original).getOrThrow()
+            val current = assertNotNull(renewed.refreshToken)
+
+            assertNotEquals(original, current)
+            assertIs<RefreshRejectedException>(refresh.refresh(original).exceptionOrNull())
+            assertNotEquals(current, refresh.refresh(current).getOrThrow().refreshToken)
+        }
+    }
 
     @Test fun contributionFixturesServeTheModerationListsAndAcceptSubmissionsThroughTheRealServices() = runTest { withSandboxFixture(temporary) { backend, client ->
         val contributions = createContributionsRepository(client.client, client.uploadClient) { 0 }

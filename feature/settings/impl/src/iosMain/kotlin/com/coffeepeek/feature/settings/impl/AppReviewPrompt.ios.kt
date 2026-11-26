@@ -11,23 +11,29 @@ import platform.UIKit.UISceneActivationStateForegroundActive
 import platform.UIKit.UIViewController
 import platform.UIKit.UIWindowScene
 import platform.UIKit.transitionCoordinator
+import kotlinx.coroutines.CoroutineScope
 
 @Composable
 internal actual fun rememberAppReviewPlatform(): AppReviewPlatform? {
     val controller = LocalUIViewController.current
-    return remember(controller) {
-        val defaults = NSUserDefaults.standardUserDefaults
-        AppReviewPlatform(
+    return remember(controller) { iosAppReviewPlatform { controller } }
+}
+
+fun createIosAppReviewPrompt(scope: CoroutineScope, controller: () -> UIViewController?): NativeAppReviewPrompt =
+    NativeAppReviewPrompt(iosAppReviewPlatform(controller), scope)
+
+private fun iosAppReviewPlatform(controller: () -> UIViewController?): AppReviewPlatform {
+    val defaults = NSUserDefaults.standardUserDefaults
+    return AppReviewPlatform(
             read = { defaults.stringForKey(AppReviewUsageKey) },
             save = { defaults.setObject(it, forKey = AppReviewUsageKey) },
-            canPresent = { controller.reviewScene() != null },
+            canPresent = { controller()?.reviewScene() != null },
             request = { claim ->
-                controller.reviewScene()?.let { scene ->
+                controller()?.reviewScene()?.let { scene ->
                     if (claim()) SKStoreReviewController.requestReviewInScene(scene)
                 }
             },
         )
-    }
 }
 
 private fun UIViewController.reviewScene(): UIWindowScene? {

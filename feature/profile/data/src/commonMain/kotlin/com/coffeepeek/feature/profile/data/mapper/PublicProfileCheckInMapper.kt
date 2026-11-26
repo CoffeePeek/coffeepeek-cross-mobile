@@ -27,8 +27,8 @@ private fun PublicProfileCheckIn.withContent(post: PublicAuthorPost) = copy(
     scores = post.scores?.let { PublicCheckInScores(it.place, it.service, it.coffee) },
     drink = post.drink?.let { PublicCheckInDrink(it.customName, it.nameRu, it.nameEn) },
     isHome = post.isHome, preparation = post.home?.takeIf { post.isHome }?.let {
-        PublicCheckInPreparation(it.beanName, it.brewMethodCode, it.doseGrams, it.brewDurationSeconds,
-            it.tasteScore, it.shelfBagCardUrl, it.roasterName, it.coffeeProductSlug)
+        PublicCheckInPreparation(it.beanName, it.brewMethodCode, it.doseGrams, it.brewDurationSeconds, it.tasteScore,
+            roasterName = it.roasterName, coffeeProductSlug = it.coffeeProductSlug, shelfBagCardUrl = it.shelfBagCardUrl)
     }, helpfulCount = post.helpfulCount, isHelpfulByCurrentUser = post.isHelpfulByCurrentUser,
 )
 

@@ -388,3 +388,25 @@ non-UI slice. Existing AGP/KMP and preview deprecation warnings remain out of sc
 Open gaps from the legacy-first audit: C1–C4 (medium: C1 mascot load-error slot). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
 
 Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.
+
+## Native iOS coffee detail
+
+`CoffeeDetail(slug)` uses SwiftUI on iOS with the existing Kotlin ViewModel.
+The shop-menu gallery and coffee detail share the configured iOS image adapter
+and fullscreen viewer. Loading, independent retry for similar coffees, share
+links, seller URL validation and related-item actions remain in Kotlin.
+
+Source inspection covered the feed, check-in detail, shelf, related coffee and
+the `/coffees/{slug}` app link in main and the iOS migration branch. A link
+replaces the active tab stack with its root and the coffee detail, so Back
+returns to that tab root. An in-app push returns to the previous screen.
+The native screen keeps its UIKit visit and the recorded coffee entry source.
+Section exposure requires at least 10 percent of the section in the scroll
+viewport for 500 ms while the same visit is visible and unobscured.
+
+`ios-verify` runs the existing ViewModel and new iOS session and analytics tests.
+Manual simulator acceptance covers the entry points above, successful and
+cancelled back swipes, scrolling and expansion with Dynamic Type, Russian and
+Belarusian in both appearances, seller/browser, related navigation, share and
+opening and dismissing the fullscreen viewer. Confirm exposure and detail visit
+counts using a test analytics sink. Record the tested revision and device.

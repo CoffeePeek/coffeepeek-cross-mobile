@@ -81,6 +81,36 @@ class HomeHistorySessionTest {
         assertEquals(1, source.queries.size)
     }
 
+    @Test fun conflatedSameAccountReloginRejectsOldLeaseBeforeTransport() = runTest {
+        val sessions = CheckInTestSessions()
+        val original = sessions.peekSession()
+        val lease = CheckInHistorySession(sessions)
+        val source = HomePreparationTestReader()
+        sessions.applySession(null)
+        sessions.applySession(original)
+        assertFalse(lease.isCurrent())
+        assertFailsWith<CancellationException> { lease.bind(HomeHistoryReaderAdapter(source)).page(1, 20, null) }
+        assertTrue(source.queries.isEmpty())
+    }
+
+    @Test fun conflatedSameAccountReloginRejectsPendingHomeResponse() = runTest {
+        val sessions = CheckInTestSessions()
+        val original = sessions.peekSession()
+        val gate = CompletableDeferred<Unit>()
+        val source = HomePreparationTestReader()
+        val page = source.history
+        source.history = { query -> withContext(NonCancellable) { gate.await(); page(query) } }
+        val lease = CheckInHistorySession(sessions)
+        val pending = async { lease.bind(HomeHistoryReaderAdapter(source)).page(1, 20, null) }
+        runCurrent()
+        sessions.applySession(null)
+        sessions.applySession(original)
+        gate.complete(Unit)
+        assertFailsWith<CancellationException> { pending.await() }
+        assertFalse(lease.isCurrent())
+        assertEquals(1, source.queries.size)
+    }
+
     @Test fun explicitRevocationAndSynchronousReplacementBlockFollowingReads() = runTest {
         val sessions = CheckInTestSessions()
         val source = HomePreparationTestReader()

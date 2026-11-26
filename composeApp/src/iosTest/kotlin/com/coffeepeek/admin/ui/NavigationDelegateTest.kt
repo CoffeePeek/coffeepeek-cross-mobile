@@ -2,53 +2,45 @@
 
 package com.coffeepeek.admin.ui
 
+import kotlin.test.AfterTest
 import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
-import platform.UIKit.UINavigationController
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import platform.UIKit.UIViewController
 
-/** Navigation wiring only: no window, Compose content, account, or services. */
+/** The former UIKit delegate now lives in Swift; these exercise its Kotlin callback boundary only. */
 class NavigationDelegateTest {
-    @Test
-    fun showingDetailRestoresDisabledSystemGestureAndItsDelegate() {
-        val root = UIViewController()
-        val detail = UIViewController()
-        val navigation = UINavigationController(rootViewController = root)
-        val delegate = NavigationDelegate().apply { this.navigation = navigation }
-        navigation.setViewControllers(listOf(root, detail), false)
-        navigation.loadViewIfNeeded()
-        navigation.setNavigationBarHidden(true, false)
-        val gesture = assertNotNull(navigation.interactivePopGestureRecognizer)
+    @AfterTest fun resetBridge() = NativeLocalBackProtection.configure({ _, _ -> }, { null })
 
-        repeat(2) {
-            gesture.enabled = false
-            gesture.delegate = null
-            delegate.navigationController(navigation, didShowViewController = detail, animated = false)
-
-            assertTrue(gesture.enabled)
-            assertSame(delegate, gesture.delegate)
-            assertTrue(delegate.gestureRecognizerShouldBegin(gesture))
-        }
+    @Test fun nativeLocalStepsForwardProtectionWithoutOwningAUiContainer() {
+        val controller = UIViewController()
+        val values = mutableListOf<Boolean>()
+        NativeLocalBackProtection.configure({ host, enabled ->
+            assertEquals(controller, host)
+            values += enabled
+        }, { null })
+        NativeLocalBackProtection.update(controller, true)
+        NativeLocalBackProtection.update(controller, false)
+        assertEquals(listOf(true, false), values)
     }
 
-    @Test
-    fun returningToRootDisablesSystemGestureAndNotifiesStackObserver() {
-        val root = UIViewController()
-        val navigation = UINavigationController(rootViewController = root)
-        val delegate = NavigationDelegate().apply { this.navigation = navigation }
-        var stackChanged = false
-        delegate.onStackChanged = { stackChanged = true }
-        navigation.loadViewIfNeeded()
-        val gesture = assertNotNull(navigation.interactivePopGestureRecognizer)
-        gesture.enabled = true
+    @Test fun replacingTheSwiftHostStopsCallingThePreviousHost() {
+        val controller = UIViewController()
+        val values = mutableListOf<Boolean>()
+        NativeLocalBackProtection.configure({ _, _ -> error("Retired host callback") }, { "old" })
+        NativeLocalBackProtection.configure({ _, enabled -> values += enabled }, { "current" })
+        NativeLocalBackProtection.update(controller, true)
+        assertEquals(listOf(true), values)
+        assertEquals("current", NativeLocalBackProtection.visit(controller))
+    }
 
-        delegate.navigationController(navigation, didShowViewController = root, animated = false)
-
-        assertFalse(gesture.enabled)
-        assertFalse(delegate.gestureRecognizerShouldBegin(gesture))
-        assertTrue(stackChanged)
+    @Test fun screensOutsideTheCurrentRouteDoNotAcquireAnAnalyticsVisit() {
+        val hosted = UIViewController()
+        val unrelated = UIViewController()
+        NativeLocalBackProtection.configure({ _, _ -> }, { if (it == hosted) "visit" else null })
+        assertEquals("visit", NativeLocalBackProtection.visit(hosted))
+        assertNull(NativeLocalBackProtection.visit(unrelated))
+        resetBridge()
+        assertNull(NativeLocalBackProtection.visit(hosted))
     }
 }

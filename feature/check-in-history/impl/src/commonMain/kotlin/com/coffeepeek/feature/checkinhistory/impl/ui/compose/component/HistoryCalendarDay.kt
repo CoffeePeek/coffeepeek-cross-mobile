@@ -27,7 +27,8 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 @Composable
 internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: Int,
     isSelected: Boolean, isToday: Boolean, isFuture: Boolean, onSelect: () -> Unit,
-    modifier: Modifier = Modifier, photos: List<HistoryCalendarPhoto> = emptyList(), imageContent: HistoryImageContent? = null) {
+    modifier: Modifier = Modifier, photos: List<HistoryCalendarPhoto> = emptyList(), imageContent: HistoryImageContent? = null,
+    actionLabel: String? = null) {
     val dateLabel = if (isToday) stringResource(Res.string.history_day_today, historyDateTitle(date)) else historyDateTitle(date)
     val description = stringResource(Res.string.history_day_description, dateLabel, historyVisitCountLabel(total)) +
         if (homeCount > 0) ", " + stringResource(Res.string.history_home_count, homeCount) else ""
@@ -43,7 +44,7 @@ internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: 
             Modifier.border(1.dp, MaterialTheme.colorScheme.primary, shape)
         } else Modifier)
         .clickable(enabled = !isFuture, role = Role.Button,
-            onClickLabel = stringResource(Res.string.history_select_day), onClick = onSelect)
+            onClickLabel = actionLabel ?: stringResource(Res.string.history_select_day), onClick = onSelect)
         .semantics(mergeDescendants = true) { contentDescription = description; selected = isSelected },
         contentAlignment = Alignment.Center) {
         if (photo == null) {

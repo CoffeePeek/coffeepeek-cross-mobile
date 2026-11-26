@@ -10,7 +10,7 @@ import com.coffeepeek.feature.auth.domain.AppleSignInChallenge
 import com.coffeepeek.feature.auth.domain.SignedInAccount
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.cookie
+import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
@@ -25,13 +25,11 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonElement
 
 /**
- * [plain] is the client without credentials (sign-in, registration, e-mail check, recovery), [authenticated] the one that
- * carries the access token (sign-out). The session is written through [sessions]; local data of another account is
- * cleared through [localUserData] before it is replaced.
+ * [plain] carries no credentials; native logout identifies its session by the JSON refresh token.
+ * The session is written through [sessions]; another account is cleared through [localUserData] before replacement.
  */
 internal class AuthRepositoryImpl(
     private val plain: HttpClient,
-    private val authenticated: HttpClient,
     private val sessions: SessionStore,
     private val localUserData: LocalUserData,
 ) : AuthRepository {
@@ -44,19 +42,20 @@ internal class AuthRepositoryImpl(
     }
 
     override suspend fun signIn(email: String, password: String): Result<SignedInAccount> = requestResult {
-        val response = plain.post("/api/Tokens") {
+        val response = plain.post("/api/tokens/native") {
+            expectSuccess = false
             contentType(ContentType.Application.Json)
             setBody(LoginRequest(email.trim().lowercase(), password))
         }
-        persist(response.tokens())
+        persist(response.nativeTokens())
     }
 
     override suspend fun signInWithGoogle(idToken: String, analyticsEnabled: Boolean?): Result<SignedInAccount> = requestResult {
-        val response = plain.post("/api/Tokens/google/login") {
+        val response = plain.post("/api/tokens/google/login") {
             contentType(ContentType.Application.Json)
             setBody(GoogleLoginRequest(idToken, analyticsEnabled))
         }
-        persist(response.tokens())
+        persist(response.googleTokens())
     }
 
     override suspend fun register(userName: String, email: String, password: String, analyticsEnabled: Boolean): Result<Unit> = requestResult {
@@ -108,21 +107,27 @@ internal class AuthRepositoryImpl(
     }
 
     private suspend fun remoteSignOut(refreshToken: String?) {
-        val response = authenticated.delete("/api/Tokens") {
-            refreshToken?.takeIf { it.isNotBlank() }?.let { cookie("refreshToken", it) }
+        val token = refreshToken?.takeIf(String::isNotBlank) ?: return
+        val response = plain.delete("/api/tokens/native") {
+            expectSuccess = false
+            contentType(ContentType.Application.Json)
+            setBody(NativeRefreshRequest(token))
         }
         if (!response.status.isSuccess()) throw AuthApiException("Logout failed")
     }
 
-    private suspend fun HttpResponse.tokens(): TokensDto {
+    private suspend fun HttpResponse.googleTokens(): TokensDto {
         val envelope = body<Envelope<TokensDto>>()
         val data = envelope.data
-        if (!envelope.isSuccess || data == null) throw AuthApiException(envelope.message)
-        return data.copy(refreshToken = refreshTokenCookie()?.takeIf { it.isNotBlank() } ?: data.refreshToken)
+        if (!status.isSuccess() || !envelope.isSuccess || data == null) throw AuthApiException(envelope.message)
+        val refresh = googleRefreshTokenCookie()?.takeIf(String::isNotBlank) ?: data.refreshToken
+        if (data.accessToken.isBlank() || refresh.isBlank()) throw AuthApiException("Missing Google session")
+        return data.copy(refreshToken = refresh)
     }
 
     private suspend fun persist(tokens: TokensDto): SignedInAccount {
-        val next = Session(tokens.accessToken, tokens.refreshToken, JwtUtils.extractUserId(tokens.accessToken))
+        val next = Session(tokens.accessToken, tokens.refreshToken, JwtUtils.extractUserId(tokens.accessToken),
+            accessTokenExpiresAt = tokens.accessTokenExpiresAt, refreshTokenExpiresAt = tokens.refreshTokenExpiresAt)
         if (sessions.getSession()?.userId != next.userId) localUserData.clear()
         sessions.saveSession(next)
         return SignedInAccount(next.userId)

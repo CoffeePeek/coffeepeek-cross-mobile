@@ -6,9 +6,10 @@ import com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer
 import com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.shop.shopCheckInModule
-import com.coffeepeek.admin.di.shop.shopFavoriteIntent
+import com.coffeepeek.admin.di.shop.shopFavoritePickerIntent
 import org.koin.core.scope.Scope
 import com.coffeepeek.admin.di.collections.collectionsModule
+import com.coffeepeek.admin.di.collections.collectionFavoritesModule
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.admin.di.contentreport.contentReportModule
 import com.coffeepeek.admin.di.contentreport.FeatureContentReportRenderer
@@ -17,7 +18,7 @@ import com.coffeepeek.feature.shopreport.data.repository.createShopIssueReportRe
 import com.coffeepeek.feature.shopreport.impl.createShopReportEntry
 import com.coffeepeek.feature.shop.data.repository.createShopMenuGalleryRepository
 import com.coffeepeek.feature.shop.impl.createShopMenuGalleryEntry
-import com.coffeepeek.admin.di.appupdate.featureAppUpdateRenderer
+import com.coffeepeek.admin.di.appupdate.IosAppUpdateRenderer
 import com.coffeepeek.admin.di.contributions.contributionsModule
 import com.coffeepeek.admin.di.contributions.featureContributionsScreenRenderer
 import com.coffeepeek.admin.di.auth.iosAuthScreenRenderer
@@ -34,16 +35,19 @@ import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
 import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.di.profile.profileSnapshotModule
-import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
-import com.coffeepeek.admin.di.shelf.shelfBrewForm
+import com.coffeepeek.admin.di.shelf.iosShelfScreenRenderer
 import com.coffeepeek.admin.di.shelf.iosShelfModule
 import com.coffeepeek.admin.locator.Constants
 
 internal fun iosPlatformModules(apiBaseUrl: String = Constants.BASE_URL) = listOf(
+    org.koin.dsl.module {
+        single<com.coffeepeek.admin.di.shop.ShopFavoriteIntent> { shopFavoritePickerIntent(get(), get()) }
+    },
     contributionsModule(),
     serverFavoritesModule(),
     coffeeModule(),
-    collectionsModule(apiBaseUrl),
+    collectionsModule(apiBaseUrl, trackPickerFavorites = true),
+    collectionFavoritesModule(),
     shopBrowsingModule(),
     shopCheckInModule(AppShopCheckInDateFormatter()),
     homeCheckInModule(apiBaseUrl),
@@ -64,7 +68,7 @@ actual fun initPlatformKoin() {
         shopDetailRendererFactory = { iosShopDetailRenderer() },
         shopCheckInListRendererFactory = { iosShopCheckInListRenderer() },
         settingsRendererFactory = { iosSettingsRenderer() },
-        appUpdateRendererFactory = { featureAppUpdateRenderer(get(), get()) },
+        appUpdateRendererFactory = { IosAppUpdateRenderer(get(), get(), get()) },
         notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },
         authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
         checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get(), get(), get(), get()) },
@@ -73,7 +77,7 @@ actual fun initPlatformKoin() {
             featureCoffeeScreenRenderer(get())
         },
         shelfRendererFactory = {
-            ShelfFeatureScreenRenderer(get(), shelfBrewForm(get()))
+            iosShelfScreenRenderer()
         },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) },
@@ -91,7 +95,7 @@ private fun iosShopGalleryRenderer(client: ApiClients) =
 
 private fun Scope.iosShopDetailRenderer() =
     FeatureShopDetailScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
-        favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get(), get()), checkInForm = get(),
+        favorites = get(), favoriteIntent = get(), favoriteCollections = get(), checkInForm = get(),
         visibility = get(), blockActions = get())
 
 private fun Scope.iosShopCheckInListRenderer() =

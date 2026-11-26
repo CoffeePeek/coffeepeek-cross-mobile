@@ -50,12 +50,15 @@ internal fun ShopBrowsingHost(
 
 @Composable
 private fun ShopSessionUnavailable(onRetry: () -> Unit) {
+    val title = stringResource(Res.string.shop_session_unavailable)
+    val retry = stringResource(Res.string.shop_session_retry)
+    if (PlatformShopSessionUnavailable(title, retry, onRetry)) return
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(Modifier.padding(CoffeePeekDimens.spacing6),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-            Text(stringResource(Res.string.shop_session_unavailable), color = MaterialTheme.colorScheme.error)
-            CoffeePeekButton(stringResource(Res.string.shop_session_retry), onRetry)
+            Text(title, color = MaterialTheme.colorScheme.error)
+            CoffeePeekButton(retry, onRetry)
         }
     }
 }

@@ -1,0 +1,84 @@
+import SwiftUI
+
+struct CollectionEditorContent<Cover: View>: View {
+    let title: String
+    let description: String
+    let isPublic: Bool
+    let enabled: Bool
+    let strings: CollectionsWorkspaceStrings
+    let onTitle: (String) -> Void
+    let onDescription: (String) -> Void
+    let onVisibility: (Bool) -> Void
+    @ViewBuilder let cover: () -> Cover
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(alignment: .top, spacing: 16) {
+                cover()
+                TextField(strings["collections_name"], text: Binding(get: { title }, set: { onTitle($0) }))
+                    .textFieldStyle(.roundedBorder).disabled(!enabled)
+            }
+            Text(strings["collections_description"]).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
+            TextField(strings["collections_description_placeholder"],
+                text: Binding(get: { description }, set: { onDescription($0) }), axis: .vertical)
+                .lineLimit(3...6).textFieldStyle(.roundedBorder).disabled(!enabled)
+            Toggle(strings["collections_public_switch"], isOn: Binding(get: { isPublic }, set: { onVisibility($0) }))
+                .tint(CoffeePeekNativeStyle.accent).disabled(!enabled)
+            Text(strings[isPublic ? "collections_public_hint" : "collections_private_hint"])
+                .font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
+        }
+    }
+}
+
+struct CollectionSummaryCard<Cover: View>: View {
+    let title: String
+    let countText: String
+    @ViewBuilder let cover: () -> Cover
+
+    var body: some View {
+        Color.clear.aspectRatio(1, contentMode: .fit)
+            .overlay {
+                GeometryReader { geometry in
+                    ZStack(alignment: .bottomLeading) {
+                        cover().frame(width: geometry.size.width, height: geometry.size.height).clipped()
+                        LinearGradient(stops: [.init(color: .clear, location: 0.3),
+                            .init(color: .black.opacity(0.85), location: 1)], startPoint: .top, endPoint: .bottom)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(title).font(.headline).lineLimit(2)
+                            Text(countText).font(.caption)
+                        }.foregroundStyle(.white).padding(12)
+                    }
+                }
+            }
+            .clipped().clipShape(RoundedRectangle(cornerRadius: 16))
+            .accessibilityElement(children: .combine)
+    }
+}
+
+@MainActor
+private func collectionContentSample() -> some View {
+    ScrollView {
+        VStack(alignment: .leading, spacing: 24) {
+            CollectionEditorContent(title: "Кофейные выходные", description: "Любимые места", isPublic: true,
+                enabled: true, strings: CollectionsWorkspaceStrings(languageTag: "ru"),
+                onTitle: { _ in }, onDescription: { _ in }, onVisibility: { _ in }) {
+                    CoffeePeekPhotoPlaceholder().frame(width: 108, height: 108).clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 0), spacing: 16), count: 2), spacing: 16) {
+                ForEach(0..<5) { index in
+                    CollectionSummaryCard(title: index == 0 ? "Кофейные выходные с друзьями" : "Коллекция \(index + 1)",
+                        countText: CollectionsWorkspaceStrings(languageTag: "ru").count(7)) { CoffeePeekPhotoPlaceholder() }
+                }
+            }
+        }.padding(16)
+    }.font(CoffeePeekNativeStyle.font(16)).foregroundStyle(CoffeePeekNativeStyle.foreground)
+        .background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Collection workspace light") {
+    collectionContentSample().preferredColorScheme(.light)
+}
+#Preview("Collection workspace dark") {
+    collectionContentSample().preferredColorScheme(.dark).environment(\.dynamicTypeSize, .accessibility2)
+}
+

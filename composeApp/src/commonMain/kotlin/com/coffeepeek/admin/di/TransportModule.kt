@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di
 
 import com.coffeepeek.admin.session.SessionStoreCredentials
+import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.auth.data.createTokenRefresh
@@ -20,7 +21,7 @@ internal fun transportModule(baseUrl: String, cacheFolderPath: String, debug: Bo
             url = baseUrl,
             cacheFolderPath = cacheFolderPath,
             debug = debug,
-            credentials = SessionStoreCredentials(sessions),
+            credentials = SessionStoreCredentials(sessions, Navigator::openLoginAfterSessionEnd),
             refreshWith = { plain -> createTokenRefresh(plain)::refresh },
         )
     }

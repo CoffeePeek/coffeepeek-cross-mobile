@@ -3,12 +3,36 @@ import ComposeApp
 import GoogleSignIn
 import UIKit
 
-/// Shared by the Xcode and xtool app entry points. All provider UI runs on the main queue.
-final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
+@MainActor
+private final class SocialSignInCompletion<Value> {
+    private var callback: ((String?, String?) -> Value)?
+    init(_ callback: @escaping (String?, String?) -> Value) { self.callback = callback }
+    func finish(token: String?, error: String?) {
+        let completion = callback
+        callback = nil
+        _ = completion?(token, error)
+    }
+}
+
+/// Kotlin dispatches this UI port and request-specific cancellation to Main.
+@MainActor
+final class SocialSignInProvider: NSObject, @MainActor IosAppleAuthProvider {
+    @MainActor static let shared = SocialSignInProvider()
+    private let ui = SocialSignInUI()
+
+    @MainActor func configure() { ui.configure(provider: self) }
+
+    func signIn(nonce: String, state: String, completion: @escaping (String?, String?) -> Void) {
+        ui.signIn(nonce: nonce, state: state, completion: SocialSignInCompletion(completion))
+    }
+    func cancel(state: String) { ui.cancelApple(state: state) }
+}
+
+@MainActor
+private final class SocialSignInUI: NSObject,
     ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
-    static let shared = SocialSignInProvider()
     private var appleController: ASAuthorizationController?
-    private var appleCompletion: (@Sendable (String?, String?) -> Void)?
+    private var appleCompletion: SocialSignInCompletion<Void>?
     private var appleWindow: UIWindow?
     private var expectedState: String?
     private var googleInProgress = false
@@ -16,8 +40,8 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
     // SDK 10 imports its NS_ERROR_ENUM differently from earlier SDK versions.
     private static let googleCancellationCode = -5
 
-    func configure() {
-        IosAppleAuthRegistry.shared.provider = self
+    func configure(provider: SocialSignInProvider) {
+        IosAppleAuthRegistry.shared.provider = appleSignInEnabled ? provider : nil
         let info = Bundle.main.infoDictionary ?? [:]
         func value(_ key: String) -> String {
             (info[key] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -35,19 +59,26 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
             GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID, serverClientID: serverID)
         }
         IosGoogleAuthBridge.shared.configure(isConfigured: valid, signIn: { [weak self] completion in
-            DispatchQueue.main.async { self?.signInWithGoogle(completion) }
-        }, signOut: {
-            DispatchQueue.main.async { GIDSignIn.sharedInstance.signOut() }
-        })
+            guard let self else {
+                _ = completion(nil, "Не удалось открыть окно Google")
+                return
+            }
+            self.signInWithGoogle(SocialSignInCompletion(completion))
+        }, signOut: { GIDSignIn.sharedInstance.signOut() })
     }
 
-    func signIn(nonce: String, state: String, completion: @escaping @Sendable (String?, String?) -> Void) {
+    private var appleSignInEnabled: Bool {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "CoffeePeekAppleSignInEnabled") else { return true }
+        return value as? Bool == true
+    }
+
+    func signIn(nonce: String, state: String, completion: SocialSignInCompletion<Void>) {
         guard appleController == nil, !googleInProgress else {
-            completion(nil, "Вход уже выполняется [ASI-B]")
+            completion.finish(token: nil, error: "Вход уже выполняется [ASI-B]")
             return
         }
         guard let window = Self.presentationWindow else {
-            completion(nil, "Не удалось открыть окно Apple [ASI-W]")
+            completion.finish(token: nil, error: "Не удалось открыть окно Apple [ASI-W]")
             return
         }
         appleCompletion = completion
@@ -64,11 +95,10 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
         controller.performRequests()
     }
 
-    func cancel() {
-        DispatchQueue.main.async { [weak self] in
-            if #available(iOS 16.0, *) { self?.appleController?.cancel() }
-            self?.finishApple(token: nil, error: "APPLE_SIGN_IN_CANCELLED")
-        }
+    func cancelApple(state: String) {
+        guard expectedState == state else { return }
+        appleController?.cancel()
+        finishApple(token: nil, error: "APPLE_SIGN_IN_CANCELLED")
     }
 
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
@@ -114,43 +144,57 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
         appleController = nil
         appleWindow = nil
         expectedState = nil
-        completion?(token, error)
+        completion?.finish(token: token, error: error)
     }
 
-    private func signInWithGoogle(_ completion: @escaping (String?, String?) -> KotlinUnit) {
+    private func signInWithGoogle(_ completion: SocialSignInCompletion<KotlinUnit>) {
+        guard let presenter = beginGoogle(completion) else { return }
+        GIDSignIn.sharedInstance.signIn(withPresenting: presenter) { [weak self] result, error in
+            let token = result?.user.idToken?.tokenString
+            let receivedResult = result != nil
+            // GIDSignIn.h guarantees Main, but its callback omits that annotation.
+            // Assert that SDK contract; keep the non-Sendable SDK result local.
+            MainActor.assumeIsolated {
+                self?.googleInProgress = false
+                if let error { completion.finish(token: nil, error: Self.googleFailure(error as NSError)) }
+                else if receivedResult { self?.completeGoogle(token, completion: completion) }
+                else { completion.finish(token: nil, error: "Не удалось войти через Google. Попробуйте ещё раз. [GSI-R]") }
+            }
+        }
+    }
+
+    private func beginGoogle(_ completion: SocialSignInCompletion<KotlinUnit>) -> UIViewController? {
         guard !googleInProgress, appleController == nil else {
-            _ = completion(nil, "Вход уже выполняется")
-            return
+            completion.finish(token: nil, error: "Вход уже выполняется")
+            return nil
         }
         guard var presenter = Self.presentationWindow?.rootViewController else {
-            _ = completion(nil, "Не удалось открыть окно Google")
-            return
+            completion.finish(token: nil, error: "Не удалось открыть окно Google")
+            return nil
         }
         while let presented = presenter.presentedViewController { presenter = presented }
         googleInProgress = true
-        GIDSignIn.sharedInstance.signIn(withPresenting: presenter) { [weak self] result, error in
-            self?.googleInProgress = false
-            if let error = error as NSError? {
-                let cancelled = error.domain == kGIDSignInErrorDomain && error.code == Self.googleCancellationCode
-                if cancelled {
-                    _ = completion(nil, "Вход через Google отменён")
-                    return
-                }
-                let domain = Self.safeErrorDomain(error.domain)
-                NSLog("Google Sign-In failed: domain=%@ code=%ld", domain ?? "<invalid>", error.code)
-                let domainSuffix = domain.map { " D:\($0)" } ?? ""
-                let oauthErrorSuffix = Self.safeOAuthErrorIdentifier(error).map { " O:\($0)" } ?? ""
-                _ = completion(nil, "Не удалось войти через Google. Попробуйте ещё раз. [GSI-E\(error.code)\(domainSuffix)\(oauthErrorSuffix)]")
-            } else if result == nil {
-                NSLog("Google Sign-In failed: missing result")
-                _ = completion(nil, "Не удалось войти через Google. Попробуйте ещё раз. [GSI-R]")
-            } else if let token = result?.user.idToken?.tokenString, !token.isEmpty {
-                _ = completion(token, nil)
-            } else {
-                NSLog("Google Sign-In failed: missing ID token")
-                _ = completion(nil, "Не удалось войти через Google. Попробуйте ещё раз. [GSI-T]")
-            }
+        return presenter
+    }
+
+    private func completeGoogle(_ token: String?, completion: SocialSignInCompletion<KotlinUnit>) {
+        if let token, !token.isEmpty {
+            completion.finish(token: token, error: nil)
+        } else {
+            NSLog("Google Sign-In failed: missing ID token")
+            completion.finish(token: nil, error: "Не удалось войти через Google. Попробуйте ещё раз. [GSI-T]")
         }
+    }
+
+    private static func googleFailure(_ error: NSError) -> String {
+        if error.domain == kGIDSignInErrorDomain && error.code == googleCancellationCode {
+            return "Вход через Google отменён"
+        }
+        let domain = safeErrorDomain(error.domain)
+        NSLog("Google Sign-In failed: domain=%@ code=%ld", domain ?? "<invalid>", error.code)
+        let domainSuffix = domain.map { " D:\($0)" } ?? ""
+        let oauthSuffix = safeOAuthErrorIdentifier(error).map { " O:\($0)" } ?? ""
+        return "Не удалось войти через Google. Попробуйте ещё раз. [GSI-E\(error.code)\(domainSuffix)\(oauthSuffix)]"
     }
 
     private static func safeErrorDomain(_ domain: String) -> String? {

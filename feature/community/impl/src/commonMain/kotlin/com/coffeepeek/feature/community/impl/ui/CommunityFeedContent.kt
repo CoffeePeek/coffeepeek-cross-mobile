@@ -57,6 +57,11 @@ import com.coffeepeek.feature.community.impl.timeline.CommunityTimeline
 
 private class PhotoPreview(val generation: Long, val thumbnails: List<String>, val originals: List<String>, val index: Int)
 
+internal class CommunityFeedCardCallbacks(
+    val onHomeEditorOpened: () -> Unit,
+    val onPhoto: (List<String>, List<String>, Int) -> Unit,
+)
+
 @Composable
 internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAction) -> Unit,
     host: CommunityHost, blockActions: AuthorBlockActions, callbacks: CommunityCallbacks,
@@ -79,27 +84,49 @@ internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAct
     preview?.takeIf { it.generation == state.sessionGeneration }?.let {
         host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null }
     }
+    CommunityFeedSheets(state, onAction)
+    val cardCallbacks = CommunityFeedCardCallbacks({ homeEditorOpened = true }) { thumbnails, originals, index ->
+        preview = PhotoPreview(state.sessionGeneration, thumbnails, originals, index)
+    }
+    CommunityFeedSurface(state, posts, listState, onAction, host, blockActions, callbacks, cardCallbacks,
+        snackbar, bottomClearance, onRefreshed, floatingAction, guest)
+}
+
+@Composable
+private fun CommunityFeedSheets(state: CommunityState, onAction: (CommunityAction) -> Unit) {
     if (state.editing != null) key(state.sessionGeneration, state.editing.source.id) { EditSheet(state, onAction) }
-    if (state.reportingId != null) ReportSheet(state.reportForm(), reportCallbacks(onAction))
-    val sharer = postSharer(host)
+    if (state.reportingId != null) key(state.sessionGeneration, state.reportingId) {
+        ReportSheet(state.reportForm(), reportCallbacks(onAction))
+    }
+}
+
+@Composable
+private fun CommunityFeedSurface(state: CommunityState, posts: List<CommunityPost>, listState: LazyListState,
+    onAction: (CommunityAction) -> Unit, host: CommunityHost, blockActions: AuthorBlockActions,
+    callbacks: CommunityCallbacks, cardCallbacks: CommunityFeedCardCallbacks, snackbar: SnackbarHostState,
+    bottomClearance: Dp, onRefreshed: () -> Unit, floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit,
+    guest: Boolean) {
     Box(Modifier.fillMaxSize()) {
-        CommunityFeedList(state, posts, listState, onAction, host, snackbar, bottomClearance, onRefreshed, guest, callbacks.onSignIn, callbacks.onOpenPost) { index, post ->
-            if (guest && index > 0) {
-                Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
-                    CommunityGuestTeaser(post, host, callbacks.onSignIn)
-                }
-            } else {
-                CommunityFeedPost(index, post, state, host, postActions(post, state, onAction, callbacks, blockActions,
-                    sharer, { homeEditorOpened = true }) { thumbnails, originals, photoIndex ->
-                    preview = PhotoPreview(state.sessionGeneration, thumbnails, originals, photoIndex)
-                })
-            }
-        }
+        ComposeCommunityFeed(state, posts, listState, onAction, host, blockActions, callbacks,
+            cardCallbacks, snackbar, bottomClearance, onRefreshed, guest)
         if (guest && posts.isNotEmpty()) {
             GuestFeedSignInButton(bottomClearance, callbacks.onSignIn)
-        } else {
-            floatingAction(CommunityFloating(state.isLoggedIn, state.sessionGeneration) { onAction(CommunityAction.Refresh()) })
-        }
+        } else floatingAction(CommunityFloating(state.isLoggedIn, state.sessionGeneration) { onAction(CommunityAction.Refresh()) })
+    }
+}
+
+@Composable
+private fun ComposeCommunityFeed(state: CommunityState, posts: List<CommunityPost>, listState: LazyListState,
+    onAction: (CommunityAction) -> Unit, host: CommunityHost, blockActions: AuthorBlockActions,
+    callbacks: CommunityCallbacks, cardCallbacks: CommunityFeedCardCallbacks, snackbar: SnackbarHostState,
+    bottomClearance: Dp, onRefreshed: () -> Unit, guest: Boolean) {
+    val sharer = postSharer(host)
+    CommunityFeedList(state, posts, listState, onAction, host, snackbar, bottomClearance, onRefreshed,
+        guest, callbacks.onSignIn, callbacks.onOpenPost) { index, post ->
+        if (guest && index > 0) Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
+            CommunityGuestTeaser(post, host, callbacks.onSignIn)
+        } else CommunityFeedPost(index, post, state, host, postActions(post, state, onAction, callbacks, blockActions,
+            sharer, cardCallbacks.onHomeEditorOpened, cardCallbacks.onPhoto))
     }
 }
 
@@ -209,7 +236,7 @@ private fun CommunityFeedPost(index: Int, post: CommunityPost, state: CommunityS
 }
 
 @Composable
-private fun postActions(
+internal fun postActions(
     post: CommunityPost,
     state: CommunityState,
     onAction: (CommunityAction) -> Unit,
@@ -219,34 +246,61 @@ private fun postActions(
     onHomeEditorOpened: () -> Unit,
     onPhoto: (List<String>, List<String>, Int) -> Unit,
 ): PostCardActions {
+    return feedPostActions(post, state, onAction, callbacks, blockActions, sharer,
+        onHomeEditorOpened, onPhoto, stringResource(Res.string.community_author))
+}
+
+internal fun feedPostActions(post: CommunityPost, state: CommunityState, onAction: (CommunityAction) -> Unit,
+    callbacks: CommunityCallbacks, blockActions: AuthorBlockActions, sharer: PostSharer,
+    onHomeEditorOpened: () -> Unit, onPhoto: (List<String>, List<String>, Int) -> Unit,
+    authorFallback: String,
+): PostCardActions {
     val isOwn = state.owns(post)
     val public = state.timeline == CommunityTimeline.Public
     val author = post.author.slug?.takeIf(String::isNotBlank)
-    val authorName = post.author.name.ifBlank { stringResource(Res.string.community_author) }
     return PostCardActions(
         onAuthor = author?.let { slug -> { callbacks.onOpenAuthor(slug, post.author.name, post.author.avatarUrl) } },
-        onShop = { onAction(CommunityAction.ItemInteracted(FeedItemAction.Shop, post.id)); callbacks.onOpenShop(post.shopSlug) }
-            .takeIf { post.shopSlug.isNotBlank() },
+        onShop = feedInteraction(FeedItemAction.Shop, post.id, onAction) { callbacks.onOpenShop(post.shopSlug) }.takeIf { post.shopSlug.isNotBlank() },
         onHelpful = { onAction(CommunityAction.ToggleHelpful(post.id)) }.takeIf { state.canLike && post.moderation == com.coffeepeek.feature.community.domain.model.PostModeration.Approved },
-        onBlock = {
-            blockActions.requestBlock(AuthorReference(post.author.id, post.author.slug, authorName, post.author.avatarUrl))
-        }.takeIf { public && !isOwn && state.canBlockAuthor(post) && (!post.author.id.isNullOrBlank() || !post.author.slug.isNullOrBlank()) },
-        onPhoto = { index ->
-            onAction(CommunityAction.ItemInteracted(FeedItemAction.Photo, post.id))
-            onPhoto(post.photos.thumbnails, post.photos.originals, index)
-        },
-        onEdit = {
-            if (post.isHome) { onHomeEditorOpened(); callbacks.onEditHome(post.id) } else onAction(CommunityAction.Edit(post.id))
-        }.takeIf { isOwn },
+        onBlock = feedBlockAction(post, state, blockActions, authorFallback).takeIf { public && !isOwn },
+        onPhoto = feedPhotoAction(post, onAction, onPhoto),
+        onEdit = feedEditAction(post, onAction, callbacks, onHomeEditorOpened).takeIf { isOwn },
         onHide = { onAction(CommunityAction.ToggleVisibility(post.id)) }.takeIf { isOwn && post.visibility == PostVisibility.Public },
         onReport = { onAction(CommunityAction.OpenReport(post.id)) }.takeIf { public && !isOwn },
         onPublish = { onAction(CommunityAction.ToggleVisibility(post.id)) }.takeIf { isOwn && post.visibility == PostVisibility.Private },
         onShare = sharer.action(post) { onAction(CommunityAction.ItemInteracted(FeedItemAction.Share, post.id)) },
-        onOpen = { onAction(CommunityAction.ItemInteracted(FeedItemAction.Open, post.id)); callbacks.onOpenPost(post.id) }.takeIf { post.id.isNotBlank() },
-        onCoffee = post.home?.coffeeProductSlug?.let { slug ->
-            { onAction(CommunityAction.ItemInteracted(FeedItemAction.Coffee, post.id)); callbacks.onOpenCoffee(slug) }
-        },
+        onOpen = feedInteraction(FeedItemAction.Open, post.id, onAction) { callbacks.onOpenPost(post.id) }.takeIf { post.id.isNotBlank() },
+        onCoffee = feedCoffeeAction(post, onAction, callbacks),
     )
+}
+
+private fun feedCoffeeAction(post: CommunityPost, send: (CommunityAction) -> Unit, callbacks: CommunityCallbacks): (() -> Unit)? =
+    post.home?.coffeeProductSlug?.let { slug -> feedInteraction(FeedItemAction.Coffee, post.id, send) { callbacks.onOpenCoffee(slug) } }
+
+private fun feedInteraction(kind: FeedItemAction, id: String, send: (CommunityAction) -> Unit, open: () -> Unit): () -> Unit = {
+    send(CommunityAction.ItemInteracted(kind, id))
+    open()
+}
+
+private fun feedPhotoAction(post: CommunityPost, send: (CommunityAction) -> Unit,
+    open: (List<String>, List<String>, Int) -> Unit): (Int) -> Unit = { index ->
+    send(CommunityAction.ItemInteracted(FeedItemAction.Photo, post.id))
+    open(post.photos.thumbnails, post.photos.originals, index)
+}
+
+private fun feedEditAction(post: CommunityPost, send: (CommunityAction) -> Unit,
+    callbacks: CommunityCallbacks, opened: () -> Unit): () -> Unit = {
+    if (post.isHome) {
+        opened()
+        callbacks.onEditHome(post.id)
+    } else send(CommunityAction.Edit(post.id))
+}
+
+private fun feedBlockAction(post: CommunityPost, state: CommunityState, actions: AuthorBlockActions,
+    fallback: String): (() -> Unit)? {
+    if (!state.canBlockAuthor(post) || post.author.id.isNullOrBlank() && post.author.slug.isNullOrBlank()) return null
+    val author = post.author
+    return { actions.requestBlock(AuthorReference(author.id, author.slug, author.name.ifBlank { fallback }, author.avatarUrl)) }
 }
 
 @Composable

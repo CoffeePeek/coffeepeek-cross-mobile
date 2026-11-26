@@ -2,7 +2,7 @@ package com.coffeepeek.admin.di.shelf
 
 import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.coffee.featureCoffeeScreenRenderer
-import com.coffeepeek.admin.di.checkinhistory.FeatureCheckInHistoryScreenRenderer
+import com.coffeepeek.admin.di.checkinhistory.FeatureHomeCheckInDetailRenderer
 import com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactory
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
@@ -88,14 +88,14 @@ class IosShelfModuleTest {
     private fun assertShelfGraph(koin: Koin) {
         assertSame(koin.get<ShelfRepository>(), koin.get<ShelfRepository>())
         assertSame(koin.get<BagScanner>(), koin.get<BagScanner>())
-        assertSame(koin.get<ShelfEntry>(), koin.get<ShelfEntry>())
+        assertSame(koin.get<ShelfEntry>(), koin.get<com.coffeepeek.feature.shelf.impl.IosShelfFeature>().entry)
         assertSame(koin.get<com.coffeepeek.feature.shelf.api.ShelfProfileEntry>(),
             koin.get<com.coffeepeek.feature.shelf.api.ShelfProfileEntry>())
         koin.get<CoffeePicker>()
         koin.get<HomePreparationShelfBagReader>()
         assertSame(koin.get<FeatureCheckInCreateFlowRenderer>(), koin.get<FeatureCheckInCreateFlowRenderer>())
         assertSame(koin.get<HistoryHomeEditorFactory>(), koin.get<HistoryHomeEditorFactory>())
-        assertSame(koin.get<FeatureCheckInHistoryScreenRenderer>(), koin.get<FeatureCheckInHistoryScreenRenderer>())
+        assertSame(koin.get<FeatureHomeCheckInDetailRenderer>(), koin.get<FeatureHomeCheckInDetailRenderer>())
         assertNotNull(featureCoffeeScreenRenderer(koin.get()))
     }
 

@@ -25,11 +25,15 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Choose a photo first. Scanner preparation is offered only after a photo was selected. */
 @Composable
-internal fun ShelfScanIntro(onCamera: () -> Unit, onGallery: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ShelfScanIntro(onCamera: () -> Unit, onGallery: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Text(stringResource(Res.string.shelf_scan_intro_title), Modifier.semantics { heading() },
             style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        if (!enabled) {
+            Text(stringResource(Res.string.shelf_scanner_disabled), style = MaterialTheme.typography.bodyMedium)
+            return@Column
+        }
         ShelfScanExample()
         Text(stringResource(Res.string.shelf_scan_intro_body), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -40,9 +44,11 @@ internal fun ShelfScanIntro(onCamera: () -> Unit, onGallery: () -> Unit, modifie
 }
 
 @Composable
-private fun ShelfScanIntroPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    ShelfScanIntro({}, {}, Modifier.background(MaterialTheme.colorScheme.background))
+private fun ShelfScanIntroPreview(dark: Boolean, enabled: Boolean = true) = CoffeePeekTheme(darkTheme = dark) {
+    ShelfScanIntro({}, {}, Modifier.background(MaterialTheme.colorScheme.background), enabled)
 }
 
 @Preview @Composable private fun ShelfScanIntroLightPreview() = ShelfScanIntroPreview(false)
 @Preview @Composable private fun ShelfScanIntroDarkPreview() = ShelfScanIntroPreview(true)
+@Preview @Composable private fun ShelfScanDisabledLightPreview() = ShelfScanIntroPreview(false, false)
+@Preview @Composable private fun ShelfScanDisabledDarkPreview() = ShelfScanIntroPreview(true, false)

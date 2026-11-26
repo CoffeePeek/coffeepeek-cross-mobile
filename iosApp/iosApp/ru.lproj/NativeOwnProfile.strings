@@ -1,0 +1,96 @@
+"brew_aeropress" = "Аэропресс";
+"brew_batch-brew" = "Batch Brew";
+"brew_batch_drip" = "Фильтр batch";
+"brew_cezve" = "Турка";
+"brew_cezve-turkish-coffee" = "Cezve (Turkish Coffee)";
+"brew_chemex" = "Chemex";
+"brew_cold-brew" = "Cold Brew";
+"brew_espresso" = "Эспрессо";
+"brew_french_press" = "Френч-пресс";
+"brew_hario-v60" = "Hario V60";
+"brew_moka-pot" = "Moka Pot";
+"brew_moka_pot" = "Гейзерная кофеварка";
+"brew_other" = "Другое";
+"brew_pour_over" = "Пуровер";
+"history_activity_at_home" = "Дома";
+"history_activity_collapse" = "Свернуть календарь";
+"history_activity_empty_day" = "В этот день чекинов не было";
+"history_activity_expand" = "Развернуть календарь";
+"history_activity_failed" = "Не удалось загрузить активность";
+"history_activity_loading" = "Загрузка активности…";
+"history_activity_open" = "Открыть чекины";
+"history_next_month" = "Следующий месяц";
+"history_previous_month" = "Предыдущий месяц";
+"history_profile_day_count" = "Чекины: %ld";
+"history_select_day" = "Выбрать дату";
+"history_shop" = "Кофейня";
+"history_weekday_0" = "Пн";
+"history_weekday_1" = "Вт";
+"history_weekday_2" = "Ср";
+"history_weekday_3" = "Чт";
+"history_weekday_4" = "Пт";
+"history_weekday_5" = "Сб";
+"history_weekday_6" = "Вс";
+"profile_actions" = "Действия с профилем";
+"profile_cancel" = "Отмена";
+"profile_check_in_dose" = "%@ г";
+"profile_check_in_likes" = "Лайки: %ld";
+"profile_check_in_seconds" = "%ld с";
+"profile_check_in_separator" = " · ";
+"profile_check_in_taste" = "%ld/5";
+"profile_check_ins_empty" = "Пока нет чекинов";
+"profile_check_ins_failed" = "Не удалось загрузить чекины";
+"profile_collections_settings" = "Настройки подборок";
+"profile_edit" = "Редактировать профиль";
+"profile_favorite_shop" = "Кофейня";
+"profile_followers_empty" = "Пока нет подписчиков";
+"profile_followers_failed" = "Не удалось загрузить подписчиков";
+"profile_load_failed" = "Не удалось загрузить профиль";
+"profile_load_more" = "Загрузить ещё";
+"profile_loading" = "Загрузка";
+"profile_logout_message" = "Вы уверены? Потребуется повторный вход.";
+"profile_logout_title" = "Выйти из аккаунта?";
+"profile_menu_blocked_authors" = "Заблокированные авторы";
+"profile_menu_logout" = "Выйти";
+"profile_menu_shop_changes" = "Правки кофеен";
+"profile_menu_submitted_roasters" = "Отправленные обжарщики";
+"profile_menu_submitted_shops" = "Отправленные кофейни";
+"profile_native_photo" = "Фотография %ld из %ld";
+"profile_native_rating" = "Средняя оценка: %@ из 5";
+"profile_open_avatar" = "Открыть аватар";
+"profile_open_coffee" = "Открыть кофе в каталоге";
+"profile_retry_full" = "Попробовать снова";
+"profile_section_all_check_ins" = "Все: Чекины";
+"profile_section_all_collections" = "Все: Подборки";
+"profile_section_check_ins" = "Чекины";
+"profile_section_favorites" = "Подборки";
+"profile_section_shelf" = "Полка";
+"profile_shelf_bag" = "Пачка с полки";
+"profile_stat_check_ins" = "Чекины";
+"profile_stat_followers" = "Подписчики";
+"profile_stat_roasters" = "Обжарщики";
+"profile_stat_shops" = "Кофейни";
+"profile_title" = "Профиль";
+"profile_update_failed" = "Не удалось обновить профиль";
+
+"profile_check_ins_clear_date" = "Сбросить дату";
+"profile_check_in_open" = "Открыть чекин";
+
+"profile_connections_followers_one" = "%d подписчик";
+"profile_connections_followers_few" = "%d подписчика";
+"profile_connections_followers_many" = "%d подписчиков";
+"profile_connections_following_one" = "%d подписка";
+"profile_connections_following_few" = "%d подписки";
+"profile_connections_following_many" = "%d подписок";
+
+"profile_followers" = "Подписчики";
+
+"profile_following_title" = "Подписки";
+
+"profile_following_empty" = "Пока нет подписок";
+
+"profile_following_failed" = "Не удалось загрузить подписки";
+
+"profile_close" = "Закрыть";
+
+"profile_open_user" = "Открыть профиль";

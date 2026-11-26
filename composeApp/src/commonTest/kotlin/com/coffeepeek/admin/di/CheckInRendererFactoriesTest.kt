@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di
 
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
-import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
+import com.coffeepeek.admin.ui.screen.checkins.HomeCheckInDetailRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer
 import androidx.compose.runtime.Composable
 import org.koin.dsl.koinApplication
@@ -11,18 +11,18 @@ import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
 class CheckInRendererFactoriesTest {
-    @Test fun resolvingCreationDoesNotEagerlyConstructHistory() {
-        var historyReads = 0
-        val factories = CheckInRendererFactories(history = {
-            historyReads++
-            History
+    @Test fun resolvingCreationDoesNotEagerlyConstructHomeDetail() {
+        var detailReads = 0
+        val factories = CheckInRendererFactories(homeDetail = {
+            detailReads++
+            HomeDetail
         }, create = { Creation }, shopPicker = { Picker })
         val app = graph(factories)
         try {
             assertSame(Creation, app.koin.get<CheckInCreateFlowRenderer>())
-            assertEquals(0, historyReads)
-            assertSame(History, app.koin.get<CheckInHistoryScreenRenderer>())
-            assertEquals(1, historyReads)
+            assertEquals(0, detailReads)
+            assertSame(HomeDetail, app.koin.get<HomeCheckInDetailRenderer>())
+            assertEquals(1, detailReads)
         } finally {
             app.close()
         }
@@ -31,14 +31,14 @@ class CheckInRendererFactoriesTest {
     private fun graph(factories: CheckInRendererFactories) = koinApplication {
         modules(module {
             single<CheckInCreateFlowRenderer> { factories.create(this) }
-            single<CheckInHistoryScreenRenderer> { factories.history(this) }
+            single<HomeCheckInDetailRenderer> { factories.homeDetail(this) }
             single<CheckInShopPickerRenderer> { factories.shopPicker(this) }
         })
     }
 
     @Test fun resolvingCreationDoesNotConstructShopSearchUntilRequested() {
         var pickerReads = 0
-        val factories = CheckInRendererFactories(history = { History }, create = { Creation }, shopPicker = {
+        val factories = CheckInRendererFactories(homeDetail = { HomeDetail }, create = { Creation }, shopPicker = {
             pickerReads++
             Picker
         })
@@ -55,8 +55,8 @@ class CheckInRendererFactoriesTest {
     }
 
     // Non-renderable DI doubles: no UI host, Activity, instrumentation or account.
-    private object History : CheckInHistoryScreenRenderer {
-        @Composable override fun Content(initialHomeId: String?) = error("DI tests must not render")
+    private object HomeDetail : HomeCheckInDetailRenderer {
+        @Composable override fun Content(id: String, editOnLoad: Boolean) = error("DI tests must not render")
     }
 
     private object Creation : CheckInCreateFlowRenderer {

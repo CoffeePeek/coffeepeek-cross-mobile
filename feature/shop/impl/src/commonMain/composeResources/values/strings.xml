@@ -188,4 +188,7 @@
     <string name="shop_checkin_error_shop_gone">Кофейня больше недоступна. Выберите другую</string>
     <string name="shop_checkin_error_photos_too_large">Фотографии слишком большие. Уменьшите их размер</string>
     <string name="shop_checkin_error_too_many_requests">Слишком много запросов. Попробуйте позже</string>
+    <string name="shop_detail_dismiss">Закрыть</string>
+    <string name="shop_detail_load_error">Не удалось загрузить кофейню</string>
+    <string name="shop_detail_load_error_body">Проверьте подключение и попробуйте снова.</string>
 </resources>

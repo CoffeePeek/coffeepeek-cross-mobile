@@ -1,9 +1,16 @@
+@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+
 package com.coffeepeek.feature.ownership.impl
 
 import com.coffeepeek.feature.ownership.impl.ui.OwnershipAccess
 import com.coffeepeek.feature.ownership.domain.model.*
 import com.coffeepeek.feature.ownership.domain.repository.BusinessOwnershipRepository
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 
@@ -16,7 +23,7 @@ class OwnershipAccessTest {
     private class Repository : BusinessOwnershipRepository {
         var currentOwner = true
         var reads = 0
-        var beforeResponse: () -> Unit = {}
+        var beforeResponse: suspend () -> Unit = {}
         override suspend fun businesses(kind: BusinessKind, page: Int): Result<BusinessPage<OwnedBusiness>> {
             reads++
             beforeResponse()
@@ -28,6 +35,14 @@ class OwnershipAccessTest {
         override suspend fun submit(input: ClaimSubmission): Result<OwnershipClaim> = error("Unused")
         override suspend fun profile(kind: BusinessKind, id: String): Result<BusinessProfile> = error("Unused")
         override suspend fun save(original: BusinessProfile, draft: ProfileDraft): Result<BusinessProfile> = error("Unused")
+    }
+    private class RefreshGate {
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        suspend fun await() {
+            started.complete(Unit)
+            release.await()
+        }
     }
     @Test fun guestsNeverReadPrivateBusinesses() = runTest {
         val repo = Repository()
@@ -66,5 +81,41 @@ class OwnershipAccessTest {
         access.switchMode()
         assertFalse(access.state.value.businessMode)
         assertTrue(access.state.value.hasBusinesses)
+    }
+    @Test fun leavingBusinessModeWaitsForRefreshAndCollapsesDuplicateTaps() = runTest {
+        val repo = Repository()
+        val access = OwnershipAccess(repo, Account())
+        access.switchMode()
+        val gate = RefreshGate()
+        repo.beforeResponse = gate::await
+        val refreshing = launch { access.refresh() }
+        gate.started.await()
+        val switching = launch { access.switchMode() }
+        runCurrent()
+        assertFalse(switching.isCompleted)
+        access.switchMode()
+        gate.release.complete(Unit)
+        joinAll(refreshing, switching)
+        assertFalse(access.state.value.businessMode)
+        assertTrue(access.state.value.hasBusinesses)
+        assertTrue(access.owns(BusinessKind.CoffeeShop, "business"))
+    }
+    @Test fun cancellingAPendingModeSwitchDoesNotDisableTheNextSwitch() = runTest {
+        val repo = Repository()
+        val access = OwnershipAccess(repo, Account())
+        access.switchMode()
+        val gate = RefreshGate()
+        repo.beforeResponse = gate::await
+        val refreshing = launch { access.refresh() }
+        gate.started.await()
+        val switching = launch { access.switchMode() }
+        runCurrent()
+        switching.cancelAndJoin()
+        gate.release.complete(Unit)
+        refreshing.join()
+        assertTrue(access.state.value.businessMode)
+        access.switchMode()
+        assertFalse(access.state.value.businessMode)
+        assertTrue(access.owns(BusinessKind.CoffeeShop, "business"))
     }
 }

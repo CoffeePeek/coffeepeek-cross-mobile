@@ -1,0 +1,861 @@
+diff --git a/packages/apple_developer_kit/lib/shared/appstoreconnect/appstoreconnect.dart b/packages/apple_developer_kit/lib/shared/appstoreconnect/appstoreconnect.dart
+index 662fda3..4ea307a 100644
+--- a/packages/apple_developer_kit/lib/shared/appstoreconnect/appstoreconnect.dart
++++ b/packages/apple_developer_kit/lib/shared/appstoreconnect/appstoreconnect.dart
+@@ -30,8 +30,7 @@ final class DevelopmentIdentityPaths {
+   final String profilePath;
+ }
+ 
+-/// Progress notes for actions the user should know about, such as revoking a
+-/// certificate whose private key is gone.
++/// Progress notes for provisioning actions.
+ typedef ProvisioningProgress = void Function(String message);
+ 
+ /// Development identity provisioning against App Store Connect.
+@@ -63,8 +62,8 @@ final class AscProvisioning {
+   /// Mirrors xtool's `DeveloperServicesFetchCertificateOperation` +
+   /// `DeveloperServicesFetchProfileOperation`:
+   /// 1. Reuse a local identity whose serial is still on the team, otherwise
+-  ///    revoke existing team certificates and issue a new `DEVELOPMENT` /
+-  ///    `IOS_DEVELOPMENT` cert.
++  ///    issue a new `DEVELOPMENT` / `IOS_DEVELOPMENT` cert without revoking
++  ///    other identities. Certificate quota failures require manual resolution.
+   /// 2. Find-or-register [bundleId] and each of [deviceUdids].
+   /// 3. Free a development-profile slot, but only of a profile xcross itself
+   ///    created - see [_freeProfileSlot]. Capabilities the app's entitlements
+@@ -234,17 +233,9 @@ final class AscProvisioning {
+       await client.deleteProfile(only.id);
+       return;
+     }
+-    if (only.isDevelopment) {
+-      onProgress?.call(
+-        'Replacing the development profile "${only.name}" - it occupies the '
+-        'only profile slot for this App ID.',
+-      );
+-      await client.deleteProfile(only.id);
+-      return;
+-    }
+     onProgress?.call(
+       'Leaving the existing profile "${only.name}" alone - xcross did not '
+-      'create it and it is not a development profile.',
++      'create it.',
+     );
+   }
+ 
+@@ -312,7 +303,7 @@ final class AscProvisioning {
+ 
+   /// xtool `DeveloperServicesFetchCertificateOperation.perform`: reuse the
+   /// local identity when its serial is still on the team and unexpired;
+-  /// otherwise revoke team certificates and create a new one. Returns the
++  /// otherwise create a new one without revoking team certificates. Returns the
+   /// certificate's serial number.
+   Future<String> _loadOrIssueIdentity({
+     required String certPath,
+@@ -326,9 +317,8 @@ final class AscProvisioning {
+       if (teamIds.isNotEmpty) return cached;
+       onProgress?.call(
+         'Cached Development certificate serial $cached is '
+-        'gone from the team; revoking leftovers and re-issuing.',
++        'gone from the team; issuing a new identity without revoking others.',
+       );
+-      await _revokeAllCertificates(onProgress: onProgress);
+     }
+     final serialNumber = await _issueAndPersistIdentity(
+       certPath: certPath,
+@@ -346,9 +336,9 @@ final class AscProvisioning {
+     ProvisioningProgress? onProgress,
+   }) async {
+     final csr = AscCsr.generate();
+-    final certificate = await _issueDevelopmentCertificate(
+-      csr.csrPem,
+-      onProgress: onProgress,
++    // Surface quota failures without invalidating another developer's identity.
++    final certificate = await client.createDevelopmentCertificate(
++      csrPem: csr.csrPem,
+     );
+     await hostServices.host.fileSystem
+         .file(certPath)
+@@ -375,42 +365,6 @@ final class AscProvisioning {
+     return serialNumber;
+   }
+ 
+-  /// Issues a Development certificate. On HTTP 409 (quota), revoke every
+-  /// certificate on the team first — same as xtool's free-team
+-  /// `replaceCertificates`.
+-  Future<AscCertificate> _issueDevelopmentCertificate(
+-    String csrPem, {
+-    ProvisioningProgress? onProgress,
+-  }) async {
+-    try {
+-      return await client.createDevelopmentCertificate(csrPem: csrPem);
+-    } on AppleApiError catch (error) {
+-      if (error.statusCode != 409) rethrow;
+-      // A 409 with nothing to revoke means a *pending* request, which
+-      // revoking cannot clear; surface it rather than retrying pointlessly.
+-      final existing = await client.listCertificateIds();
+-      if (existing.isEmpty) rethrow;
+-      await _revokeAllCertificates(knownIds: existing, onProgress: onProgress);
+-      final certificate = await client.createDevelopmentCertificate(
+-        csrPem: csrPem,
+-      );
+-      return certificate;
+-    }
+-  }
+-
+-  Future<void> _revokeAllCertificates({
+-    List<String>? knownIds,
+-    ProvisioningProgress? onProgress,
+-  }) async {
+-    for (final id in knownIds ?? await client.listCertificateIds()) {
+-      onProgress?.call(
+-        'Revoking certificate $id: its private key is not on this machine. '
+-        'Apps still signed with it must be re-signed.',
+-      );
+-      await client.revokeCertificate(id);
+-    }
+-  }
+-
+   /// Serial of the cached identity when [certPath]/[keyPath] exist and the
+   /// certificate isn't expired, else null.
+   Future<String?> _cachedSerialNumber(
+diff --git a/packages/apple_developer_kit/test/appstoreconnect/appstoreconnect_test.dart b/packages/apple_developer_kit/test/appstoreconnect/appstoreconnect_test.dart
+index 1f2b8e8..7793ad4 100644
+--- a/packages/apple_developer_kit/test/appstoreconnect/appstoreconnect_test.dart
++++ b/packages/apple_developer_kit/test/appstoreconnect/appstoreconnect_test.dart
+@@ -327,25 +327,25 @@ void main() {
+     expect(warnings, anyElement(contains('App Groups')));
+   });
+ 
+-  test('revokes team certificates and reissues on create 409', () async {
++  test('preserves team certificates and surfaces create 409', () async {
+     final temp = Directory.systemTemp.createTempSync('xcross_cert_409');
+     addTearDown(() => temp.deleteSync(recursive: true));
+     final client = FakeProvisioningClient(quotaUsedBy: const ['old-cert']);
+ 
+-    final result =
+-        await AscProvisioning(
+-          hostServices: testHostServices,
+-          client: client,
+-        ).provisionDevelopmentIdentity(
+-          bundleId: 'com.example.app',
+-          deviceUdids: const ['UDID'],
+-          outputDir: temp.path,
+-        );
++    await expectLater(
++      AscProvisioning(
++        hostServices: testHostServices,
++        client: client,
++      ).provisionDevelopmentIdentity(
++        bundleId: 'com.example.app',
++        deviceUdids: const ['UDID'],
++        outputDir: temp.path,
++      ),
++      throwsA(isA<AppleApiError>()),
++    );
+ 
+-    expect(client.revoked, ['old-cert']);
+-    expect(client.certificateCreations, 2, reason: 'retried after revoking');
+-    expect(File(result.certificatePemPath).existsSync(), isTrue);
+-    expect(File(result.privateKeyPemPath).existsSync(), isTrue);
++    expect(client.revoked, isEmpty);
++    expect(client.certificateCreations, 1, reason: 'no destructive retry');
+   });
+ 
+   test('surfaces the 409 when there is nothing to revoke', () async {
+@@ -490,7 +490,7 @@ void main() {
+     expect(client.deletedProfiles, isEmpty);
+   });
+ 
+-  test('replaces a lone development profile another tool created', () async {
++  test('preserves a lone development profile another tool created', () async {
+     final temp = Directory.systemTemp.createTempSync('xcross_profile_dev');
+     addTearDown(() => temp.deleteSync(recursive: true));
+     final client = FakeProvisioningClient(
+@@ -512,7 +512,7 @@ void main() {
+       outputDir: temp.path,
+     );
+ 
+-    expect(client.deletedProfiles, ['xcode-profile']);
++    expect(client.deletedProfiles, isEmpty);
+   });
+ 
+   // The profile xcross creates and the profile it is later willing to delete
+diff --git a/packages/xcross/lib/src/shared/compose/build/compose_app_assembler.dart b/packages/xcross/lib/src/shared/compose/build/compose_app_assembler.dart
+index f1cfb32..af5e2f1 100644
+--- a/packages/xcross/lib/src/shared/compose/build/compose_app_assembler.dart
++++ b/packages/xcross/lib/src/shared/compose/build/compose_app_assembler.dart
+@@ -256,6 +256,7 @@ final class ComposeAppAssembler<T extends PlatformHostInterface> {
+     await target.host.fileSystem
+         .file(p.join(stagingPath, 'Info.plist'))
+         .writeAsString(compiledPlist);
++    await _copyNativeHostResources(project, stagingPath);
+     await target.host.fileSystem
+         .file(p.join(stagingPath, BundlePkgInfo.fileName))
+         .writeAsString(BundlePkgInfo.contentsFor(compiledPlist));
+@@ -305,6 +306,30 @@ final class ComposeAppAssembler<T extends PlatformHostInterface> {
+     _makeExecutable(runnerDest);
+   }
+ 
++  Future<void> _copyNativeHostResources(
++    KmpProject project,
++    String stagingPath,
++  ) async {
++    final sourcePath = project.swiftAppDir;
++    if (sourcePath == null) return;
++    final files = target.host.fileSystem;
++    for (final name in ['GoogleService-Info.plist', 'PrivacyInfo.xcprivacy']) {
++      final resource = files.file(p.join(sourcePath, name));
++      if (resource.existsSync()) {
++        await resource.copy(files.file(p.join(stagingPath, name)).path);
++      }
++    }
++    for (final resource
++        in files.directory(sourcePath).listSync(followLinks: false)) {
++      if (resource is Directory && resource.path.endsWith('.lproj')) {
++        await _copyDirectory(
++          resource,
++          files.directory(p.join(stagingPath, p.basename(resource.path))),
++        );
++      }
++    }
++  }
++
+   /// Embeds the products of the host's Swift packages as Xcode does: each
+   /// dynamic product as `Frameworks/<Product>.framework`, binary-target
+   /// frameworks without headers and modules, stubs of statically linked
+diff --git a/packages/xcross/lib/src/shared/compose/build/compose_info_plist.dart b/packages/xcross/lib/src/shared/compose/build/compose_info_plist.dart
+index 07eaa55..86c82c2 100644
+--- a/packages/xcross/lib/src/shared/compose/build/compose_info_plist.dart
++++ b/packages/xcross/lib/src/shared/compose/build/compose_info_plist.dart
+@@ -52,7 +52,9 @@ final class ComposeInfoPlist {
+         _expandMap(_safeMap(partial, 'partial plist'), _buildSettings(project)),
+       );
+     }
+-    merged.addAll(_safeMap(extras, 'extras'));
++    merged.addAll(
++      _expandMap(_safeMap(extras, 'extras'), _buildSettings(project)),
++    );
+     merged.addAll(_required(project, target, minimumOsVersion));
+     return PropertyListSerialization.stringWithPropertyList(merged);
+   }
+@@ -70,6 +72,7 @@ final class ComposeInfoPlist {
+   /// explicit extras are merged on top.
+   static const _composeDefaults = <String, Object?>{
+     'CADisableMinimumFrameDurationOnPhone': true,
++    'UILaunchScreen': <String, Object?>{},
+   };
+ 
+   Map<String, Object?> _required(
+@@ -92,7 +95,6 @@ final class ComposeInfoPlist {
+       'MinimumOSVersion': minimumOsVersion,
+       'UIRequiredDeviceCapabilities': ['arm64'],
+       'UIDeviceFamily': deviceFamilyOf(config?.buildSettings),
+-      'UILaunchScreen': <String, Object?>{},
+       ...composePlatformKeys(target),
+     };
+   }
+diff --git a/packages/xcross/lib/src/shared/compose/build/gradle_klib_builder.dart b/packages/xcross/lib/src/shared/compose/build/gradle_klib_builder.dart
+index da31573..4f0f013 100644
+--- a/packages/xcross/lib/src/shared/compose/build/gradle_klib_builder.dart
++++ b/packages/xcross/lib/src/shared/compose/build/gradle_klib_builder.dart
+@@ -90,6 +90,7 @@ final class GradleKlibBuilder<T extends PlatformHostInterface> {
+           initScriptPath,
+           '--no-configuration-cache',
+           '--console=plain',
++          '--max-workers=6',
+         ],
+         workingDirectory: project.root,
+         environment: env,
+@@ -188,6 +189,15 @@ allprojects {
+             .mapNotNull { project.tasks.findByName(it) }
+             .forEach { dependsOn(it) }
+         doLast {
++            // A disabled cross-compilation task can leave an older KLIB behind.
++            // Existence alone must never turn that into a successful build.
++            val compile = project.tasks.getByName("compileKotlin${target[0].toUpperCase()}${target.substring(1)}")
++            val state = compile.state
++            check(compile.enabled && state.executed && !state.noSource &&
++                (!state.skipped || state.upToDate || state.skipMessage == "FROM-CACHE")) {
++                "xcross: Kotlin compilation did not run: " + compile.path +
++                    " (" + state.skipMessage + "). Refusing a possibly stale KLIB."
++            }
+             val outPath = (project.findProperty("xcross.depsOut") as String?)
+                 ?: System.getenv("XCROSS_DEPS_OUT")
+                 ?: error("XCROSS_DEPS_OUT not set")
+diff --git a/packages/xcross/lib/src/shared/compose/compose_setup_options.dart b/packages/xcross/lib/src/shared/compose/compose_setup_options.dart
+index ebc0340..ea40702 100644
+--- a/packages/xcross/lib/src/shared/compose/compose_setup_options.dart
++++ b/packages/xcross/lib/src/shared/compose/compose_setup_options.dart
+@@ -82,6 +82,15 @@ final class ComposeSetupOptions<T extends PlatformHostInterface> {
+   }
+ 
+   static const Map<String, String> _sha256ByArtifact = {
++    // JetBrains/kotlin v2.4.21 release asset digests; Maven distributes the same archives.
++    'kotlin-native-prebuilt-2.4.21-linux-x86_64.tar.gz':
++        '4935d8c8da90a2d2a8ff51da7d2c264c0d6026e1d35a8f169e218d9209965678',
++    'kotlin-native-prebuilt-2.4.21-windows-x86_64.zip':
++        '9b77b3972a05e35ddfa0dd9d50eb3ddc20618c9cc6cead1bc6f6d41d2cad24bd',
++    'kotlin-native-prebuilt-2.4.21-macos-x86_64.tar.gz':
++        '741799f163ad240f7fe54fae5334490c5a8a8fca9b9e9d39495db497b4f1763c',
++    'kotlin-native-prebuilt-2.4.21-macos-aarch64.tar.gz':
++        'bf4edb526d91e17d0862102f69250525d788e79011f86c2c64362749adf260ae',
+     'kotlin-native-prebuilt-2.2.20-linux-x86_64.tar.gz':
+         '5e2c25c7783f2a7f89aafeb3ccfb0fb5a671e0e32d283c3ab335dc5e29f19e32',
+     'kotlin-native-prebuilt-2.2.20-windows-x86_64.zip':
+diff --git a/packages/xcross/lib/src/shared/compose/kmp_entry_discovery.dart b/packages/xcross/lib/src/shared/compose/kmp_entry_discovery.dart
+index cdf789f..9ea79fb 100644
+--- a/packages/xcross/lib/src/shared/compose/kmp_entry_discovery.dart
++++ b/packages/xcross/lib/src/shared/compose/kmp_entry_discovery.dart
+@@ -8,6 +8,7 @@ import 'package:xcross/src/shared/compose/swift/swift_host_paths.dart';
+ import 'package:xcross/src/shared/compose/swift/swift_import.dart';
+ import 'package:xcross/src/shared/compose/swift/swift_import_scanner.dart';
+ import 'package:xcross/src/shared/compose/swift/swift_lexer.dart';
++import 'package:xcross/src/shared/compose/swift/xcode_host_sources.dart';
+ import 'package:xcross/src/shared/errors/errors.dart';
+ 
+ @internal
+@@ -84,7 +85,8 @@ final class KmpEntryDiscovery {
+   ) {
+     final kotlinEntry = _detectKotlinEntry(modulePath);
+     final swiftEntry = _detectSwiftAppEntry(projectRoot, baseName);
+-    if (swiftEntry != null && kotlinEntry == null) return swiftEntry;
++    // The SwiftUI host owns native providers and may pass arguments into the Kotlin entry.
++    if (swiftEntry != null) return swiftEntry;
+     if (kotlinEntry != null) return kotlinEntry;
+     return const ComposeEntryResult(KmpEntryKind.frameworkOnly);
+   }
+@@ -137,7 +139,7 @@ final class KmpEntryDiscovery {
+     }
+     if (mainFile == null) return null;
+     final appDir = p.dirname(mainFile.path);
+-    final sources =
++    final discoveredSources =
+         files
+             .directory(appDir)
+             .listSync(recursive: true)
+@@ -146,6 +148,12 @@ final class KmpEntryDiscovery {
+             .map((f) => f.path)
+             .toList()
+           ..sort();
++    final xcodeSources = readXcodeHostSources(
++      files,
++      iosApp.path,
++      mainFile.path,
++    );
++    final sources = xcodeSources.isEmpty ? discoveredSources : xcodeSources;
+     // Whether each imported module exists is decided at build time against
+     // the real SDK, so discovery only records them instead of allowlisting.
+     final imports = [
+diff --git a/packages/xcross/lib/src/shared/compose/swift/swift_host_paths.dart b/packages/xcross/lib/src/shared/compose/swift/swift_host_paths.dart
+index 2b24f44..1e18605 100644
+--- a/packages/xcross/lib/src/shared/compose/swift/swift_host_paths.dart
++++ b/packages/xcross/lib/src/shared/compose/swift/swift_host_paths.dart
+@@ -15,6 +15,9 @@ const swiftHostDirectory = 'iosApp';
+ /// trigger a Kotlin/Native rebuild that produces the same app.
+ @internal
+ bool isSwiftHostSource(String path, {required String projectRoot}) {
++  // Native Windows enumeration returns extended paths even when the CLI root is ordinary.
++  path = _withoutExtendedPrefix(path);
++  projectRoot = _withoutExtendedPrefix(projectRoot);
+   if (p.extension(path) != '.swift') return false;
+   final relative = p.isRelative(path)
+       ? p.normalize(path)
+@@ -31,7 +34,14 @@ bool isSwiftHostSource(String path, {required String projectRoot}) {
+ /// dependency checkouts that xcross does not link.
+ @internal
+ bool isExcludedSwiftHostSegment(String segment) =>
++    segment == '.build' ||
+     segment == 'Preview Content' ||
+     segment == 'Pods' ||
+     segment == 'Carthage' ||
+     segment.endsWith('Tests');
++
++String _withoutExtendedPrefix(String value) {
++  if (value.startsWith(r'\\?\UNC\')) return r'\\' + value.substring(8);
++  if (value.startsWith(r'\\?\')) return value.substring(4);
++  return value;
++}
+diff --git a/packages/xcross/lib/src/shared/compose/swiftpm/host_package_link.dart b/packages/xcross/lib/src/shared/compose/swiftpm/host_package_link.dart
+index c42385c..a1b10a0 100644
+--- a/packages/xcross/lib/src/shared/compose/swiftpm/host_package_link.dart
++++ b/packages/xcross/lib/src/shared/compose/swiftpm/host_package_link.dart
+@@ -1,3 +1,4 @@
++import 'dart:convert';
+ import 'dart:io';
+ 
+ import 'package:cli_kit/shared/platform/platform_host.dart';
+@@ -23,6 +24,8 @@ final class HostPackageLink {
+     required this.frameworkSearchPaths,
+     required this.build,
+     this.modules = const {},
++    this.headerSearchPaths = const [],
++    this.compilerPlugins = const [],
+     this.deploymentTarget = composeMinimumIosVersion,
+   });
+ 
+@@ -55,18 +58,49 @@ final class HostPackageLink {
+ 
+   /// Every module the build made importable.
+   final Set<String> modules;
++  final List<String> headerSearchPaths;
++  final List<String> compilerPlugins;
+ 
+   /// The extra `swiftc` arguments that compile and link the host against
+   /// the packages.
+   List<String> get swiftcArguments => [
+     if (modulesDir != null) ...['-I', modulesDir!],
+     for (final map in moduleMapFiles) ...['-Xcc', '-fmodule-map-file=$map'],
++    for (final dir in headerSearchPaths) ...['-Xcc', '-I', '-Xcc', dir],
++    for (final plugin in compilerPlugins) ...[
++      '-load-plugin-executable',
++      plugin,
++    ],
+     for (final dir in frameworkSearchPaths) ...['-F', dir],
+     '-Xlinker',
+     libraryPath,
+   ];
+ }
+ 
++/// Reuses package compile context when the application imports their modules.
++@internal
++List<String> swiftPmManifestValues(String debugYaml, String flag) {
++  final found = <String>{};
++  for (final match in RegExp(
++    r'^\s*args:\s*(\[.*\])\s*$',
++    multiLine: true,
++  ).allMatches(debugYaml)) {
++    final arguments = (jsonDecode(match.group(1)!) as List<Object?>)
++        .whereType<String>()
++        .where((value) => value != '-Xcc' && value != '-Xfrontend')
++        .toList();
++    for (var index = 0; index < arguments.length; index++) {
++      final value = arguments[index];
++      if (value == flag && index + 1 < arguments.length) {
++        found.add(arguments[++index]);
++      } else if (flag == '-I' && value.startsWith('-I') && value.length > 2) {
++        found.add(value.substring(2));
++      }
++    }
++  }
++  return found.toList();
++}
++
+ /// The iOS version Xcode would build [declared] for: the app targets'
+ /// deployment target, never below the Compose minimum.
+ @internal
+diff --git a/packages/xcross/lib/src/shared/compose/swiftpm/host_packages_builder.dart b/packages/xcross/lib/src/shared/compose/swiftpm/host_packages_builder.dart
+index bceca14..0dcd25e 100644
+--- a/packages/xcross/lib/src/shared/compose/swiftpm/host_packages_builder.dart
++++ b/packages/xcross/lib/src/shared/compose/swiftpm/host_packages_builder.dart
+@@ -70,14 +70,18 @@ final class HostPackagesBuilder<T extends PlatformHostInterface> {
+       deploymentTarget: deploymentTarget,
+     );
+     final debugYaml = files.file(p.join(workspace.scratch, 'debug.yaml'));
+-    final moduleMaps = debugYaml.existsSync()
+-        ? swiftPmModuleMapFiles(debugYaml.readAsStringSync())
+-        : const <String>[];
++    final manifest = debugYaml.existsSync() ? debugYaml.readAsStringSync() : '';
++    final moduleMaps = swiftPmModuleMapFiles(manifest);
+     return HostPackageLink(
+       productName: productName,
+       libraryPath: result.libraryPath,
+       modulesDir: result.modulesDir,
+       moduleMapFiles: moduleMaps,
++      headerSearchPaths: swiftPmManifestValues(manifest, '-I'),
++      compilerPlugins: swiftPmManifestValues(
++        manifest,
++        '-load-plugin-executable',
++      ),
+       frameworkSearchPaths: [debugDir],
+       build: result,
+       deploymentTarget: deploymentTarget.version,
+diff --git a/packages/xcross/lib/src/shared/compose/swiftpm/host_swift_packages_reader.dart b/packages/xcross/lib/src/shared/compose/swiftpm/host_swift_packages_reader.dart
+index b87e4e1..00d1a81 100644
+--- a/packages/xcross/lib/src/shared/compose/swiftpm/host_swift_packages_reader.dart
++++ b/packages/xcross/lib/src/shared/compose/swiftpm/host_swift_packages_reader.dart
+@@ -2,6 +2,7 @@ import 'package:cli_kit/shared/platform/platform_host.dart';
+ import 'package:meta/meta.dart';
+ import 'package:path/path.dart' as p;
+ import 'package:xcross/src/shared/apple/xcodeproj/pbx_parser.dart';
++import 'package:xcross/src/shared/compose/project/ios_app_config.dart';
+ import 'package:xcross/src/shared/compose/swiftpm/swift_package_model.dart';
+ import 'package:xcross/src/shared/errors/errors.dart';
+ 
+@@ -42,6 +43,17 @@ HostSwiftPackages readHostSwiftPackages({
+   final byIdentity = <String, SwiftPackageReference>{};
+   final products = <SwiftPackageProductDependency>{};
+   final deploymentTargets = <String>{};
++  final config = files.file(
++    paths.join(iosAppDir, 'Configuration', 'Config.xcconfig'),
++  );
++  if (config.existsSync()) {
++    final version = IosAppConfig.parse(
++      config.readAsStringSync(),
++    ).buildSettings['IPHONEOS_DEPLOYMENT_TARGET'];
++    if (version != null && RegExp(r'^\d+(\.\d+)*$').hasMatch(version)) {
++      deploymentTargets.add(version);
++    }
++  }
+   for (final project in projects) {
+     for (final product in _readProject(
+       files,
+diff --git a/packages/xcross/lib/src/shared/swiftpm/build_driver.dart b/packages/xcross/lib/src/shared/swiftpm/build_driver.dart
+index 888b629..ea65dec 100644
+--- a/packages/xcross/lib/src/shared/swiftpm/build_driver.dart
++++ b/packages/xcross/lib/src/shared/swiftpm/build_driver.dart
+@@ -152,7 +152,12 @@ final class SwiftPmBuildDriver<T extends PlatformHostInterface> {
+       reconcileDependencies: reconcileDependencies,
+     );
+     final iosSdk = sdkRepository.iosSdk(sdk, target: deploymentTarget.platform);
+-    if (hostPolicy.warmsImplicitModules) {
++    final warmImplicitModules =
++        hostPolicy.warmsImplicitModules &&
++        planReader.fileSystem
++            .file(SwiftPmModuleWarmup.sourceFile(packageDir))
++            .existsSync();
++    if (warmImplicitModules) {
+       await _refreshModuleWarmup(
+         packageDir: packageDir,
+         packagesDir: p.join(outputDir, 'Packages'),
+@@ -182,13 +187,20 @@ final class SwiftPmBuildDriver<T extends PlatformHostInterface> {
+     );
+     final command = SwiftPmBuildCommand(
+       executable: swiftBuild,
+-      arguments: [...baseArguments, ...interopArguments],
++      arguments: [
++        ...baseArguments,
++        ...interopArguments,
++        if (hostPolicy.warmsImplicitModules && !warmImplicitModules) ...[
++          '--jobs',
++          '1',
++        ],
++      ],
+       environment: environment,
+       scratchPath: scratchPath,
+       targetBuildDir: targetBuildDir,
+       consumerProducts: interopConsumers,
+     );
+-    if (hostPolicy.warmsImplicitModules) await _warmImplicitModules(command);
++    if (warmImplicitModules) await _warmImplicitModules(command);
+     final operation = SwiftPmBuildSession<T>(
+       execution: buildExecution,
+       command: command,
+diff --git a/packages/xcross/lib/src/shared/swiftpm/swiftpm_binary_target.dart b/packages/xcross/lib/src/shared/swiftpm/swiftpm_binary_target.dart
+index 2707193..e05c3e7 100644
+--- a/packages/xcross/lib/src/shared/swiftpm/swiftpm_binary_target.dart
++++ b/packages/xcross/lib/src/shared/swiftpm/swiftpm_binary_target.dart
+@@ -304,8 +304,34 @@ final class SwiftManifestParser {
+ 
+   int _skipWhitespace(int start, int end) {
+     var cursor = start;
+-    while (cursor < end && _isWhitespace(source.codeUnitAt(cursor))) {
+-      cursor++;
++    while (cursor < end) {
++      if (_isWhitespace(source.codeUnitAt(cursor))) {
++        cursor++;
++      } else if (source.startsWith('//', cursor)) {
++        final newline = source.indexOf('\n', cursor + 2);
++        cursor = newline < 0 || newline > end ? end : newline;
++      } else if (source.startsWith('/*', cursor)) {
++        cursor = _skipBlockComment(cursor, end);
++      } else {
++        break;
++      }
++    }
++    return cursor;
++  }
++
++  int _skipBlockComment(int start, int end) {
++    var cursor = start + 2;
++    var depth = 1;
++    while (cursor < end && depth > 0) {
++      if (source.startsWith('/*', cursor)) {
++        depth++;
++        cursor += 2;
++      } else if (source.startsWith('*/', cursor)) {
++        depth--;
++        cursor += 2;
++      } else {
++        cursor++;
++      }
+     }
+     return cursor;
+   }
+diff --git a/packages/xcross/lib/src/target/iphone/compose/iphone_compose_target.dart b/packages/xcross/lib/src/target/iphone/compose/iphone_compose_target.dart
+index abba223..a42df65 100644
+--- a/packages/xcross/lib/src/target/iphone/compose/iphone_compose_target.dart
++++ b/packages/xcross/lib/src/target/iphone/compose/iphone_compose_target.dart
+@@ -25,7 +25,9 @@ final class IPhoneComposeTarget<T extends PlatformHostInterface>
+   String generatedRunnerDirectory(String root) =>
+       p.join(root, 'build', 'xcross-compose', 'Runner');
+   @override
+-  List<String> gradleArguments(String kotlinHome) => const [];
++  List<String> gradleArguments(String kotlinHome) => [
++    '-Pkotlin.native.home=$kotlinHome',
++  ];
+   @override
+   void validateOutput({required bool ipa}) {}
+   @override
+diff --git a/packages/xcross/test/compose/compose_host_test.dart b/packages/xcross/test/compose/compose_host_test.dart
+index e465381..b767282 100644
+--- a/packages/xcross/test/compose/compose_host_test.dart
++++ b/packages/xcross/test/compose/compose_host_test.dart
+@@ -157,7 +157,7 @@ void main() {
+     expect(simulator.gradleTarget, 'iosSimulatorArm64');
+     expect(simulator.compilerRtName, 'libclang_rt.iossim.a');
+     expect(simulator.gradleArguments('/kn'), ['-Pkotlin.native.home=/kn']);
+-    expect(iphone.gradleArguments('/kn'), isEmpty);
++    expect(iphone.gradleArguments('/kn'), ['-Pkotlin.native.home=/kn']);
+     expect(
+       () => simulator.validateOutput(ipa: true),
+       throwsA(isA<XcrossError>()),
+diff --git a/packages/xcross/test/compose/swiftpm/host_swift_packages_test.dart b/packages/xcross/test/compose/swiftpm/host_swift_packages_test.dart
+index a48e16c..49a1587 100644
+--- a/packages/xcross/test/compose/swiftpm/host_swift_packages_test.dart
++++ b/packages/xcross/test/compose/swiftpm/host_swift_packages_test.dart
+@@ -470,6 +470,11 @@ void main() {
+     expect(read().deploymentTarget, '16.4');
+     file('iosApp/iosApp.xcodeproj/project.pbxproj', project());
+     expect(read().deploymentTarget, '15.4');
++    file(
++      'iosApp/Configuration/Config.xcconfig',
++      'IPHONEOS_DEPLOYMENT_TARGET = 17.0',
++    );
++    expect(read().deploymentTarget, '17.0');
+     expect(compareVersions('16.0', '15.10'), greaterThan(0));
+     expect(compareVersions('15', '15.0'), 0);
+   });
+diff --git a/packages/xcross/test/swiftpm/swiftpm_binary_target_test.dart b/packages/xcross/test/swiftpm/swiftpm_binary_target_test.dart
+index 9d791da..390c35b 100644
+--- a/packages/xcross/test/swiftpm/swiftpm_binary_target_test.dart
++++ b/packages/xcross/test/swiftpm/swiftpm_binary_target_test.dart
+@@ -5,6 +5,25 @@ void main() {
+   const checksum =
+       'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+ 
++  test('reads ONNX-style checksum comments and preserves Target qualifier', () {
++    const source =
++        '''
++Target.binaryTarget(name: /* outer /* nested */ end */ "onnxruntime",
++ url: "https://example.invalid/onnx.zip",
++ // SHA256 checksum
++ checksum: "$checksum")
++''';
++    final target = SwiftPmBinaryTargetManifest.discover(source).single;
++    expect(target.checksum, checksum);
++    final rewritten = SwiftPmBinaryTargetManifest.rewriteToLocalPaths(source, {
++      target: "artifacts/onnx",
++    });
++    expect(
++      rewritten,
++      'Target.binaryTarget(name: "onnxruntime", path: "artifacts/onnx")\n',
++    );
++  });
++
+   test('discovers only eligible direct literal targets', () {
+     const source = '''
+ let targets: [Target] = [
+diff --git a/packages/xcross/test/compose/coffeepeek_entry_test.dart b/packages/xcross/test/compose/coffeepeek_entry_test.dart
+new file mode 100644
+--- /dev/null
++++ b/packages/xcross/test/compose/coffeepeek_entry_test.dart
+@@ -0,0 +1,109 @@
++import 'dart:io';
++
++import 'package:cli_kit/composition/native_host.dart';
++import 'package:meta/meta.dart';
++import 'package:path/path.dart' as p;
++import 'package:test/test.dart';
++import 'package:xcross/src/shared/compose/kmp_entry_discovery.dart';
++import 'package:xcross/src/shared/compose/project/kmp_project.dart';
++import 'package:xcross/src/shared/compose/swift/swift_host_paths.dart';
++import 'package:xcross/src/shared/compose/swiftpm/host_package_link.dart';
++
++@internal
++const kotlinHostSource = '''
++import androidx.compose.ui.window.ComposeUIViewController
++fun MainViewController(onReady: () -> Unit): UIViewController {
++    return ComposeUIViewController { App(onReady = onReady) }
++}
++''';
++@internal
++const swiftHostSource = '''
++import SwiftUI
++import ComposeApp
++@main struct CoffeePeekApp: App { var body: some Scene { WindowGroup { EmptyView() } } }
++''';
++
++void main() {
++  test(
++    'forwards SwiftPM header paths and compiler plugins including spaced Windows paths',
++    () {
++      const manifest =
++          r'''args: ["swiftc", "-Xcc", "-I", "-Xcc", "C:\\Package Files\\include", "-I/other", "-Xfrontend", "-load-plugin-executable", "C:\\Tools\\Macros.exe#SwiftUIMacros"]''';
++      expect(swiftPmManifestValues(manifest, '-I'), [
++        r'C:\Package Files\include',
++        '/other',
++      ]);
++      expect(swiftPmManifestValues(manifest, '-load-plugin-executable'), [
++        r'C:\Tools\Macros.exe#SwiftUIMacros',
++      ]);
++    },
++  );
++  test('retains SwiftUI host when it calls a Kotlin UIViewController', () {
++    expect(detectEntry(withSwift: true).kind, KmpEntryKind.swiftApp);
++  });
++  test('retains Kotlin runner when there is no SwiftUI host', () {
++    expect(detectEntry(withSwift: false).kind, KmpEntryKind.runnableApp);
++  });
++  test('includes external Xcode app sources without another target main', () {
++    final entry = detectEntry(withSwift: true, withProject: true);
++    expect(entry.swiftSources, hasLength(2));
++    expect(
++      entry.swiftSources.any((path) => path.endsWith('Bridge.swift')),
++      isTrue,
++    );
++    expect(entry.swiftImports.any((item) => item.module == 'MapLibre'), isTrue);
++  });
++  test('ignores Swift package build cache as application source', () {
++    expect(
++      isSwiftHostSource('iosApp/.build/checkouts/App.swift', projectRoot: '.'),
++      isFalse,
++    );
++  });
++}
++
++@internal
++ComposeEntryResult detectEntry({
++  required bool withSwift,
++  bool withProject = false,
++}) {
++  final root = Directory.systemTemp.createTempSync('xcross-coffeepeek-entry-');
++  final parent = Directory.systemTemp.resolveSymbolicLinksSync();
++  if (!p.isWithin(parent, root.resolveSymbolicLinksSync())) {
++    throw StateError('Unexpected fixture path');
++  }
++  addTearDown(() => root.deleteSync(recursive: true));
++  writeFixture(
++    root,
++    'composeApp/src/iosMain/MainViewController.kt',
++    kotlinHostSource,
++  );
++  if (withSwift) {
++    writeFixture(root, 'iosApp/iosApp/CoffeePeekApp.swift', swiftHostSource);
++  }
++  if (withProject) {
++    writeFixture(root, 'iosXtool/Bridge.swift', 'import MapLibre\n');
++    writeFixture(root, 'iosApp/iosApp/OtherApp.swift', swiftHostSource);
++    writeFixture(root, 'iosApp/iosApp.xcodeproj/project.pbxproj', '''
++{ objects = {
++  group = { isa = PBXGroup; path = iosApp; sourceTree = "<group>"; children = (main, bridge); };
++  main = { isa = PBXFileReference; path = CoffeePeekApp.swift; sourceTree = "<group>"; };
++  bridge = { isa = PBXFileReference; path = ../../iosXtool/Bridge.swift; sourceTree = "<group>"; };
++  mainBuild = { isa = PBXBuildFile; fileRef = main; };
++  bridgeBuild = { isa = PBXBuildFile; fileRef = bridge; };
++  phase = { isa = PBXSourcesBuildPhase; files = (mainBuild, bridgeBuild); };
++  app = { isa = PBXNativeTarget; productType = com.apple.product-type.application; buildPhases = (phase); };
++}; }
++''');
++  }
++  final files = detectPlatformHostSnapshot().host.fileSystem;
++  return KmpEntryDiscovery(
++    files,
++  ).classifyEntry(p.join(root.path, 'composeApp'), root.path, 'ComposeApp');
++}
++
++@internal
++void writeFixture(Directory root, String path, String content) {
++  final file = File(p.join(root.path, path));
++  file.parent.createSync(recursive: true);
++  file.writeAsStringSync(content);
++}
+diff --git a/packages/xcross/lib/src/shared/compose/swift/xcode_host_sources.dart b/packages/xcross/lib/src/shared/compose/swift/xcode_host_sources.dart
+new file mode 100644
+--- /dev/null
++++ b/packages/xcross/lib/src/shared/compose/swift/xcode_host_sources.dart
+@@ -0,0 +1,85 @@
++import 'package:cli_kit/shared/platform/platform_host.dart';
++import 'package:meta/meta.dart';
++import 'package:path/path.dart' as p;
++import 'package:xcross/src/shared/apple/xcodeproj/pbx_parser.dart';
++
++/// Sources in the application target containing [mainFile], including files
++/// outside iosApp that Xcode references through its group hierarchy.
++@internal
++List<String> readXcodeHostSources(
++  HostFileSystemInterface files,
++  String iosAppDir,
++  String mainFile,
++) {
++  final result = <String>{};
++  for (final project in files.directory(iosAppDir).listSync()) {
++    if (!project.path.endsWith('.xcodeproj')) continue;
++    final archive = PbxParser(
++      files.file(p.join(project.path, 'project.pbxproj')).readAsStringSync(),
++    ).parseArchive();
++    final objects = archive['objects']! as Map<String, Object?>;
++    final reader = XcodeSourceLocations(objects, iosAppDir);
++    for (final value in objects.values.whereType<Map<String, Object?>>()) {
++      if (value['isa'] != 'PBXNativeTarget' ||
++          value['productType'] != 'com.apple.product-type.application') {
++        continue;
++      }
++      final sources = reader.targetSources(value);
++      if (sources.any((source) => _ordinary(source) == _ordinary(mainFile))) {
++        result.addAll(sources);
++      }
++    }
++  }
++  return result.toList()..sort();
++}
++
++String _ordinary(String path) =>
++    p.normalize(path.startsWith(r'\\?\') ? path.substring(4) : path);
++
++@internal
++final class XcodeSourceLocations {
++  XcodeSourceLocations(this.objects, this.root) {
++    for (final entry in objects.entries) {
++      final value = object(entry.key);
++      if (value['isa'] != 'PBXGroup' && value['isa'] != 'PBXVariantGroup') {
++        continue;
++      }
++      for (final child in value['children'] as List<Object?>? ?? const []) {
++        parents[child as String] = entry.key;
++      }
++    }
++  }
++  final Map<String, Object?> objects;
++  final String root;
++  final parents = <String, String>{};
++  Map<String, Object?> object(String id) =>
++      objects[id] as Map<String, Object?>? ?? const {};
++
++  String? location(String id, [Set<String> seen = const {}]) {
++    if (seen.contains(id)) throw FormatException('Cyclic Xcode group: $id');
++    final value = object(id);
++    final path = value['path'] as String? ?? '';
++    final tree = value['sourceTree'] ?? '<group>';
++    if (tree == '<absolute>') return path;
++    if (tree == 'SOURCE_ROOT') return p.normalize(p.join(root, path));
++    if (tree != '<group>') return null;
++    final parent = parents[id];
++    final base = parent == null ? root : location(parent, {...seen, id});
++    return base == null ? null : p.normalize(p.join(base, path));
++  }
++
++  List<String> targetSources(Map<String, Object?> target) {
++    final result = <String>[];
++    for (final phaseId in target['buildPhases'] as List<Object?>? ?? const []) {
++      final phase = object(phaseId as String);
++      if (phase['isa'] != 'PBXSourcesBuildPhase') continue;
++      for (final fileId in phase['files'] as List<Object?>? ?? const []) {
++        final reference = object(fileId as String)['fileRef'];
++        if (reference is! String) continue;
++        final source = location(reference);
++        if (source != null && source.endsWith('.swift')) result.add(source);
++      }
++    }
++    return result;
++  }
++}

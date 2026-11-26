@@ -7,6 +7,7 @@ import com.coffeepeek.feature.homecheckin.impl.createGuestCheckInOnboardingEntry
 
 @Composable
 internal fun GuestCheckInOnboardingHost(onFinish: (Navigator.Screen?) -> Unit) {
+    if (PlatformGuestCheckInOnboarding(onFinish)) return
     val entry = remember { createGuestCheckInOnboardingEntry() }
     entry.Content(
         onContinueAsGuest = { onFinish(null) },
