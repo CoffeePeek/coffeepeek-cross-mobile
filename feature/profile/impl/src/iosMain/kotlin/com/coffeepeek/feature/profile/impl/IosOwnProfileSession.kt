@@ -18,6 +18,7 @@ import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
 import com.coffeepeek.feature.profile.impl.ui.data.profileCheckInDrink
 import com.coffeepeek.feature.profile.impl.ui.data.profileCheckInPhotos
+import com.coffeepeek.feature.profile.impl.ui.data.ownProfileDisplayName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,6 +39,7 @@ class OwnProfileSnapshot internal constructor(own: OwnProfileState, public: Publ
     val identity = own.profile.takeIf { active }
     val hasContent = active && own.hasContent
     val publicProfile = public?.profile?.takeIf { active && !it.isBlockedByViewer }
+    val displayName = ownProfileDisplayName(identity, publicProfile?.nickname)
     val publicExpected = active && own.publicSlug != null
     val publicLoading = publicExpected && (public == null || public.isLoading)
     val publicFailed = publicExpected && public?.error != null
