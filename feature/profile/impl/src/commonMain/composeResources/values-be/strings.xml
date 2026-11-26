@@ -27,7 +27,6 @@
     <string name="profile_section_shelf">Паліца</string>
     <string name="profile_shelf_address_required">Каб паказаць тут паліцу, наладзьце адрас профілю</string>
     <string name="profile_section_activity">Актыўнасць</string>
-    <string name="profile_section_all">Усе</string>
     <string name="profile_section_all_description">Усе: %1$s</string>
     <string name="profile_check_ins_failed">Не ўдалося загрузіць чэкіны</string>
     <string name="profile_check_ins_empty">Пакуль няма чэкінаў</string>

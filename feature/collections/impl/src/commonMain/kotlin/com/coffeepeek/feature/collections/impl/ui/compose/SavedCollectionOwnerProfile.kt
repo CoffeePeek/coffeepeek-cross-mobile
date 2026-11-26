@@ -1,11 +1,13 @@
 package com.coffeepeek.feature.collections.impl.ui.compose
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.key
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,10 +29,23 @@ internal fun SavedCollectionOwnerProfile(state: SavedCollectionsState, action: (
     when (val content = savedOwnerProfileContent(state)) {
         SavedOwnerProfileContent.Status -> SavedCollectionsStatus(state, action)
         SavedOwnerProfileContent.Empty -> Text(stringResource(Res.string.collections_library_empty), modifier.padding(horizontal = 16.dp))
-        is SavedOwnerProfileContent.Lists -> LazyRow(modifier, contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            items(content.values, key = { it.id }) { value ->
-                SavedCollectionCard(value, { open(value.id) }, Modifier.width(176.dp)) { image(value, it) }
+        is SavedOwnerProfileContent.Lists -> SavedOwnerProfileGrid(content.values, open, modifier, image)
+    }
+}
+
+/** The profile owns vertical scrolling, so the embedded grid must not introduce a second scroll container. */
+@Composable
+private fun SavedOwnerProfileGrid(values: List<SavedCollectionSummary>, open: (String) -> Unit, modifier: Modifier,
+    image: @Composable (SavedCollectionSummary, Modifier) -> Unit) {
+    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        values.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                row.forEach { value ->
+                    key(value.id) {
+                        SavedCollectionCard(value, { open(value.id) }, Modifier.weight(1f)) { image(value, it) }
+                    }
+                }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
             }
         }
     }
@@ -41,7 +56,8 @@ private fun SavedOwnerProfileSample(dark: Boolean, failure: SavedCollectionsFail
     val publicList = SavedCollectionSummary("public", "Кофейные выходные", visibility = SavedCollectionVisibility.Public, itemCount = 5)
     val privateList = SavedCollectionSummary("private", "Избранное", visibility = SavedCollectionVisibility.Private, itemCount = 2)
     SavedCollectionOwnerProfile(SavedCollectionsState(SavedCollectionsMode.Library, signedIn = true, loading = false,
-        failure = failure, lists = listOf(publicList, privateList)), {}, {}, Modifier.width(320.dp))
+        failure = failure, listsLoaded = true, lists = listOf(publicList, privateList,
+            SavedCollectionSummary("third", "Места для прогулки", itemCount = 10))), {}, {}, Modifier.width(320.dp))
 }
 
 @Preview @Composable private fun SavedOwnerProfileLightPreview() = SavedOwnerProfileSample(false)

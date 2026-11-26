@@ -146,3 +146,27 @@ Final local Sandbox artifact: `com.coffeepeek.sandbox`, `1.1.7.2721-sandbox` /
 `13d8a599af9f3e70848f9269a3d8c58e037d2b98976229bac03fd6d078d7c969`.
 The earlier profile-integration artifact hash is historical and does not include
 this final multirow shelf correction.
+
+## Android parity with native shelf — 2026-11-26
+
+The owner request supersedes the timber/header follow-ups above. The owner's
+Shelf tab has no Coffee shelf heading, bag/roaster/weight summary or scan CTA.
+Guest sign-in and failed-load retry remain. Bags keep their existing accessible
+names, open/reorder/finish actions and geometry. Glass rails now overlap the bags
+in front and read a local Haze source; the unreferenced oak texture is removed.
+The shared public preview uses the same rail treatment.
+
+One 48 dp design-system glass settings control sits above root navigation,
+16 dp from the end and nav clearance + 20 dp from the bottom, matching Collections.
+The feature-owned settings sheet contains the existing visibility control and
+archive search/month sections/paging in one LazyColumn, bounded to 80% of the
+available modal viewport without a partially expanded initial state. Its archive
+ViewModelStore is created on opening and cleared on disposal. Existing handoff
+seeds an archived bag before dismissing/navigating; one opening consumes only
+its first navigation event. Closing the sheet does not create or modify bags.
+The public ShelfEntry ABI and other full-screen archive consumers are preserved.
+
+The cross-feature verification plan and final evidence are in
+`../profile/PROFILE_TABS_PLAN.md` under Android profile parity. Shared presentation
+is compiled for Android here; a host-skipped native task would not prove iOS
+compilation. The ongoing TestFlight 3398 release is from the preceding source.

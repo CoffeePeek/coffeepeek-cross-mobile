@@ -2,9 +2,14 @@ package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
+import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileCollectionsButton
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -43,6 +48,7 @@ internal fun ProfileContentTabs(
     shelf: @Composable () -> Unit, modifier: Modifier = Modifier,
     ownerShelf: OwnProfileShelf? = null, ownerHistory: OwnProfileHistory? = null, bottomPadding: Dp = 0.dp,
     checkInsList: (@Composable (Modifier, @Composable () -> Unit) -> Unit)? = null,
+    onOpenCollections: (() -> Unit)? = null,
     header: @Composable (onSelectCheckIns: () -> Unit) -> Unit = {},
 ) {
     var selectedName by rememberSaveable(stateKey) { mutableStateOf(ProfileContentTab.CheckIns.name) }
@@ -67,20 +73,39 @@ internal fun ProfileContentTabs(
             ProfileTabHeader(tab, onSelect, content)
         }
     }
-    if (selected == ProfileContentTab.CheckIns && ownerHistory != null) {
-        ownerHistory.list { tabHeader(selected, select, header) }
-    } else if (selected == ProfileContentTab.Shelf && ownerShelf != null) {
-        ownerShelf.content(modifier) { tabHeader(selected, select, header) }
-    } else if (selected == ProfileContentTab.CheckIns && checkInsList != null) {
-        checkInsList(modifier) { tabHeader(selected, select, header) }
-    } else Column(modifier.fillMaxWidth().verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        tabHeader(selected, select, header)
-        when (selected) {
-            ProfileContentTab.CheckIns -> checkIns()
-            ProfileContentTab.Collections -> collections()
-            ProfileContentTab.Shelf -> shelf()
+    ProfileTabPane(selected, scroll, modifier, bottomPadding, ownerShelf, ownerHistory, checkInsList,
+        onOpenCollections, { tabHeader(selected, select, header) }, checkIns, collections, shelf)
+}
+
+@Composable
+private fun ProfileTabPane(
+    selected: ProfileContentTab, scroll: ScrollState, modifier: Modifier, bottomPadding: Dp,
+    ownerShelf: OwnProfileShelf?, ownerHistory: OwnProfileHistory?,
+    checkInsList: (@Composable (Modifier, @Composable () -> Unit) -> Unit)?, onOpenCollections: (() -> Unit)?,
+    header: @Composable () -> Unit, checkIns: @Composable () -> Unit,
+    collections: @Composable () -> Unit, shelf: @Composable () -> Unit,
+) {
+    val contentBottomPadding = bottomPadding + if (selected == ProfileContentTab.Collections && onOpenCollections != null) 64.dp else 0.dp
+    Box(modifier.fillMaxSize()) {
+        if (selected == ProfileContentTab.CheckIns && ownerHistory != null) {
+            ownerHistory.list(header)
+        } else if (selected == ProfileContentTab.Shelf && ownerShelf != null) {
+            ownerShelf.content(Modifier.matchParentSize(), header)
+        } else if (selected == ProfileContentTab.CheckIns && checkInsList != null) {
+            checkInsList(Modifier.matchParentSize(), header)
+        } else Column(Modifier.fillMaxWidth().verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            header()
+            when (selected) {
+                ProfileContentTab.CheckIns -> checkIns()
+                ProfileContentTab.Collections -> collections()
+                ProfileContentTab.Shelf -> shelf()
+            }
+            if (contentBottomPadding > 0.dp) Spacer(Modifier.height(contentBottomPadding))
         }
-        if (bottomPadding > 0.dp) Spacer(Modifier.height(bottomPadding))
+        if (selected == ProfileContentTab.Collections && onOpenCollections != null) {
+            ProfileCollectionsButton(onOpenCollections, Modifier.align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = bottomPadding))
+        }
     }
 }
 
@@ -102,7 +127,7 @@ private fun ProfileContentTabsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme
     Surface {
         ProfileContentTabs("preview", { Text(stringResource(Res.string.profile_section_check_ins)) },
             { Text(stringResource(Res.string.profile_section_favorites)) },
-            shelf = {}, ownerShelf = OwnProfileShelf(
+            shelf = {}, modifier = Modifier.size(320.dp, 600.dp), ownerShelf = OwnProfileShelf(
                 content = { modifier, header ->
                     Column(modifier.verticalScroll(rememberScrollState())) {
                         header()
@@ -118,3 +143,15 @@ private fun ProfileContentTabsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme
 
 @Preview @Composable private fun ProfileContentTabsLightPreview() = ProfileContentTabsPreview(false)
 @Preview @Composable private fun ProfileContentTabsDarkPreview() = ProfileContentTabsPreview(true)
+
+@Composable
+private fun ProfileCollectionsPanePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface {
+        ProfileTabPane(ProfileContentTab.Collections, rememberScrollState(), Modifier.size(320.dp, 600.dp),
+            bottomPadding = 100.dp, ownerShelf = null, ownerHistory = null, checkInsList = null, onOpenCollections = {},
+            header = { ProfileTabHeader(ProfileContentTab.Collections, {}, {}) }, checkIns = {}, shelf = {},
+            collections = { Text(stringResource(Res.string.profile_section_favorites), Modifier.padding(16.dp)) })
+    }
+}
+@Preview @Composable private fun ProfileCollectionsPaneLightPreview() = ProfileCollectionsPanePreview(false)
+@Preview @Composable private fun ProfileCollectionsPaneDarkPreview() = ProfileCollectionsPanePreview(true)

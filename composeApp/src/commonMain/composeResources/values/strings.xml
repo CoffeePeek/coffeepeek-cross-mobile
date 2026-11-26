@@ -19,8 +19,6 @@
     <string name="retry">Попробовать снова</string>
     <string name="checkin_rating_coffee">Кофе</string>
 
-    <string name="profile_collections_cancel">Отмена</string>
-    <string name="profile_collections_settings">Настройки подборок</string>
     <string name="local_data_cleanup_error">Локальные данные не удалось полностью очистить</string>
     <string name="photo_pick_failed">Не удалось добавить фото: %1$d</string>
     <string name="business_tab_title">Бизнес</string>

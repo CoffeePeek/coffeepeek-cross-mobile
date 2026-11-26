@@ -7,7 +7,6 @@ import com.coffeepeek.feature.shelf.domain.model.ShelfIssue
 import com.coffeepeek.feature.shelf.domain.model.ShelfRoastPurpose
 import com.coffeepeek.feature.shelf.impl.resources.*
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagItem
-import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfSummary
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 import org.jetbrains.compose.resources.StringResource
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -60,15 +59,6 @@ internal fun shelfWeightText(grams: Int): String {
     val kilograms = if (tenths % 10 == 0) "${tenths / 10}" else "${tenths / 10},${tenths % 10}"
     return stringResource(Res.string.shelf_weight_kg, kilograms)
 }
-
-@Composable
-internal fun ShelfSummary.text(): String = listOfNotNull(
-    stringResource(coffeePeekPluralForm(bags, Res.string.shelf_bags_one, Res.string.shelf_bags_few, Res.string.shelf_bags_many), bags),
-    grams?.let { shelfWeightText(it) },
-    roasters.takeIf { it > 0 }?.let {
-        stringResource(coffeePeekPluralForm(it, Res.string.shelf_roasters_one, Res.string.shelf_roasters_few, Res.string.shelf_roasters_many), it)
-    },
-).joinToString(" · ")
 
 /** Weight, grind, what it was roasted for and whether the bag is a catalog coffee, for the bag's screen. */
 @Composable

@@ -35,7 +35,7 @@ internal fun SavedCollectionsLibrary(state: SavedCollectionsState, action: (Save
                 return@Column
             }
             SavedCollectionsStatus(state, action)
-            LazyVerticalGrid(GridCells.Adaptive(150.dp), contentPadding = PaddingValues(16.dp),
+            LazyVerticalGrid(GridCells.Fixed(2), contentPadding = PaddingValues(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 item(span = { GridItemSpan(maxLineSpan) }) { SavedCollectionsSearch(state, action) }
                 SavedCollectionVisibility.entries.reversed().forEach { visibility ->
@@ -58,7 +58,7 @@ internal fun SavedCollectionsLibrary(state: SavedCollectionsState, action: (Save
 @Composable
 private fun SavedCollectionsLibraryShimmer() {
     val loading = stringResource(Res.string.collections_loading)
-    LazyVerticalGrid(GridCells.Adaptive(150.dp), modifier = Modifier.semantics { contentDescription = loading },
+    LazyVerticalGrid(GridCells.Fixed(2), modifier = Modifier.semantics { contentDescription = loading },
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item(span = { GridItemSpan(maxLineSpan) }) {
