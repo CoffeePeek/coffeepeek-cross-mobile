@@ -454,6 +454,133 @@ class PublicProfileViewModelTest {
     }
 
     @Test
+    fun followingCountUsesServerTotalWithoutOpeningAConnectionList() = runTest(dispatcher) {
+        val requests = mutableListOf<Triple<PublicProfileConnectionKind, Int, Int>>()
+        val data = FakeData().apply {
+            connectionsRequest = { _, kind, page, size ->
+                requests += Triple(kind, page, size)
+                Result.success(PublicProfileConnectionsPage(emptyList(), 57, page, size))
+            }
+        }
+        val vm = model(data = data)
+        runCurrent()
+        assertEquals(57, vm.state.value.followingCount)
+        assertEquals(listOf(Triple(PublicProfileConnectionKind.Following, 1, 1)), requests)
+        assertNull(vm.state.value.connectionKind)
+        assertTrue(vm.state.value.connections.isEmpty())
+    }
+
+    @Test
+    fun failedFollowingCountRemainsUnknownWithoutFailingTheProfile() = runTest(dispatcher) {
+        val data = FakeData().apply { connectionsRequest = { _, _, _, _ -> Result.failure(IllegalStateException("offline")) } }
+        val vm = model(data = data)
+        runCurrent()
+        assertNull(vm.state.value.followingCount)
+        assertNotNull(vm.state.value.profile)
+        assertNull(vm.state.value.error)
+        data.connectionsRequest = { _, _, page, size -> Result.success(PublicProfileConnectionsPage(emptyList(), 0, page, size)) }
+        vm.onAction(PublicProfileAction.Refresh)
+        runCurrent()
+        assertEquals(0, vm.state.value.followingCount)
+    }
+
+    @Test
+    fun lateFollowingCountCannotCrossAnAccountReplacement() = runTest(dispatcher) {
+        val pending = CompletableDeferred<PublicProfileConnectionsPage>()
+        val accounts = FakeAccounts("first", ownProfile("other"))
+        val vm = model(data = delayedFirstCount(pending), accounts = accounts)
+        try {
+            runCurrent()
+            accounts.signIn("second")
+            runCurrent()
+            assertEquals(7, vm.state.value.followingCount)
+            pending.complete(PublicProfileConnectionsPage(emptyList(), 99, 1, 1))
+            runCurrent()
+            assertEquals(7, vm.state.value.followingCount)
+        } finally { pending.complete(PublicProfileConnectionsPage(emptyList(), 99, 1, 1)) }
+    }
+
+    @Test
+    fun aFollowingListPageSupersedesThePendingHeaderCount() = runTest(dispatcher) {
+        val pending = CompletableDeferred<PublicProfileConnectionsPage>()
+        val vm = model(data = delayedFirstCount(pending))
+        try {
+            runCurrent()
+            vm.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Following))
+            runCurrent()
+            assertEquals(7, vm.state.value.followingCount)
+            pending.complete(PublicProfileConnectionsPage(emptyList(), 99, 1, 1))
+            runCurrent()
+            assertEquals(7, vm.state.value.followingCount)
+        } finally { pending.complete(PublicProfileConnectionsPage(emptyList(), 99, 1, 1)) }
+    }
+
+    @Test
+    fun blockedProfilesDoNotFetchFollowingCounts() = runTest(dispatcher) {
+        var countRequests = 0
+        val data = FakeData().apply {
+            profile = { Result.success(PublicProfile("blocked", "n", null, null, PublicProfileStats(0, 0, 0, 0),
+                emptyList(), null, isBlockedByViewer = true)) }
+            connectionsRequest = { _, _, page, size ->
+                countRequests++
+                Result.success(PublicProfileConnectionsPage(emptyList(), 7, page, size))
+            }
+        }
+        val vm = model(data = data)
+        runCurrent()
+        assertEquals(0, countRequests)
+        assertNull(vm.state.value.followingCount)
+    }
+
+    @Test
+    fun returningToOwnProfileRefreshesCountWithoutReloadingProfileOrOpeningASheet() = runTest(dispatcher) {
+        var profileRequests = 0
+        var count = 1
+        val data = FakeData().apply {
+            profile = {
+                profileRequests++
+                Result.success(PublicProfile("canonical", "n", null, null, PublicProfileStats(0, 0, 0, 0), emptyList(), null))
+            }
+            connectionsRequest = { _, _, page, size -> Result.success(PublicProfileConnectionsPage(emptyList(), count, page, size)) }
+        }
+        val vm = model(data = data)
+        runCurrent()
+        count = 2
+        vm.onAction(PublicProfileAction.RefreshFollowingCount)
+        runCurrent()
+        assertEquals(2, vm.state.value.followingCount)
+        assertEquals(1, profileRequests)
+        assertNull(vm.state.value.connectionKind)
+    }
+
+    @Test
+    fun returningReplacesAnOlderPendingHeaderCount() = runTest(dispatcher) {
+        val pending = CompletableDeferred<PublicProfileConnectionsPage>()
+        val vm = model(data = delayedFirstCount(pending))
+        try {
+            runCurrent()
+            vm.onAction(PublicProfileAction.RefreshFollowingCount)
+            runCurrent()
+            assertEquals(7, vm.state.value.followingCount)
+            pending.complete(PublicProfileConnectionsPage(emptyList(), 99, 1, 1))
+            runCurrent()
+            assertEquals(7, vm.state.value.followingCount)
+        } finally { pending.complete(PublicProfileConnectionsPage(emptyList(), 99, 1, 1)) }
+    }
+
+    private fun delayedFirstCount(pending: CompletableDeferred<PublicProfileConnectionsPage>): FakeData {
+        var first = true
+        return FakeData().apply {
+            connectionsRequest = { _, _, page, size ->
+                if (first) {
+                    first = false
+                    withContext(NonCancellable) { Result.success(pending.await()) }
+                } else Result.success(PublicProfileConnectionsPage(emptyList(), 7, page, size))
+            }
+        }
+    }
+
+    @Test
     fun unavailableProfileHasAnErrorWithoutInventingFallbackSections() = runTest(dispatcher) {
         val vm = model("missing", FakeData().apply { profile = { Result.failure(IllegalStateException("Missing")) } }); runCurrent()
         assertFalse(vm.state.value.isLoading)
@@ -524,12 +651,14 @@ private class FakeData : PublicProfileData, PublicCheckInsPort {
     var checkIns: suspend (String, String?) -> Result<PublicProfileCheckInPage> = { _, _ -> Result.success(PublicProfileCheckInPage(emptyList(), null)) }
     var follow: suspend (String, Boolean) -> Result<PublicProfileFollowState> = { _, _ -> error("Unexpected follow") }
     var connections: suspend (PublicProfileConnectionKind, Int) -> Result<PublicProfileConnectionsPage> = { _, page -> Result.success(PublicProfileConnectionsPage(emptyList(), 0, page, 20)) }
+    var connectionsRequest: suspend (String, PublicProfileConnectionKind, Int, Int) -> Result<PublicProfileConnectionsPage> =
+        { _, kind, page, _ -> connections(kind, page) }
     override suspend fun getProfile(slug: String) = profile(slug)
     override suspend fun getFavorites(slug: String) = favorites(slug)
     override suspend fun getActivity(slug: String, year: Int, month: Int, timeZone: String) = activity(year, month)
     override suspend fun page(slug: String, cursor: String?) = checkIns(slug, cursor)
     override suspend fun setFollowing(slug: String, isFollowing: Boolean) = follow(slug, isFollowing)
-    override suspend fun getConnections(slug: String, kind: PublicProfileConnectionKind, page: Int, pageSize: Int) = connections(kind, page)
+    override suspend fun getConnections(slug: String, kind: PublicProfileConnectionKind, page: Int, pageSize: Int) = connectionsRequest(slug, kind, page, pageSize)
 }
 
 /** Account keys are plain user ids; [load] answers a profile request the way `getMe`/`refreshProfile` do: cache first unless forced. */

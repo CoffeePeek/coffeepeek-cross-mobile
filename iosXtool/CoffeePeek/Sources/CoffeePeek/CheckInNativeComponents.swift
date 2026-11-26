@@ -17,6 +17,7 @@ struct CheckInNativeStrings {
     }
 }
 
+@MainActor
 enum CheckInNativeFormStyle {
     case standard, home
 
@@ -102,6 +103,7 @@ struct CheckInNativeInput: View {
 #Preview("Home inputs light") { homeInputsPreview().preferredColorScheme(.light) }
 #Preview("Home inputs dark") { homeInputsPreview().preferredColorScheme(.dark) }
 
+@MainActor
 private func homeInputsPreview() -> some View {
     let strings = CheckInNativeStrings(languageTag: "ru", table: "NativeHomeCheckIn")
     return VStack(spacing: 20) {
@@ -153,7 +155,7 @@ struct CheckInNativePrimaryButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                if busy { ProgressView().tint(CoffeePeekNativeStyle.foreground) }
+                if busy { CoffeePeekNativeLoader(color: .black, size: 24) }
                 Text(title).font(CoffeePeekNativeStyle.font(17, weight: "SemiBold"))
             }
             .frame(maxWidth: .infinity, minHeight: 48)
@@ -183,3 +185,62 @@ struct CheckInNativePrimaryButton: View {
         CheckInNativePrimaryButton(title: "Опубликовать", enabled: false, action: {})
     }.padding().background(CoffeePeekNativeStyle.background).preferredColorScheme(.dark)
 }
+
+struct CoffeePeekNativeRating: View {
+    let value: Double
+    let valueText: String
+    let label: String
+
+    private var roundedValue: Double { value.isFinite ? (min(5, max(0, value)) * 10).rounded() / 10 : 0 }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            HStack(spacing: 4) {
+                ForEach(0..<5) { index in
+                    CoffeePeekNativeRatingStar(fill: min(1, max(0, roundedValue - Double(index))))
+                        .frame(width: 22, height: 22)
+                }
+            }
+            Text(valueText).font(CoffeePeekNativeStyle.font(15))
+        }.accessibilityElement(children: .ignore).accessibilityLabel(label)
+    }
+}
+
+private struct CoffeePeekNativeRatingStar: View {
+    let fill: Double
+
+    var body: some View {
+        Group {
+            if fill >= 1 { symbol("star.fill").foregroundStyle(CoffeePeekNativeStyle.accent) }
+            else {
+                symbol("star").foregroundStyle(CoffeePeekNativeStyle.secondary)
+                    .overlay {
+                        if fill > 0 {
+                            symbol("star.fill").foregroundStyle(CoffeePeekNativeStyle.accent)
+                                .mask(alignment: .leading) {
+                                    GeometryReader { geometry in
+                                        Rectangle().frame(width: geometry.size.width * fill)
+                                    }
+                                }
+                        }
+                    }
+            }
+        }
+    }
+
+    private func symbol(_ name: String) -> some View {
+        Image(systemName: name).resizable().scaledToFit().symbolRenderingMode(.monochrome)
+    }
+}
+
+@MainActor
+private func nativeRatingsPreview() -> some View {
+    VStack(alignment: .leading, spacing: 16) {
+        ForEach([0, 1, 3.7, 4.5, 4.96, 5], id: \.self) { value in
+            CoffeePeekNativeRating(value: value, valueText: String(format: "%.1f", value), label: "Rating")
+        }
+    }.padding(16).foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Native ratings light") { nativeRatingsPreview().preferredColorScheme(.light) }
+#Preview("Native ratings dark") { nativeRatingsPreview().preferredColorScheme(.dark) }

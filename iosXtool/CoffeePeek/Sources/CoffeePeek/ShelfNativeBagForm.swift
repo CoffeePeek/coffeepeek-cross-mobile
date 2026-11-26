@@ -32,7 +32,7 @@ struct ShelfNativeBagForm: View {
             weights
             traits
             roastDate
-            if add.saving { ProgressView() }
+            if add.saving { CoffeePeekNativeLoader(label: strings["shelf_form_save"], size: 24) }
             Button(strings["shelf_form_save"]) { send(.save(false)) }
                 .buttonStyle(.borderedProminent).foregroundStyle(.black).frame(maxWidth: .infinity)
             Button(strings["shelf_form_later"]) { send(.save(true)) }.frame(maxWidth: .infinity)
@@ -50,7 +50,7 @@ struct ShelfNativeBagForm: View {
                 Label(strings["shelf_form_catalog_match"], systemImage: "checkmark.circle.fill")
                     .font(.caption).foregroundStyle(CoffeePeekNativeStyle.accent)
             }
-            if add.searching { ProgressView() }
+            if add.searching { CoffeePeekNativeLoader(label: strings["shelf_form_coffee"], size: 24) }
             if add.searchFailed { Text(strings["shelf_form_coffee_failed"]).font(.footnote).foregroundStyle(CoffeePeekNativeStyle.secondary) }
             ForEach(add.options, id: \.slug) { option in
                 Button { send(.coffee(option.slug)) } label: {
@@ -122,6 +122,7 @@ struct ShelfNativeBagForm: View {
     }
 }
 
+@MainActor
 private func shelfFormPreview() -> some View {
     let state = IosShelfAddState(step: "Form", scanner: "Ready", downloadBytes: 0, downloadDone: 0,
         downloadTotal: 0, frame: [], stages: [], failure: nil, query: "Santa Rosa", roaster: "Coffee Roaster",

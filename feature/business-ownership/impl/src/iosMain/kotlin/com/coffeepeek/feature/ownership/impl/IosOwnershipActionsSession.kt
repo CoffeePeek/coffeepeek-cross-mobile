@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.ownership.impl
 
-import androidx.compose.runtime.Composable
 import com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry
 import com.coffeepeek.feature.ownership.domain.model.BusinessKind
 import kotlinx.coroutines.*
@@ -8,12 +7,6 @@ import kotlinx.coroutines.*
 fun createIosOwnershipActionsSession(entry: BusinessOwnershipEntry, kind: String, id: String, slug: String,
     suggest: () -> Unit, ownerEdit: () -> Unit): IosOwnershipActionsSession {
     return IosOwnershipActionsSession(entry as OwnershipEntry, BusinessKind.valueOf(kind), id, slug, suggest, ownerEdit)
-}
-
-/** Standalone native toolbar claims use the same isolated store, events and account-replacement dismissal as ProfileActions. */
-@Composable
-fun IosOwnershipClaimContent(entry: BusinessOwnershipEntry, kind: String, slug: String, onClose: () -> Unit, onLogin: () -> Unit) {
-    (entry as OwnershipEntry).ClaimContent(BusinessKind.valueOf(kind), slug, onClose, onLogin, nativeModal = false)
 }
 
 /** Reuses the entry's OwnershipAccess; toolbar rendering never creates a second ViewModel or access reader. */

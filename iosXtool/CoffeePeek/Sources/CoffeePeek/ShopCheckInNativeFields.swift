@@ -6,7 +6,6 @@ struct ShopCheckInNativeFields: View {
     let state: IosShopCheckInState
     let strings: CheckInNativeStrings
     let actions: ShopCheckInNativeActions
-    @State private var sourcePresented = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -26,11 +25,6 @@ struct ShopCheckInNativeFields: View {
             photos
         }
         .disabled(!state.editable)
-        .confirmationDialog(strings["shop_review_photo_source_title"], isPresented: $sourcePresented, titleVisibility: .visible) {
-            Button(strings["shop_review_photo_source_camera"]) { actions.choosePhotos(true) }
-            Button(strings["shop_review_photo_source_gallery"]) { actions.choosePhotos(false) }
-            Button(strings["shop_review_photo_source_cancel"], role: .cancel) {}
-        }
     }
 
     private var shop: some View {
@@ -46,7 +40,7 @@ struct ShopCheckInNativeFields: View {
 
     private var drink: some View {
         CheckInNativeField(title: strings["shop_checkin_form_drink"]) {
-            if state.drinksLoading { ProgressView() }
+            if state.drinksLoading { CoffeePeekNativeLoader(label: strings["shop_checkin_form_drink"], size: 24) }
             if state.drinksFailed {
                 Button(strings["shop_checkin_form_drinks_error"], action: actions.retryDrinks)
             }
@@ -101,7 +95,7 @@ struct ShopCheckInNativeFields: View {
     private var photos: some View {
         ShopCheckInNativePhotos(photos: state.photos, editable: state.editable && !state.photosPreparing,
             preparing: state.photosPreparing, strings: strings, move: actions.movePhoto,
-            remove: actions.removePhoto, add: { sourcePresented = true })
+            remove: actions.removePhoto, add: actions.choosePhotos)
     }
 
 }
@@ -113,7 +107,7 @@ private struct ShopCheckInNativePhotos: View {
     let strings: CheckInNativeStrings
     let move: (Int32, Int32) -> Void
     let remove: (Int32) -> Void
-    let add: () -> Void
+    let add: (Bool) -> Void
     @State private var preview: Int?
     private var identities: [AnyHashable] { photos.map { AnyHashable($0.image.map(ObjectIdentifier.init)) } }
 
@@ -128,7 +122,9 @@ private struct ShopCheckInNativePhotos: View {
             }
             CoffeePeekPhotoAttachmentGrid(count: photos.count, editable: editable, viewable: editable, managesPhotos: true,
                 showAdd: photos.count < 5, preparing: preparing, revision: identities,
-                labels: .init(add: strings["shop_review_photo_add"],
+                labels: .init(add: strings["shop_review_photo_add"], sourceTitle: strings["shop_review_photo_source_title"],
+                    gallery: strings["shop_review_photo_source_gallery"], camera: strings["shop_review_photo_source_camera"],
+                    cancel: strings["shop_review_photo_source_cancel"],
                     description: { strings.format("coffeepeek_photo_description", $0 + 1, photos.count) },
                     remove: { strings.format("shop_review_photo_remove", $0 + 1) },
                     earlier: strings["shop_checkin_photo_move_before"], later: strings["shop_checkin_photo_move_after"]),
@@ -146,6 +142,10 @@ private struct ShopCheckInNativePhotos: View {
 
 struct CoffeePeekPhotoAttachmentLabels {
     let add: String
+    let sourceTitle: String
+    let gallery: String
+    let camera: String
+    let cancel: String
     let description: (Int) -> String
     let remove: (Int) -> String
     let earlier: String
@@ -165,10 +165,11 @@ struct CoffeePeekPhotoAttachmentGrid<Thumbnail: View>: View {
     let open: (Int) -> Void
     let move: (Int, Int) -> Void
     let remove: (Int) -> Void
-    let add: () -> Void
+    let add: (Bool) -> Void
     @ViewBuilder let thumbnail: (Int) -> Thumbnail
     @State private var dragSession = UUID()
     @State private var dropTarget: Int?
+    @State private var sourcePresented = false
 
     var body: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 96, maximum: 96), spacing: 8)], alignment: .leading, spacing: 8) {
@@ -177,6 +178,7 @@ struct CoffeePeekPhotoAttachmentGrid<Thumbnail: View>: View {
         }
         .onChange(of: revision) { _, _ in resetInteraction() }
         .onChange(of: editable) { _, _ in resetInteraction() }
+        .onChange(of: showAdd) { _, _ in resetInteraction() }
     }
 
     @ViewBuilder private func tile(_ index: Int) -> some View {
@@ -220,15 +222,26 @@ struct CoffeePeekPhotoAttachmentGrid<Thumbnail: View>: View {
     }
 
     private var addTile: some View {
-        Button(action: add) {
+        Button { sourcePresented = true } label: {
             Group {
-                if preparing { ProgressView() }
+                if preparing { CoffeePeekNativeLoader(size: 24) }
                 else { Image(systemName: "camera").font(.system(size: 28)) }
             }
             .foregroundStyle(CoffeePeekNativeStyle.secondary).frame(width: 96, height: 96)
             .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(CoffeePeekNativeStyle.border))
         }.buttonStyle(.plain).disabled(!editable).accessibilityLabel(labels.add)
+            .confirmationDialog(labels.sourceTitle, isPresented: $sourcePresented, titleVisibility: .visible) {
+                Button(labels.gallery) { chooseSource(camera: false) }
+                Button(labels.camera) { chooseSource(camera: true) }
+                Button(labels.cancel, role: .cancel) {}
+            }
+            .tint(CoffeePeekNativeStyle.foreground)
+    }
+
+    private func chooseSource(camera: Bool) {
+        guard editable && showAdd && !preparing else { return }
+        add(camera)
     }
 
     private func acceptDrop(_ values: [String], target: Int) -> Bool {
@@ -245,18 +258,19 @@ struct CoffeePeekPhotoAttachmentGrid<Thumbnail: View>: View {
     private func resetInteraction() {
         dragSession = UUID()
         dropTarget = nil
+        sourcePresented = false
     }
 }
 
 #Preview("Shop photo attachments light") {
     ShopCheckInNativePhotos(photos: shopPhotoPreviewItems(), editable: true, preparing: false,
-        strings: CheckInNativeStrings(languageTag: "ru", table: "NativeShopCheckIn"), move: { _, _ in }, remove: { _ in }, add: {})
+        strings: CheckInNativeStrings(languageTag: "ru", table: "NativeShopCheckIn"), move: { _, _ in }, remove: { _ in }, add: { _ in })
         .padding(16).preferredColorScheme(.light)
 }
 
 #Preview("Shop photo attachments dark") {
     ShopCheckInNativePhotos(photos: shopPhotoPreviewItems(), editable: true, preparing: false,
-        strings: CheckInNativeStrings(languageTag: "be", table: "NativeShopCheckIn"), move: { _, _ in }, remove: { _ in }, add: {})
+        strings: CheckInNativeStrings(languageTag: "be", table: "NativeShopCheckIn"), move: { _, _ in }, remove: { _ in }, add: { _ in })
         .padding(16).preferredColorScheme(.dark)
 }
 

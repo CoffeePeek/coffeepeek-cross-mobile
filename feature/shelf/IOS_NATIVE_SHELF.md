@@ -1,5 +1,23 @@
 # Native iOS shelf checkpoint
 
+## Archive photo loading follow-up — 2026-11-25, Debug 3225
+
+Archive covers used the raw one-shot decoder for protected bag-photo URLs; it
+cannot grant photo access without a permission scope and returns nil. The archive
+now collects the existing authorized `IosCatalogueMedia.observeImage` stream,
+like the active shelf. It retains the account visibility scope and exact current
+photo check, clears failed/cancelled frames, and rethrows cancellation. Expiry and
+session invalidation stay owned by core/media; protected URLs remain in Kotlin.
+The related original/bag/immutable-variant bridge contract uses fake image bytes,
+never live credentials. Media JVM results (71 tests) are FROM-CACHE in the combined
+3225 check. Full native compilation and manual archive rendering/expiry/back and
+account-replacement acceptance must be recorded separately. No shelf writes occur.
+
+The combined 3225 native application compiled/linked and was signed successfully;
+the source and artifact identity are recorded in the shared iOS execution plan.
+Its initial installation attempt found no matching USB phone, so actual archive
+photo rendering/invalidation remains unverified on 3225.
+
 Source base: `codex/ios-native`, 2026-11-18. Scope: native UI with shared Kotlin ViewModels, repository, scanner, and write contracts.
 
 ## Routes and ownership

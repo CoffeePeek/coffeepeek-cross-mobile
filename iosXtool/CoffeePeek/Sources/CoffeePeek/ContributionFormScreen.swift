@@ -7,7 +7,8 @@ func makeContributionFormController(form: IosContributionForm, strings: Contribu
     ContributionFormHostingController(form: form, strings: strings)
 }
 
-private func contributionFormSample(_ kind: String, step: Int = 0, section: String = "Description") -> some View {
+@MainActor
+private func contributionFormSample(_ kind: String, step: Int = 0, section: String = "Description", submit: String = "idle") -> some View {
     let fields = [
         ContributionInput(key: "name", value: "Sandbox Cafe", issues: []),
         ContributionInput(key: "description", value: "Кофейня для спокойного утра", issues: []),
@@ -19,7 +20,7 @@ private func contributionFormSample(_ kind: String, step: Int = 0, section: Stri
         ContributionOptionGroup(key: "brewMethods", options: [ContributionOption(id: "v60", name: "V60", selected: true, photoUrl: nil)])
     ]
     let snapshot = ContributionFormSnapshot(kind: kind, accountVersion: 1, signedIn: 1, loading: false,
-        step: step, canSubmit: true, title: "Sandbox Cafe", section: section, fields: fields, groups: groups,
+        submit: submit, step: step, canSubmit: true, title: "Sandbox Cafe", section: section, fields: fields, groups: groups,
         sections: ["Photos", "Contacts", "Description", "Tags", "Roasters", "Menu", "BrewMethods"],
         photos: [], menu: [ContributionMenuInput(slug: "flat-white", name: "Флэт уайт", availability: "Present", price: "8")],
         photoLimit: 5, menuPhotoLimit: 4, open: "09:00", close: "21:00")
@@ -37,6 +38,14 @@ private func contributionFormSample(_ kind: String, step: Int = 0, section: Stri
 #Preview("Suggest change dark") { contributionFormSample("Suggest").preferredColorScheme(.dark) }
 #Preview("Change editor light") { contributionFormSample("Editor", section: "Menu").preferredColorScheme(.light) }
 #Preview("Change editor dark") { contributionFormSample("Editor", section: "Menu").preferredColorScheme(.dark) }
+#Preview("Shop success light") { contributionFormSample("AddShop", submit: "done").preferredColorScheme(.light) }
+#Preview("Shop success dark") { contributionFormSample("AddShop", submit: "done").preferredColorScheme(.dark) }
+#Preview("Roaster failure light") { contributionFormSample("AddRoaster", submit: "failed").preferredColorScheme(.light) }
+#Preview("Roaster failure dark") { contributionFormSample("AddRoaster", submit: "failed").preferredColorScheme(.dark) }
+#Preview("Roaster success light") { contributionFormSample("AddRoaster", submit: "done").preferredColorScheme(.light) }
+#Preview("Roaster success dark") { contributionFormSample("AddRoaster", submit: "done").preferredColorScheme(.dark) }
+#Preview("Shop features light") { contributionFormSample("AddShop", step: 3).preferredColorScheme(.light) }
+#Preview("Shop features dark") { contributionFormSample("AddShop", step: 3).preferredColorScheme(.dark) }
 
 @MainActor
 private final class ContributionFormHostingController: UIHostingController<ContributionFormHost> {
@@ -49,11 +58,12 @@ private final class ContributionFormHostingController: UIHostingController<Contr
     }
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Use init(form:strings:)") }
-    deinit { let form = form; DispatchQueue.main.async { form.close() } }
+    isolated deinit { form.close() }
 }
 
 private struct ContributionFormHost: View {
     @ObservedObject var model: ContributionFormModel
+    @State private var photoImport: ContributionPhotoImport?
 
     var body: some View {
         ContributionFormContent(state: model.state, strings: model.strings, preparingPhotos: model.preparingPhotos,
@@ -81,10 +91,20 @@ private struct ContributionFormHost: View {
             Button(model.strings.media("cancel"), role: .cancel) { model.sourceMenu = nil }
         }
         .fullScreenCover(item: $model.mediaRequest) { request in
-            ContributionPhotoPicker(request: request, onFinish: { model.picked($0, request: request) },
-                onCamera: { model.pickedCamera($0, request: request) }, onStart: { model.startedImport(request: request) })
+            ContributionPhotoPicker(request: request, onSelection: { providers in
+                photoImport = ContributionPhotoImport(providers: providers, request: request)
+                model.startedImport(request: request)
+            }, onCamera: { model.pickedCamera($0, request: request) })
                 .ignoresSafeArea()
         }
+        .task(id: photoImport?.id) {
+            guard let selection = photoImport else { return }
+            let data = await selection.load()
+            guard !Task.isCancelled, photoImport?.id == selection.id else { return }
+            model.picked(data, request: selection.request)
+            photoImport = nil
+        }
+        .onChange(of: model.state.accountVersion) { _, _ in photoImport = nil }
         .fullScreenCover(isPresented: Binding(get: { model.state.map != nil }, set: {
             if !$0 { model.form.control(action: "dismissMap") }
         })) { ContributionMapPicker(model: model) }
@@ -113,17 +133,27 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
 
     var body: some View {
         ContributionsScaffold(title: title, backLabel: strings.text("back"),
-            onBack: state.submit == "sending" ? nil : onBack) {
-            if state.signedIn == -1 || state.loading && state.kind != "AddRoaster" {
-                if state.loadError != nil { loadFailure } else { ProgressView(strings.text("loading")) }
-            } else if state.signedIn == 0 {
-                ContributionsMessage(text: strings.text(signInKey), actionTitle: strings.text("sign_in"), onAction: onSignIn)
-            } else if state.submit != "idle" { submission }
-            else if state.loadError != nil && state.kind != "AddRoaster" { loadFailure }
-            else { form }
-        }
+            onBack: backAction, showsHeader: state.submit != "done") { formState }
         .font(CoffeePeekNativeStyle.font(16))
         .tint(CoffeePeekNativeStyle.foreground)
+    }
+
+    private var backAction: (() -> Void)? {
+        state.submit == "sending" ? nil : { submissionBack() }
+    }
+
+    @ViewBuilder private var formState: some View {
+        if state.signedIn == -1 || state.loading && state.kind != "AddRoaster" {
+            if state.loadError != nil { loadFailure } else { CoffeePeekNativeLoader(label: strings.text("loading"), size: 32, showsLabel: true) }
+        } else if state.signedIn == 0 {
+            ContributionsMessage(text: strings.text(signInKey), actionTitle: strings.text("sign_in"), onAction: onSignIn)
+        } else if state.submit != "idle" { submission }
+        else if state.loadError != nil && state.kind != "AddRoaster" { loadFailure }
+        else { form }
+    }
+
+    private func submissionBack() {
+        if state.submit == "failed" { onAction("dismissFailure") } else { onBack() }
     }
 
     private var title: String {
@@ -185,7 +215,6 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
     @ViewBuilder private var shopStep: some View {
         switch state.step {
         case 0:
-            Text(strings.text("shop_required_hint")).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
             field("name")
             field("description", multiline: true)
             city
@@ -212,10 +241,9 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
 
     private var roasterFields: some View {
         Group {
-            Text(strings.text("shop_required_hint")).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
             field("name")
             field("description", multiline: true)
-            if state.loading { ProgressView(strings.text("loading")) }
+            if state.loading { CoffeePeekNativeLoader(label: strings.text("loading"), size: 32, showsLabel: true) }
             city
             field("address")
             Text(strings.text("roaster_location_hint")).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
@@ -292,44 +320,40 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
     }
 
     private var city: some View {
-        optionPicker("city", title: strings.text("shop_city_label") + (state.kind == "AddShop" ? " *" : "")) {
-            if $0.isEmpty { onEdit("city", "") } else { onToggle("city", $0) }
-        }
-        .disabled(state.group("city").count == 1 && state.kind == "AddShop")
+        let options = state.group("city")
+        let placeholder = strings.text("shop_city_label") + (state.kind == "AddShop" ? " *" : "")
+        let selected = options.first(where: \.selected)
+        return Menu {
+            Picker(placeholder, selection: Binding(get: { selected?.id ?? "" }, set: {
+                if $0.isEmpty { onEdit("city", "") } else { onToggle("city", $0) }
+            })) {
+                Text(placeholder).tag("")
+                ForEach(options) { Text($0.name).tag($0.id) }
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Text(selected?.name ?? placeholder).frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.up.chevron.down").font(.system(size: 14, weight: .semibold))
+                    .accessibilityHidden(true)
+            }.frame(minHeight: 48).contributionInputSurface().contentShape(Rectangle())
+        }.buttonStyle(.plain)
+        .accessibilityLabel(strings.text("city_description"))
+        .disabled(options.isEmpty)
     }
 
     private var price: some View {
-        optionPicker("price", title: strings.text("price_title")) { onEdit("price", $0) }
-    }
-
-    private func optionPicker(_ key: String, title: String, select: @escaping (String) -> Void) -> some View {
-        let options = state.group(key)
-        return LabeledContent {
-            Picker(title, selection: Binding(get: { options.first(where: \.selected)?.id ?? "" }, set: select)) {
-                Text(title).tag("")
-                ForEach(options) { Text($0.name).tag($0.id) }
-            }.pickerStyle(.menu).labelsHidden()
-        } label: {
-            Text(title)
+        let options = state.group("price")
+        let index = options.firstIndex(where: \.selected).map { $0 + 1 } ?? 0
+        let title = index == 0 ? strings.text("price_title") : strings.format("price_cappuccino", options[index - 1].name)
+        return CoffeePeekNativePriceSlider(title: title, prices: [strings.text("price_title")] + options.map(\.name),
+            selectedIndex: index, showsValue: false) { selected in
+            onEdit("price", selected == 0 ? "" : options[selected - 1].id)
         }
-        .contributionInputSurface()
     }
 
     private func choices(_ key: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if !state.group(key).isEmpty {
-                Text(strings.groupTitle(key)).font(.headline)
-                ForEach(state.group(key)) { option in
-                    Button { onToggle(key, option.id) } label: {
-                        HStack(spacing: 12) {
-                            if let url = option.photoUrl { optionImage(url).frame(width: 36, height: 36).clipped().clipShape(Circle()) }
-                            Text(option.name).frame(maxWidth: .infinity, alignment: .leading)
-                            if option.selected { Image(systemName: "checkmark").foregroundStyle(CoffeePeekNativeStyle.accent) }
-                        }.frame(minHeight: 44)
-                    }.buttonStyle(.plain).accessibilityAddTraits(option.selected ? .isSelected : [])
-                }
-            }
-        }
+        ContributionChoices(title: strings.groupTitle(key), options: state.group(key),
+            select: { onToggle(key, $0) }, optionImage: optionImage)
     }
 
     private var sections: some View {
@@ -393,7 +417,7 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
 
     private func addPhotoButton(menu: Bool) -> some View {
         Button { onAddPhoto(menu) } label: {
-            if preparingPhotos { ProgressView() }
+            if preparingPhotos { CoffeePeekNativeLoader(size: 24) }
             else { Image(systemName: "plus").font(.title) }
         }.frame(width: 112, height: 112).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 14))
             .accessibilityLabel(strings.media("title")).disabled(preparingPhotos)
@@ -423,31 +447,144 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
     }
 
     private var submission: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 16) {
+                    if state.submit == "done" { successContent } else { pendingContent }
+                }.padding(24).frame(maxWidth: .infinity)
+            }.defaultScrollAnchor(.center)
+            submissionActions.padding(16)
+        }.multilineTextAlignment(.center)
+    }
+
+    private var submissionPrefix: String {
+        state.kind == "AddShop" ? "shop" : state.kind == "AddRoaster" ? "roaster" : "editor"
+    }
+
+    private var pendingContent: some View {
+        VStack(spacing: 16) {
             if state.submit == "sending" {
-                ProgressView(strings.text(state.kind == "AddShop" ? "shop_sending_title" : state.kind == "AddRoaster" ? "roaster_sending_title" : state.editing ? "editor_saving_title" : "editor_sending_title"))
-            } else if state.submit == "failed" {
-                Image(systemName: "exclamationmark.circle").font(.largeTitle).foregroundStyle(.red).accessibilityHidden(true)
-                Text(state.submitMessage ?? strings.text(state.kind == "AddRoaster" ? "roaster_failed_default" : state.kind == "AddShop" ? "shop_failed_default" : "editor_failed_default"))
-                Text(strings.text("shop_failed_kept")).foregroundStyle(CoffeePeekNativeStyle.secondary)
-                Button(strings.text("shop_retry_send")) { onAction("submit") }.buttonStyle(.borderedProminent)
-                Button(strings.text("shop_back_to_form")) { onAction("dismissFailure") }
+                CoffeePeekNativeLoader(label: strings.text("\(submissionPrefix)_sending_title"))
+                    .frame(width: 88, height: 88)
             } else {
-                Image(systemName: "checkmark.circle").font(.largeTitle).foregroundStyle(CoffeePeekNativeStyle.accent).accessibilityHidden(true)
-                Text(strings.text(state.kind == "AddShop" ? "shop_success_title" : state.kind == "AddRoaster" ? "roaster_success_title" : state.editing ? "editor_saved_title" : "editor_sent_title")).font(.title2)
-                if let message = state.submitMessage, !message.isEmpty { Text(message) }
-                if state.kind == "Editor" {
-                    Text(strings.text("editor_status_\((state.resultStatus ?? "Pending").lowercased())"))
-                    Button(strings.text("open_request"), action: onOpenRequest)
-                } else {
-                    Text(strings.text(state.kind == "AddRoaster" ? "roaster_success_description" : "shop_success_description"))
-                    if state.addressValidated == false { Text(strings.text("roaster_address_unchecked")) }
-                    Text(state.field("name").value).font(.headline)
-                    if !state.field("address").value.isEmpty { Text(state.field("address").value) }
-                }
-                Button(strings.text("roaster_done"), action: onBack).buttonStyle(.borderedProminent)
+                Image(systemName: "exclamationmark.circle").font(.system(size: 72))
+                    .foregroundStyle(.red).frame(width: 88, height: 88).accessibilityHidden(true)
             }
-        }.multilineTextAlignment(.center).padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
+            Text(strings.text(state.submit == "failed" ? "\(submissionPrefix)_failed_title" :
+                state.kind == "Editor" && state.editing ? "editor_saving_title" : "\(submissionPrefix)_sending_title"))
+                .font(CoffeePeekNativeStyle.font(24, weight: "Bold", relativeTo: .title2))
+            Text(state.submit == "failed" ? failureDescription : strings.text("\(submissionPrefix)_sending_description"))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
+        }
+    }
+
+    private var failureDescription: String {
+        let message = state.submitMessage.flatMap { $0.isEmpty ? nil : $0 } ?? strings.text("\(submissionPrefix)_failed_default")
+        return message + "\n\n" + strings.text("shop_failed_kept")
+    }
+
+    private var successContent: some View {
+        VStack(spacing: 16) {
+            ContributionSuccessArtwork()
+            Image(systemName: "checkmark").font(.system(size: 24, weight: .semibold))
+                .foregroundStyle(.black).frame(width: 48, height: 48)
+                .background(CoffeePeekNativeStyle.accent, in: Circle()).accessibilityHidden(true)
+            Text(strings.text(state.kind == "Editor" ? (state.editing ? "editor_saved_title" : "editor_sent_title") :
+                "\(submissionPrefix)_success_title"))
+                .font(CoffeePeekNativeStyle.font(24, weight: "Bold", relativeTo: .title2))
+            successDescription
+            if state.kind == "AddShop" { sentShopCard.padding(.top, 8) }
+        }
+    }
+
+    @ViewBuilder private var successDescription: some View {
+        if state.kind == "Editor" {
+            Text(strings.text("editor_status_\((state.resultStatus ?? "Pending").lowercased())"))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
+            Button(strings.text("open_request"), action: onOpenRequest).frame(minHeight: 44)
+        } else {
+            Text(state.submitMessage.flatMap { $0.isEmpty ? nil : $0 } ?? strings.text("\(submissionPrefix)_success_description"))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
+            if state.kind == "AddRoaster", !state.field("address").value.isEmpty, state.addressValidated == false {
+                Text(strings.text("roaster_address_unchecked")).foregroundStyle(CoffeePeekNativeStyle.secondary)
+            }
+        }
+    }
+
+    private var sentShopCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let cover = state.photos.first(where: { !$0.menu }) {
+                photo(cover).frame(maxWidth: .infinity).frame(height: 120).clipped()
+            }
+            Text(state.field("name").value.isEmpty ? strings.text("shop_fallback_name") : state.field("name").value)
+                .font(.headline)
+            Text([state.group("city").first(where: \.selected)?.name, state.field("address").value]
+                .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", "))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
+        }.multilineTextAlignment(.leading).contributionsCard()
+    }
+
+    @ViewBuilder private var submissionActions: some View {
+        if state.submit == "failed" {
+            VStack(spacing: 12) {
+                CoffeePeekNativeActionButton(title: strings.text("shop_retry_send"), action: { onAction("submit") })
+                Button(strings.text("shop_back_to_form")) { onAction("dismissFailure") }
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .overlay { Capsule().strokeBorder(CoffeePeekNativeStyle.border).allowsHitTesting(false) }
+            }
+        } else if state.submit == "done" {
+            CoffeePeekNativeActionButton(title: strings.text(state.kind == "AddShop" ? "shop_go_home" : "roaster_done"), action: onBack)
+        }
+    }
+}
+
+private struct ContributionChoices<OptionImage: View>: View {
+    let title: String
+    let options: [ContributionOption]
+    let select: (String) -> Void
+    @ViewBuilder let optionImage: (String) -> OptionImage
+    @Environment(\.accessibilityReduceMotion) private var reducedMotion
+    @State private var expanded = false
+
+    var body: some View {
+        if !options.isEmpty {
+            DisclosureGroup(isExpanded: $expanded) {
+                ForEach(Array(options.enumerated()), id: \.element.id) { index, option in
+                    if index > 0 { Divider().overlay(CoffeePeekNativeStyle.border) }
+                    CoffeePeekNativeChoiceRow(title: option.name, selected: option.selected, action: { select(option.id) }) {
+                        if let url = option.photoUrl {
+                            optionImage(url).frame(width: 28, height: 28).clipped().clipShape(Circle())
+                                .accessibilityHidden(true)
+                        }
+                    }
+                }
+            } label: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title).font(.headline)
+                    let selected = options.filter(\.selected).map(\.name).joined(separator: ", ")
+                    if !selected.isEmpty { Text(selected).font(.subheadline).foregroundStyle(CoffeePeekNativeStyle.secondary) }
+                }.frame(minHeight: 44)
+            }.padding(12).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+                .animation(reducedMotion ? nil : .smooth(duration: 0.25), value: expanded)
+        }
+    }
+}
+
+private struct ContributionSuccessArtwork: View {
+    private var image: UIImage? {
+        let resource = "com.coffeepeek.feature.contributions.impl.resources/drawable"
+        for prefix in ["compose-resources/composeResources", "compose-resources"] {
+            if let path = Bundle.main.path(forResource: "contributions_mascot_happy", ofType: "png", inDirectory: "\(prefix)/\(resource)"),
+               let image = UIImage(contentsOfFile: path) { return image }
+        }
+        return nil
+    }
+
+    var body: some View {
+        Group {
+            if let image { Image(uiImage: image).resizable().scaledToFit() }
+            else { Image(systemName: "cup.and.saucer.fill").resizable().scaledToFit().padding(32) }
+        }.frame(width: 160, height: 160).accessibilityHidden(true)
     }
 }
 

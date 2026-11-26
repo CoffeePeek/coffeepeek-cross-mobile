@@ -50,13 +50,13 @@ private fun SavedPickerContent(state: SavedCollectionsState, action: (SavedColle
             item { SavedCollectionsStatus(state, action) }
             item { SavedCollectionsSearch(state, action) }
             SavedCollectionVisibility.entries.reversed().forEach { visibility ->
-                val lists = state.lists.filter { it.visibility == visibility && it.title.contains(state.query, true) }
+                val lists = state.lists.filter { it.visibility == visibility && matchesCollectionQuery(it.title, state.query) }
                 if (lists.isNotEmpty()) item { SavedCollectionSectionTitle(visibility) }
                 items(lists, key = { it.id }) { value -> SavedMembershipRow(value, value.id in state.memberships, !state.busy && state.membershipsLoaded,
                     { action(SavedCollectionsAction.ToggleMembership(value.id)) }) { image(value, it) } }
             }
             if (!state.loading && state.failure != SavedCollectionsFailure.Load && state.lists.isEmpty()) item { Text(stringResource(Res.string.collections_library_empty)) }
-            if (state.lists.isNotEmpty() && state.lists.none { it.title.contains(state.query, true) })
+            if (state.lists.isNotEmpty() && state.lists.none { matchesCollectionQuery(it.title, state.query) })
                 item { Text(stringResource(Res.string.collections_no_matches)) }
         }
         CoffeePeekButton(stringResource(Res.string.collections_done), { action(SavedCollectionsAction.CommitMemberships) },

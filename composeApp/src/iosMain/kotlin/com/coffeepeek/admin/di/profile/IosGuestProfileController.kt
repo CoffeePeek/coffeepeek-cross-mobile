@@ -15,6 +15,10 @@ internal val LocalIosGuestProfileController = staticCompositionLocalOf<(IosGuest
 internal fun iosGuestProfileContent(): () -> UIViewController {
     val factory = LocalIosGuestProfileController.current
     val language = koinInject<LanguagePort>()
+    return iosGuestProfileContent(factory, language)
+}
+
+internal fun iosGuestProfileContent(factory: (IosGuestProfile) -> UIViewController, language: LanguagePort): () -> UIViewController {
     return {
         factory(IosGuestProfile(language,
             onLogin = { Navigator.navigate(Navigator.Screen.Auth) },

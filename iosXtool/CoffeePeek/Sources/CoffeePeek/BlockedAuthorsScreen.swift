@@ -131,6 +131,7 @@ private struct BlockedAuthorsScreen: View {
             Section {
                 Text(strings.text("author_blocking_description"))
                     .foregroundStyle(.secondary)
+                    .coffeePeekRefreshable(isRefreshing: state.loading, label: strings.text("author_blocking_loading")) { onRefresh() }
             } header: {
                 Text(strings.text("author_blocking_heading"))
                     .accessibilityAddTraits(.isHeader)
@@ -138,31 +139,18 @@ private struct BlockedAuthorsScreen: View {
             if state.signedIn { authorList } else { guest }
         }
         .listStyle(.insetGrouped)
-        .refreshable { onRefresh() }
         .safeAreaInset(edge: .top, spacing: 0) { header }
         .overlay { workingOverlay }
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Button(action: onBack) {
-                Label(strings.text("author_blocking_back"), systemImage: "chevron.backward")
-                    .labelStyle(.iconOnly)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
-            }
-            Text(strings.text("author_blocking_title"))
-                .font(.headline)
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 12)
-        .background(.bar)
+        CoffeePeekNativeNavigationHeader(title: strings.text("author_blocking_title"),
+            backLabel: strings.text("author_blocking_back"), back: onBack)
     }
 
     @ViewBuilder private var authorList: some View {
         if state.loading {
-            Section { ProgressView(strings.text("author_blocking_loading")) }
+            Section { CoffeePeekNativeLoader(label: strings.text("author_blocking_loading"), size: 32, showsLabel: true) }
         }
         if let error = state.error {
             Section {
@@ -199,7 +187,7 @@ private struct BlockedAuthorsScreen: View {
         if let prompt = state.prompt, prompt.working {
             ZStack {
                 Color.black.opacity(0.15).ignoresSafeArea()
-                ProgressView(strings.text(prompt.blocking ? "author_blocking_blocking" : "author_blocking_unblocking"))
+                CoffeePeekNativeLoader(label: strings.text(prompt.blocking ? "author_blocking_blocking" : "author_blocking_unblocking"), size: 32, showsLabel: true)
                     .padding(24)
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
                     .accessibilityAddTraits(.updatesFrequently)
@@ -257,7 +245,7 @@ private struct BlockedAuthorRow: View {
     }
 }
 
-private struct BlockedAuthorsStrings {
+struct BlockedAuthorsStrings {
     private let bundle: Bundle
 
     init(languageTag: String) {

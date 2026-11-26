@@ -16,11 +16,10 @@ struct NotificationInboxScreen: View {
     private let viewport = "notification-inbox"
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
+        NavigationStack {
             GeometryReader { geometry in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 14) {
+                    LazyVStack(alignment: .leading, spacing: 0) {
                         if state.signedIn {
                             history(height: geometry.size.height)
                             status
@@ -36,49 +35,54 @@ struct NotificationInboxScreen: View {
                 .coordinateSpace(name: viewport)
                 .onPreferenceChange(InboxRowBounds.self) { rowBounds = $0 }
             }
+            .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
+            .navigationTitle(strings.text("notifications_title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { closeButton } }
         }
-        .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
+        .tint(CoffeePeekNativeStyle.foreground)
     }
 
-    private var header: some View {
-        HStack {
-            Text(strings.text("notifications_title"))
-                .font(CoffeePeekNativeStyle.font(23, weight: "Bold", relativeTo: .title2))
-                .foregroundStyle(CoffeePeekNativeStyle.foreground)
-                .accessibilityAddTraits(.isHeader)
-            Spacer()
-            Button(action: close) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .semibold))
-                    .frame(width: 44, height: 44)
-                    .background(CoffeePeekNativeStyle.surface, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(CoffeePeekNativeStyle.foreground)
-            .accessibilityLabel(Text(strings.text("notifications_close")))
-            .keyboardShortcut(.cancelAction)
+    private var closeButton: some View {
+        Button(action: close) {
+            Label(strings.text("notifications_close"), systemImage: "xmark").labelStyle(.iconOnly)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
+        .keyboardShortcut(.cancelAction)
     }
 
     private func history(height: CGFloat) -> some View {
         ForEach(groups) { group in
-            HStack {
-                Text(strings.text(group.today ? "notifications_today" : "notifications_earlier"))
-                    .font(CoffeePeekNativeStyle.font(12, weight: "Semibold", relativeTo: .caption))
-                    .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                    .accessibilityAddTraits(.isHeader)
-                Spacer()
-                if groups.first?.id == group.id {
-                    action("notifications_read_all", run: markAll)
-                        .disabled(!canInteract || state.unreadCount == 0 || state.markingRead)
+            groupHeader(group)
+                .padding(.top, groups.first?.id == group.id ? 0 : 16)
+            ForEach(Array(group.rows.enumerated()), id: \.element.id) { index, row in
+                if index > 0 {
+                    Divider().overlay(CoffeePeekNativeStyle.border).padding(.leading, 46)
                 }
-            }
-            ForEach(group.rows, id: \.id) { row in
                 rowView(row, height: height)
             }
         }
+    }
+
+    private func groupHeader(_ group: InboxGroup) -> some View {
+        HStack(spacing: 8) {
+            Text(strings.text(group.today ? "notifications_today" : "notifications_earlier"))
+                .font(CoffeePeekNativeStyle.font(12, weight: "Semibold", relativeTo: .caption))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 0)
+            if groups.first?.id == group.id { readAll }
+        }
+        .frame(minHeight: 44)
+    }
+
+    private var readAll: some View {
+        Button(action: markAll) {
+            Label(strings.text("notifications_read_all"), systemImage: "checkmark")
+                .font(CoffeePeekNativeStyle.font(14, weight: "Semibold"))
+                .frame(minHeight: 44)
+        }
+        .tint(CoffeePeekNativeStyle.secondaryAccent)
+        .disabled(!canInteract || state.unreadCount == 0 || state.markingRead)
     }
 
     private func rowView(_ row: IosNotificationInboxRow, height: CGFloat) -> some View {
@@ -102,7 +106,7 @@ struct NotificationInboxScreen: View {
     @ViewBuilder
     private var status: some View {
         if state.loading && state.items.isEmpty {
-            ProgressView().frame(maxWidth: .infinity).accessibilityLabel(Text(strings.text("notifications_loading")))
+            CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity).accessibilityLabel(Text(strings.text("notifications_loading")))
         } else if let error = state.errorKey {
             VStack(alignment: .leading, spacing: 6) {
                 Text(strings.text(error)).foregroundStyle(.red)
@@ -198,7 +202,7 @@ private struct NotificationInboxRow: View {
                         .accessibilityHidden(true)
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, 12)
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
@@ -236,14 +240,11 @@ private struct NotificationInboxRow: View {
     }
 }
 
+@MainActor
 private func previewInbox(signedIn: Bool, languageTag: String) -> some View {
-    let item = IosNotificationInboxRow(
-        id: "preview", kind: "NewShop", title: "CoffeePeek", body: "",
-        date: "17.11.2026 10:45", today: true, read: false, rejected: false, canOpen: true
-    )
     let state = IosNotificationInboxState(
         sheetVersion: 1, signedIn: signedIn, unreadCount: signedIn ? 1 : 0,
-        items: signedIn ? [item] : [], loading: false, loadingMore: false,
+        items: signedIn ? inboxPreviewItems : [], loading: false, loadingMore: false,
         markingRead: false, hasMore: signedIn, openingId: nil, errorKey: nil
     )
     return NotificationInboxScreen(
@@ -252,5 +253,24 @@ private func previewInbox(signedIn: Bool, languageTag: String) -> some View {
     )
 }
 
+private var inboxPreviewItems: [IosNotificationInboxRow] {
+    [
+        IosNotificationInboxRow(id: "shop", kind: "NewShop", title: "Новая кофейня на карте",
+            body: "На карте появилась новая кофейня. Загляните за чашкой кофе!",
+            date: "25.11.2026 10:45", today: true, read: false, rejected: false, canOpen: true),
+        IosNotificationInboxRow(id: "moderation", kind: "CheckInModeration", title: "Результат модерации изменился",
+            body: "Откройте приложение, чтобы посмотреть подробности.",
+            date: "25.11.2026 09:30", today: true, read: true, rejected: false, canOpen: true),
+        IosNotificationInboxRow(id: "earlier", kind: "General", title: "CoffeePeek", body: "",
+            date: "24.11.2026 10:45", today: false, read: true, rejected: false, canOpen: false)
+    ]
+}
+
 #Preview("Inbox — light") { previewInbox(signedIn: true, languageTag: "ru").preferredColorScheme(.light) }
-#Preview("Inbox — dark") { previewInbox(signedIn: false, languageTag: "be").preferredColorScheme(.dark) }
+#Preview("Inbox — dark") { previewInbox(signedIn: true, languageTag: "ru").preferredColorScheme(.dark) }
+#Preview("Guest — light") { previewInbox(signedIn: false, languageTag: "be").preferredColorScheme(.light) }
+#Preview("Guest — dark") { previewInbox(signedIn: false, languageTag: "be").preferredColorScheme(.dark) }
+#Preview("Inbox — large text") {
+    previewInbox(signedIn: true, languageTag: "ru").preferredColorScheme(.dark)
+        .environment(\.dynamicTypeSize, .accessibility2)
+}

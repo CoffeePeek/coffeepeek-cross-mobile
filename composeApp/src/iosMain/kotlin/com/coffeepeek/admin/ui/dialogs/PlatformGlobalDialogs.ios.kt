@@ -16,7 +16,7 @@ import com.coffeepeek.admin.ui.component.NativeEditorControllerHost
 import com.coffeepeek.admin.ui.component.PresentNativeController
 import platform.UIKit.UIViewController
 
-private lateinit var globalDialogFactory: (IosGlobalDialog) -> UIViewController
+internal lateinit var globalDialogFactory: (IosGlobalDialog) -> UIViewController
 
 internal fun configureNativeGlobalDialogs(factory: (IosGlobalDialog) -> UIViewController) { globalDialogFactory = factory }
 

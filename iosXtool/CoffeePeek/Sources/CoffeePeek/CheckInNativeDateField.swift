@@ -77,6 +77,7 @@ struct CheckInNativeDateField: View {
 #Preview("Home date light") { homeDatePreview().preferredColorScheme(.light) }
 #Preview("Home date dark") { homeDatePreview().preferredColorScheme(.dark) }
 
+@MainActor
 private func homeDatePreview() -> some View {
     let strings = CheckInNativeStrings(languageTag: "ru", table: "NativeHomeCheckIn")
     return CheckInNativeField(title: strings["home_check_in_prepared_date"], style: .home) {

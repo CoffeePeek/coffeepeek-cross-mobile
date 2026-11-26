@@ -11,7 +11,7 @@ struct AccountDeletionNativeScreen: View {
     var body: some View {
         SettingsNativePage(title: strings["profile_deletion_title"], backLabel: strings["profile_back"], back: back) {
             if state.revoked { Color.clear }
-            else if state.loading { ProgressView(strings["profile_loading"]).frame(maxWidth: .infinity, minHeight: 180) }
+            else if state.loading { CoffeePeekNativeLoader(label: strings["profile_loading"], size: 32, showsLabel: true).frame(maxWidth: .infinity, minHeight: 180) }
             else { confirmation }
         }
         .alert(strings["profile_error_title"], isPresented: errorPresented) {
@@ -50,6 +50,7 @@ struct AccountDeletionNativeScreen: View {
     }
 }
 
+@MainActor
 private func deletionPreview(_ language: String, requested: Bool) -> some View {
     AccountDeletionNativeScreen(state: IosAccountDeletionState(email: "fixture@example.invalid", loading: false,
         sending: false, requested: requested, canSend: !requested, resendAvailable: false, revoked: false,

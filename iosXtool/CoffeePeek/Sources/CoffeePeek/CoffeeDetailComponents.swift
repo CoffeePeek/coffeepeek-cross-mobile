@@ -297,6 +297,7 @@ func coffeeDetailFraction(_ frame: CGRect?, in viewport: CGSize) -> Float {
     return Float((clipped.width * clipped.height) / (frame.width * frame.height))
 }
 
+@MainActor
 private func offerPreview(_ languageTag: String) -> some View {
     CoffeeDetailOfferCard(
         offer: IosCoffeeOffer(price: "24.5", currency: "BYN", weight: "250", availability: "InStock", seller: "CoffeePeek",

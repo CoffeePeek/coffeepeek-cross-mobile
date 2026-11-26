@@ -51,6 +51,7 @@ struct CoffeePeekCheckInCardData {
     var actions: Set<String> = []
 }
 
+@MainActor
 final class CoffeePeekCardImageRequest {
     private var cancelAction: (() -> Void)?
     init(cancel: @escaping () -> Void) { cancelAction = cancel }
@@ -59,7 +60,7 @@ final class CoffeePeekCardImageRequest {
         cancelAction = nil
         action?()
     }
-    deinit { cancelAction?() }
+    isolated deinit { cancelAction?() }
 }
 
 typealias CoffeePeekCardImageLoader = (String, @escaping (UIImage?) -> Void) -> CoffeePeekCardImageRequest?

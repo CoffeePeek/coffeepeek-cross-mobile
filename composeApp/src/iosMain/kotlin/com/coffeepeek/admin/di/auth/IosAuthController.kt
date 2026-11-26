@@ -30,34 +30,38 @@ internal fun iosAuthContent(): (Navigator.Screen, () -> Unit) -> (() -> UIViewCo
     val factory = LocalIosAuthController.current
     val sessions = koinInject<SessionReader>()
     val destinations = IosAuthDestinations(koinInject(), koinInject(), koinInject())
-    return { screen, resetToLogin ->
-        when (screen) {
-            Navigator.Screen.Auth -> { { factory(destinations.fullScreenLogin()) } }
-            Navigator.Screen.Register -> { { factory(destinations.fullScreenRegister()) } }
-            is Navigator.Screen.ForgotPassword -> {
-                { factory(destinations.recovery(screen.email, Navigator::popBack, resetToLogin)) }
-            }
-            is Navigator.Screen.ShopCheckInSignIn -> {
-                {
-                    val attempt = Navigator.shopCheckInSignInAttempt(screen.shopId, sessions)
-                    factory(destinations.shopCheckInSignIn(attempt, Navigator::popBack))
-                }
-            }
-            else -> null
+    return iosAuthContent(factory, sessions, destinations)
+}
+
+internal fun iosAuthContent(factory: (IosAuthScreen) -> UIViewController,
+    sessions: SessionReader, destinations: IosAuthDestinations,
+): (Navigator.Screen, () -> Unit) -> (() -> UIViewController)? = { screen, resetToLogin ->
+    when (screen) {
+        Navigator.Screen.Auth -> { { factory(destinations.fullScreenLogin()) } }
+        Navigator.Screen.Register -> { { factory(destinations.fullScreenRegister()) } }
+        is Navigator.Screen.ForgotPassword -> {
+            { factory(destinations.recovery(screen.email, Navigator::popBack, resetToLogin)) }
         }
+        is Navigator.Screen.ShopCheckInSignIn -> {
+            {
+                val attempt = Navigator.shopCheckInSignInAttempt(screen.shopId, sessions)
+                factory(destinations.shopCheckInSignIn(attempt, Navigator::popBack))
+            }
+        }
+        else -> null
     }
 }
 
 private fun IosAuthDestinations.fullScreenLogin() = login(
     back = Navigator::closeAuth,
     onForgotPassword = { email -> Navigator.navigate(Navigator.Screen.ForgotPassword(email)) },
-    onRegister = { Navigator.popThenNavigate(Navigator.Screen.Register) },
+    onRegister = { Navigator.navigate(Navigator.Screen.Register) },
     onSignedIn = { Navigator.navigate(Navigator.Screen.Main) },
 )
 
 private fun IosAuthDestinations.fullScreenRegister() = registration(
     back = Navigator::closeAuth,
-    onLogin = { Navigator.popThenNavigate(Navigator.Screen.Auth) },
+    onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
     onSignedIn = { Navigator.navigate(Navigator.Screen.Main) },
 )
 

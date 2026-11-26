@@ -13,6 +13,7 @@ import com.coffeepeek.core.media.ImageUrlFetcher
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.feature.shop.data.repository.createShopMenuGalleryRepository
 import com.coffeepeek.feature.shop.impl.createIosShopMenuGallerySession
+import com.coffeepeek.feature.shop.domain.repository.ShopMenuGalleryRepository
 import org.koin.compose.koinInject
 import platform.UIKit.UIViewController
 
@@ -29,9 +30,13 @@ internal fun iosShopMenuGalleryContent(): (String) -> UIViewController {
     val imageFetcher = koinInject<ImageUrlFetcher>()
     val media = remember(imageFetcher) { IosCatalogueMedia(imageFetcher, Constants.BASE_URL) }
     val repository = remember(client) { createShopMenuGalleryRepository(client) }
-    return { shopId ->
+    return iosShopMenuGalleryContent(factory, { languageTag }, repository, media)
+}
+
+internal fun iosShopMenuGalleryContent(factory: (IosShopMenuGallery, String) -> UIViewController,
+    language: () -> String, repository: ShopMenuGalleryRepository, media: IosCatalogueMedia,
+): (String) -> UIViewController = { shopId ->
         val session = createIosShopMenuGallerySession(shopId, repository)
         val gallery = IosShopMenuGallery(session, media, Navigator::popBack)
-        factory(gallery, languageTag)
-    }
+        factory(gallery, language())
 }

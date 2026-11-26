@@ -15,14 +15,14 @@ struct CollectionEditorContent<Cover: View>: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top, spacing: 16) {
                 cover()
-                TextField(strings["collections_name"], text: Binding(get: { title }, set: onTitle))
+                TextField(strings["collections_name"], text: Binding(get: { title }, set: { onTitle($0) }))
                     .textFieldStyle(.roundedBorder).disabled(!enabled)
             }
             Text(strings["collections_description"]).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
             TextField(strings["collections_description_placeholder"],
-                text: Binding(get: { description }, set: onDescription), axis: .vertical)
+                text: Binding(get: { description }, set: { onDescription($0) }), axis: .vertical)
                 .lineLimit(3...6).textFieldStyle(.roundedBorder).disabled(!enabled)
-            Toggle(strings["collections_public_switch"], isOn: Binding(get: { isPublic }, set: onVisibility))
+            Toggle(strings["collections_public_switch"], isOn: Binding(get: { isPublic }, set: { onVisibility($0) }))
                 .tint(CoffeePeekNativeStyle.accent).disabled(!enabled)
             Text(strings[isPublic ? "collections_public_hint" : "collections_private_hint"])
                 .font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
@@ -30,55 +30,32 @@ struct CollectionEditorContent<Cover: View>: View {
     }
 }
 
-struct CollectionProfilePreferenceContent: View {
-    let visible: Bool
-    let selectedTitle: String?
-    let enabled: Bool
-    let strings: CollectionsWorkspaceStrings
-    let onVisibility: (Bool) -> Void
-    let onChoose: () -> Void
-    let onDone: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(strings["collections_settings"]).font(.title2).accessibilityAddTraits(.isHeader)
-            Toggle(strings["collections_profile_show"], isOn: Binding(get: { visible }, set: onVisibility))
-                .tint(CoffeePeekNativeStyle.accent).disabled(!enabled)
-            Text(strings["collections_profile_choice_hint"]).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            if visible {
-                Button(action: onChoose) {
-                    HStack {
-                        Text(selectedTitle ?? strings["collections_profile_choose"])
-                        Spacer()
-                        Image(systemName: "chevron.forward")
-                    }
-                }.disabled(!enabled)
-            }
-            Button(strings["collections_done"], action: onDone).frame(maxWidth: .infinity, minHeight: 44)
-        }
-    }
-}
-
 struct CollectionSummaryCard<Cover: View>: View {
     let title: String
-    let count: Int32
-    let strings: CollectionsWorkspaceStrings
+    let countText: String
     @ViewBuilder let cover: () -> Cover
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            cover()
-            LinearGradient(stops: [.init(color: .clear, location: 0.3),
-                .init(color: .black.opacity(0.85), location: 1)], startPoint: .top, endPoint: .bottom)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.headline).lineLimit(2)
-                Text(strings.count(count)).font(.caption)
-            }.foregroundStyle(.white).padding(12)
-        }.aspectRatio(1, contentMode: .fit).clipped().clipShape(RoundedRectangle(cornerRadius: 16))
+        Color.clear.aspectRatio(1, contentMode: .fit)
+            .overlay {
+                GeometryReader { geometry in
+                    ZStack(alignment: .bottomLeading) {
+                        cover().frame(width: geometry.size.width, height: geometry.size.height).clipped()
+                        LinearGradient(stops: [.init(color: .clear, location: 0.3),
+                            .init(color: .black.opacity(0.85), location: 1)], startPoint: .top, endPoint: .bottom)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(title).font(.headline).lineLimit(2)
+                            Text(countText).font(.caption)
+                        }.foregroundStyle(.white).padding(12)
+                    }
+                }
+            }
+            .clipped().clipShape(RoundedRectangle(cornerRadius: 16))
             .accessibilityElement(children: .combine)
     }
 }
 
+@MainActor
 private func collectionContentSample() -> some View {
     ScrollView {
         VStack(alignment: .leading, spacing: 24) {
@@ -87,10 +64,12 @@ private func collectionContentSample() -> some View {
                 onTitle: { _ in }, onDescription: { _ in }, onVisibility: { _ in }) {
                     CoffeePeekPhotoPlaceholder().frame(width: 108, height: 108).clipShape(RoundedRectangle(cornerRadius: 16))
                 }
-            CollectionProfilePreferenceContent(visible: true, selectedTitle: "Кофейные выходные", enabled: true,
-                strings: CollectionsWorkspaceStrings(languageTag: "ru"), onVisibility: { _ in }, onChoose: {}, onDone: {})
-            CollectionSummaryCard(title: "Кофейные выходные", count: 7,
-                strings: CollectionsWorkspaceStrings(languageTag: "ru")) { CoffeePeekPhotoPlaceholder() }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 0), spacing: 16), count: 2), spacing: 16) {
+                ForEach(0..<5) { index in
+                    CollectionSummaryCard(title: index == 0 ? "Кофейные выходные с друзьями" : "Коллекция \(index + 1)",
+                        countText: CollectionsWorkspaceStrings(languageTag: "ru").count(7)) { CoffeePeekPhotoPlaceholder() }
+                }
+            }
         }.padding(16)
     }.font(CoffeePeekNativeStyle.font(16)).foregroundStyle(CoffeePeekNativeStyle.foreground)
         .background(CoffeePeekNativeStyle.background)

@@ -61,6 +61,7 @@ private struct CoffeePeekCommunityCardHeight: PreferenceKey {
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
+@MainActor
 private final class CoffeePeekCommunityCardModel: ObservableObject {
     let card: IosCommunityCard
     @Published private(set) var state: IosCommunityCardState
@@ -72,7 +73,7 @@ private final class CoffeePeekCommunityCardModel: ObservableObject {
         state = card.current()
     }
 
-    deinit { observation?.cancel() }
+    isolated deinit { observation?.cancel() }
 
     func observe() {
         guard observation == nil else { return }

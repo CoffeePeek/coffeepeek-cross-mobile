@@ -216,6 +216,8 @@ jobs:
             --tests 'com.coffeepeek.admin.di.discovery.IosDiscoveryAccountTest' \
             --tests 'com.coffeepeek.admin.di.discovery.IosDiscoveryLocationRequestsTest' \
             --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
+            --tests 'com.coffeepeek.admin.ui.NativeRootNavigationModelTest' \
+            --tests 'com.coffeepeek.admin.ui.NativeRootNavigationCommandTest' \
             --tests 'com.coffeepeek.admin.di.roaster.IosRoasterLifetimeTest' \
             --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
             --tests 'com.coffeepeek.admin.di.contentreport.IosContentReportTest' \

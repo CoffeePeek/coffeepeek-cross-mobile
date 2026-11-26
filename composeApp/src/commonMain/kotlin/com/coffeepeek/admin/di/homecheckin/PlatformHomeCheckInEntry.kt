@@ -18,11 +18,16 @@ internal fun platformHomeCheckInEntry(repository: HomePreparationRepository, cat
     }
 }
 
+internal interface NativeHomeCheckInEntry : HomeCheckInEditorEntry {
+    fun createNative(id: String?, generation: Int, bean: HomeCheckInBean?): NativeHomeCheckInSession
+}
+
 private class PlatformHomeCheckInEntry(
     val fallback: HomeCheckInEditorEntry,
     val picker: HomeCheckInPhotoPicker,
     val create: (String?, Int, HomeCheckInBean?) -> NativeHomeCheckInSession,
-) : HomeCheckInEditorEntry {
+) : NativeHomeCheckInEntry {
+    override fun createNative(id: String?, generation: Int, bean: HomeCheckInBean?) = create(id, generation, bean)
     @Composable
     override fun Content(preparationId: String?, sessionGeneration: Int, accessAllowed: Boolean,
         onClose: () -> Unit, onSaved: (String, Boolean) -> Unit, onDismissAllowedChange: (Boolean) -> Unit,

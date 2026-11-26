@@ -14,12 +14,12 @@ rule changes are part of this checkpoint.
 | Feed card report | CommunityViewModel | CommunityReportContent |
 | Standalone post report | PostViewModel | CommunityReportContent |
 
-`communityHost()` injects both native renderers. `PostSheets` retains its existing
-design-system sheet around the injected body, so `IosNativeSheetPresenter` remains
-the sole owner of the analytics overlay enter/leave and UIKit dismissal delegate.
-Saving/sending disables controls, cancel and swipe dismissal. The Compose body is
-still needed by Android and fake Compose previews; it has no production iOS caller
-after this injection.
+`NativeCommunityFeed` and `NativeCommunityPost` now own the existing ViewModels
+through explicit stores. Their ordinary presentation flows supply the native
+controllers directly. `IosCommunityOverlays` keeps a sheet transport for the same
+draft key; SwiftUI owns sheet/photo-cover presentation. The old feed/detail and
+editor/report Compose renderer hooks were removed with their last iOS consumers.
+Android retains its feature screens, sheets and colocated previews.
 
 The feature resolves its own strings (current ru/default and be resources), saved
 drink names and bundled rating-image URIs. Swift receives app-owned JSON transport,
@@ -30,32 +30,62 @@ text limits, validation/server errors and shared submission actions are preserve
 
 ## Lifetime and callbacks
 
-Every mounted body has a distinct `IosCommunitySheet`. Composition closes it on
-disposal; the UIKit hosting controller retains its Swift model and the root view
-observes that model. Swift model deinitialization cancels only its observation.
+Every mounted body has a distinct `IosCommunitySheet`. The native feature owner
+closes it on accepted dismissal, key replacement or account revocation. The Swift
+model cancels only its observation on deinitialization. Controller destruction
+closes its feature store and collectors; temporary modal coverage keeps the draft.
 Accepted dismissal disposes and revokes the transport, so an old body cannot
 edit a later reopening. A requested dismissal never closes the source ahead of
 the shared owner: a save may already have started before the next native render. Account identity/generation are checked synchronously for
 every action and asynchronously for visible state; account replacement clears the
 native draft. Feed sheet keys include its session generation and post identity.
 
-The SwiftUI child excludes container insets already supplied by the outer sheet,
-but keeps the keyboard safe-area region so its scroll viewport avoids input
-occlusion. Manual keyboard/rotation acceptance is still required.
+SwiftUI owns container and keyboard safe areas directly. The old Compose
+Surface, content measurement and height-reporting transport have been removed
+from this route. Native medium/large detents and scrolling accommodate the form;
+manual keyboard/rotation acceptance is still required.
 
 The existing feature analytics callbacks still run once through their original
 ViewModel actions. No second overlay or analytics service is installed.
 
+## Container exit — 2026-11-25
+
+Swift lays out the feed header and notification control. Transient messages use
+the shared native message view, a cancellable serialized request and identity-bound
+dismissal. Their ordinary timeout is four seconds; VoiceOver keeps the message
+available for explicit dismissal. Shared SnackbarHostState remains only on the
+Android path. No Compose host renders or positions the native message.
+
+One lifecycle-owned date ticker runs while started. Feed return refresh happens
+once after its external Home editor; post resume uses its existing Reload guard.
+Initial resource preparation is distinct from closed state: a null initial
+snapshot does not close the destination, and an unavailable post retains back and
+retry presentation. App account-generation/user/sign-in guards close the entire
+owner even while the controller is hidden.
+
+Resolved feature text feeds one pure card mapper. Thumbnail fallback, inline
+detail upgrades, moderation and offered actions have one implementation. Native
+prefetch shares the global two-request limit and six-image budget, waits 150 ms,
+stops under a photo cover and never renews a display grant or fetches a protected
+original. The existing analytics service retains feed-view and exposure ownership.
+
+The platform-independent sheet/message transports, JSON mapping and ten existing
+guard contracts were moved from iosMain/iosTest to commonMain/commonTest. These
+contracts now execute on the host JVM as well as remaining available to native
+test targets. The application modal/global-flow selection executed 31 contracts
+in four suites without failures. Message constraints update with navigation
+clearance and native fade transitions respect Reduce Motion.
+
 ## Modal audit
 
-`feature/community/impl/ui` has two sheet types: editor and report, both dispatched
-through the native body hooks above from feed and standalone post. Photo previews
-remain delegated through `CommunityHost.photoViewer` (native viewer checkpoint
-#407); transient messages remain delegated through `CommunityHost.snackbar` (#406).
+The native owners offer two sheet types: editor and report. Photo previews use the
+existing protected native viewer through an ordinary source; transient messages
+use the same native message component. `CommunityHost` keeps Android rendering
+services and the independent card hook still needed by its remaining consumers.
 Share uses the existing platform share port; author blocking uses its independently
 injected feature API. This checkpoint adds no hidden Compose dialog/body on iOS.
 
-## Verification — 2026-11-18
+## Historical verification — 2026-11-18
 
 - Windows common feature metadata compilation passed. The feature's iOS metadata
   task is `NO-SOURCE`: its presentation is shared commonMain code.
@@ -76,3 +106,18 @@ sheet, light/dark and accessibility font sizes, VoiceOver rating labels, bundled
 images, catalog failure/retry, back/cancel/swipe while sending, and safe-account
 server acceptance. No automated UI, instrumented or screenshot tests, real-account
 writes, Android builds or device runs were performed.
+
+## Native owner verification — 2026-11-25
+
+Kotlin/Native application compilation and the body gate passed after native route
+selection and old-renderer removal. The repeated normal Android directDebug
+assembly/packaged DEX checks passed, with community 87 tests / 10 suites, media
+73 / 10 and selected refresh/analytics application contracts 6 / 2, no failures.
+Nine tooling checks passed, including compiled Swift lifecycle/photo model
+contracts and native-controller registration. Controller visibility combines its
+actual showing state with scene foreground state, preserving the same owner under
+a cover and preventing a hidden entry from resuming when its scene becomes active.
+Updated framework/Swift 6 executable
+verification and manual modal/keyboard/theme/
+accessibility acceptance remain pending. No device or live-account writes ran,
+and this checkpoint has not been uploaded to TestFlight.

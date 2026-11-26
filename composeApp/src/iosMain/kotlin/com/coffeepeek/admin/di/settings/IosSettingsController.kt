@@ -2,6 +2,7 @@ package com.coffeepeek.admin.di.settings
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.rememberCoroutineScope
 import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
@@ -15,8 +16,6 @@ import com.coffeepeek.feature.profile.api.AccountDeletionPort
 import com.coffeepeek.feature.profile.impl.createNativeAccountDeletionSession
 import com.coffeepeek.admin.auth.GoogleAuth
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import com.coffeepeek.feature.settings.api.LanguagePort
 import com.coffeepeek.feature.settings.api.SettingsAppInfo
@@ -36,11 +35,12 @@ internal fun iosSettingsContent(): (Navigator.Screen) -> (() -> UIViewController
     val factory = LocalIosSettingsController.current
     val dependencies = IosSettingsDependencies(
         koinInject(), koinInject(), koinInject(), koinInject(), koinInject(), koinInject(), koinInject(), koinInject(), koinInject(),
+        rememberCoroutineScope(),
     )
     return { route -> dependencies.controller(route, factory) }
 }
 
-private class IosSettingsDependencies(
+internal class IosSettingsDependencies(
     catalogs: PublicDiscoveryCatalogs,
     cityPreference: CityPreference,
     private val sessions: SessionReader,
@@ -50,10 +50,10 @@ private class IosSettingsDependencies(
     private val ownership: BusinessOwnershipEntry,
     private val accounts: ProfileAccountPort,
     private val deletion: AccountDeletionPort,
+    private val redirectScope: CoroutineScope,
 ) {
     private val cities = AppCityPort(catalogs, cityPreference)
     private val external = AppSettingsExternalActions()
-    private val redirectScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     fun controller(route: Navigator.Screen, factory: (IosSettingsScreen) -> UIViewController): (() -> UIViewController)? = when (route) {
         Navigator.Screen.SettingsTab -> { { factory(tab()) } }

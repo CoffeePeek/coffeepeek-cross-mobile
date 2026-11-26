@@ -22,10 +22,22 @@ class IosEditProfile internal constructor(
     private val media: IosCatalogueMedia, private val photos: () -> PhotoPickerController?,
     private val onBack: () -> Unit, private val onDeletion: () -> Unit,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val mediaScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
+    internal val screenVisible = MutableStateFlow(false)
     private val preparing = MutableStateFlow(false)
+    private var presenter: () -> platform.UIKit.UIViewController? = { null }
+    private var onDispose: () -> Unit = {}
+    private var released = false
+    private var closed = false
     fun current() = session.current().iosState(preparing.value)
     fun languageTag() = language.current().languageTag
+    fun bindPresenter(host: () -> platform.UIKit.UIViewController?) { if (!closed) presenter = host }
+    internal fun presentationHost() = presenter().takeIf { !closed && session.isCurrent() }
+    internal fun bindDisposal(dispose: () -> Unit) {
+        if (released) dispose() else onDispose = dispose
+    }
+    fun setVisible(visible: Boolean) { screenVisible.value = visible && !closed && session.isCurrent() }
     fun observe(onState: (IosEditProfileState) -> Unit, onLanguage: (String) -> Unit): IosEditProfileObservation {
         return IosEditProfileObservation(
             scope.launch { combine(session.state, preparing) { state, loading -> state.iosState(loading) }.collect(onState) },
@@ -39,7 +51,7 @@ class IosEditProfile internal constructor(
     fun cancelUsername() = session.cancelUsername()
     fun dismissError() = session.dismissError()
     fun reload() = session.reload()
-    fun back() { if (!session.current().saving) onBack() }
+    fun back() { if (!closed && !session.current().saving) onBack() }
     fun deleteAccount() { if (session.isCurrent() && !session.current().saving) onDeletion() }
     fun choosePhoto(camera: Boolean) {
         if (!session.isCurrent() || session.current().saving || preparing.value) return
@@ -47,12 +59,36 @@ class IosEditProfile internal constructor(
         if (camera) picker.takePhoto() else picker.pickFromGallery()
     }
     fun loadImage(url: String, onImage: (UIImage?) -> Unit): IosEditProfileObservation {
-        return IosEditProfileObservation(scope.launch {
-            media.observeImage(url, session::isCurrent).collect { onImage(it.takeIf { session.isCurrent() }) }
+        return IosEditProfileObservation(mediaScope.launch {
+            try { media.observeImage(url, session::isCurrent).collect { onImage(it.takeIf { session.isCurrent() }) } }
+            catch (cancelled: CancellationException) {
+                onImage(null)
+                throw cancelled
+            }
         })
     }
-    internal fun photoLoading(value: Boolean) { preparing.value = value }
-    internal fun close() { scope.cancel() }
+    internal fun photoLoading(value: Boolean) { if (!closed) preparing.value = value }
+    internal fun revoke() {
+        session.close()
+        preparing.value = false
+        screenVisible.value = false
+        mediaScope.cancel()
+        releaseOwner()
+    }
+    fun close() {
+        if (closed) return
+        closed = true
+        revoke()
+        presenter = { null }
+        scope.cancel()
+    }
+    private fun releaseOwner() {
+        if (released) return
+        released = true
+        val release = onDispose
+        onDispose = {}
+        release()
+    }
 }
 
 class IosEditProfileObservation internal constructor(private vararg val jobs: Job) {

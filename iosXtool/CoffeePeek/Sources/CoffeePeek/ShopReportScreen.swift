@@ -26,10 +26,7 @@ private final class ShopReportHostingController: UIHostingController<ShopReportH
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Use init(report:languageTag:shopTitle:onBack:)") }
 
-    deinit {
-        let owner = report
-        DispatchQueue.main.async { owner.close() }
-    }
+    isolated deinit { report.close() }
 }
 
 private struct ShopReportHost: View {
@@ -108,6 +105,7 @@ private struct ShopReportScreen: View {
     let submit: () -> Void
     let onBack: () -> Void
     @FocusState private var descriptionFocused: Bool
+    @ScaledMetric(relativeTo: .body) private var descriptionHeight: CGFloat = 112
 
     private var title: String {
         shopTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -115,8 +113,8 @@ private struct ShopReportScreen: View {
     }
 
     var body: some View {
-        Form {
-            Group {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
                 if state.sessionEnded {
                     message("shop_report_session_ended", button: "shop_report_back")
                 } else if state.unconfirmed {
@@ -126,10 +124,13 @@ private struct ShopReportScreen: View {
                 } else {
                     formFields
                 }
-            }.listRowBackground(CoffeePeekNativeStyle.surface)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
         }
-        .scrollContentBackground(.hidden)
+        .scrollDismissesKeyboard(.interactively)
         .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
+        .font(CoffeePeekNativeStyle.font(16))
         .foregroundStyle(CoffeePeekNativeStyle.foreground).tint(CoffeePeekNativeStyle.accent)
         .safeAreaInset(edge: .top, spacing: 0) { header }
         .toolbar {
@@ -141,97 +142,110 @@ private struct ShopReportScreen: View {
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Button(action: onBack) {
-                Label(strings.text("shop_report_back"), systemImage: "chevron.backward")
-                    .labelStyle(.iconOnly)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
-            }
-            Text(strings.text("shop_report_title"))
-                .font(.headline)
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 12)
-        .background(CoffeePeekNativeStyle.background)
+        CoffeePeekNativeNavigationHeader(title: strings.text("shop_report_title"),
+            backLabel: strings.text("shop_report_back"), back: onBack)
     }
 
     private var formFields: some View {
         Group {
-            Section {
-                Text(title).font(.headline)
-                Text(strings.text("shop_report_prompt")).foregroundStyle(.secondary)
-            }
-            Section {
-                ForEach(ShopReportCategory.all, id: \.id) { category in
+            Text(title)
+                .font(CoffeePeekNativeStyle.font(22, weight: "Semibold", relativeTo: .title2))
+                .accessibilityAddTraits(.isHeader)
+            Text(strings.text("shop_report_prompt")).foregroundStyle(CoffeePeekNativeStyle.secondary)
+            VStack(spacing: 0) {
+                ForEach(Array(ShopReportCategory.all.enumerated()), id: \.element.id) { index, category in
+                    if index > 0 {
+                        Divider().overlay(CoffeePeekNativeStyle.border).padding(.horizontal, 16)
+                    }
                     categoryButton(category)
                 }
             }
+            .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 24))
+            .overlay { RoundedRectangle(cornerRadius: 24).strokeBorder(CoffeePeekNativeStyle.border) }
             if state.category == "Other" { descriptionField }
             submission
         }
     }
 
     private func categoryButton(_ category: ShopReportCategory) -> some View {
-        Button { selectCategory(category.id) } label: {
-            HStack {
-                Text(strings.text(category.key)).foregroundStyle(.primary)
-                Spacer(minLength: 12)
-                if state.category == category.id {
-                    Image(systemName: "checkmark").accessibilityHidden(true)
-                }
-            }
-            .contentShape(Rectangle())
-        }
+        Button { selectCategory(category.id) } label: { categoryLabel(category) }
+        .buttonStyle(.plain)
+        .opacity(state.submitting ? 0.5 : 1)
         .disabled(state.submitting)
         .accessibilityAddTraits(state.category == category.id ? .isSelected : [])
     }
 
+    private func categoryLabel(_ category: ShopReportCategory) -> some View {
+        HStack(spacing: 12) {
+            Text(strings.text(category.key)).foregroundStyle(CoffeePeekNativeStyle.foreground)
+            Spacer(minLength: 12)
+            ZStack {
+                if state.category == category.id {
+                    Image(systemName: "checkmark").font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(CoffeePeekNativeStyle.accent)
+                }
+            }
+            .frame(width: 24, height: 24).accessibilityHidden(true)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+        .contentShape(Rectangle())
+    }
+
     private var descriptionField: some View {
-        Section {
-            TextEditor(text: Binding(get: { state.description }, set: changeDescription))
-                .frame(minHeight: 112)
+        VStack(alignment: .leading, spacing: 8) {
+            Text(strings.text("shop_report_description_label"))
+                .font(CoffeePeekNativeStyle.font(14, weight: "Medium"))
+            TextEditor(text: Binding(get: { state.description }, set: { changeDescription($0) }))
+                .scrollContentBackground(.hidden)
+                .frame(height: descriptionHeight).padding(12)
+                .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16).strokeBorder(
+                        state.error == "DescriptionRequired" ? CoffeePeekNativeStyle.error : CoffeePeekNativeStyle.border)
+                }
                 .focused($descriptionFocused)
                 .disabled(state.submitting)
                 .accessibilityLabel(strings.text("shop_report_description_label"))
-        } header: {
-            Text(strings.text("shop_report_description_label"))
-        } footer: {
             Text(strings.text("shop_report_description_limit"))
+                .font(CoffeePeekNativeStyle.font(12, relativeTo: .caption))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
         }
     }
 
     private var submission: some View {
-        Section {
+        VStack(alignment: .leading, spacing: 20) {
             if let error = state.error, let key = ShopReportStrings.errorKeys[error] {
-                Text(strings.text(key)).foregroundStyle(.red)
+                Text(strings.text(key)).font(CoffeePeekNativeStyle.font(12, relativeTo: .caption))
+                    .foregroundStyle(CoffeePeekNativeStyle.error)
             }
             if state.submitting {
-                ProgressView(strings.text("shop_report_submitting"))
+                CoffeePeekNativeLoader(label: strings.text("shop_report_submitting"), size: 32, showsLabel: true)
+                    .frame(maxWidth: .infinity, minHeight: 48)
             } else {
-                Button(strings.text("shop_report_submit")) {
+                CoffeePeekNativeActionButton(title: strings.text("shop_report_submit"), enabled: state.category != nil) {
                     descriptionFocused = false
                     submit()
                 }
-                .disabled(state.category == nil)
             }
         }
+        .padding(.top, 8)
     }
 
     private var success: some View {
-        Section {
-            Text(strings.text("shop_report_thanks")).font(.headline)
+        Group {
+            Text(strings.text("shop_report_thanks"))
+                .font(CoffeePeekNativeStyle.font(24, weight: "Semibold", relativeTo: .title2))
             Text(String(format: strings.text("shop_report_will_review"), title))
-                .foregroundStyle(.secondary)
-            Button(strings.text("shop_report_done"), action: onBack)
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
+            CoffeePeekNativeActionButton(title: strings.text("shop_report_done"), action: onBack)
         }
     }
 
     private func message(_ key: String, button: String) -> some View {
-        Section {
-            Text(strings.text(key)).foregroundStyle(.secondary)
-            Button(strings.text(button), action: onBack)
+        Group {
+            Text(strings.text(key)).foregroundStyle(CoffeePeekNativeStyle.secondary)
+            CoffeePeekNativeActionButton(title: strings.text(button), action: onBack)
         }
     }
 }
@@ -243,9 +257,9 @@ private struct ShopReportCategory {
     static let all = [
         Self(id: "OutdatedMenu", key: "shop_report_outdated_menu"),
         Self(id: "ShopClosed", key: "shop_report_shop_closed"),
-        Self(id: "IncorrectAddress", key: "shop_report_incorrect_address"),
         Self(id: "WrongOpeningHours", key: "shop_report_wrong_hours"),
         Self(id: "IncorrectPhotos", key: "shop_report_incorrect_photos"),
+        Self(id: "IncorrectAddress", key: "shop_report_incorrect_address"),
         Self(id: "Other", key: "shop_report_other")
     ]
 }
@@ -267,23 +281,33 @@ private struct ShopReportStrings {
     }
 }
 
-#Preview("Light") {
-    ShopReportScreen(state: ShopReportViewState(category: "Other", description: "Неверный адрес"),
-                     strings: ShopReportStrings(languageTag: "ru"), shopTitle: "Кофейня",
+@MainActor
+private func shopReportPreview(_ state: ShopReportViewState = ShopReportViewState(), languageTag: String = "ru") -> some View {
+    ShopReportScreen(state: state, strings: ShopReportStrings(languageTag: languageTag), shopTitle: "CoffeePeek",
                      selectCategory: { _ in }, changeDescription: { _ in }, submit: {}, onBack: {})
-        .preferredColorScheme(.light)
 }
 
-#Preview("Dark") {
-    ShopReportScreen(state: ShopReportViewState(category: "ShopClosed", error: "SubmissionFailed"),
-                     strings: ShopReportStrings(languageTag: "be"), shopTitle: "Кавярня",
-                     selectCategory: { _ in }, changeDescription: { _ in }, submit: {}, onBack: {})
+#Preview("Report · Light") { shopReportPreview().preferredColorScheme(.light) }
+#Preview("Report · Dark") { shopReportPreview().preferredColorScheme(.dark) }
+#Preview("Other · Light") {
+    shopReportPreview(ShopReportViewState(category: "Other", description: "Неверный адрес")).preferredColorScheme(.light)
+}
+#Preview("Other · Dark") {
+    shopReportPreview(ShopReportViewState(category: "Other", description: "Неверный адрес")).preferredColorScheme(.dark)
+}
+#Preview("Error · Belarusian") {
+    shopReportPreview(ShopReportViewState(category: "ShopClosed", error: "SubmissionFailed"), languageTag: "be")
         .preferredColorScheme(.dark)
 }
-
+#Preview("Submitting") {
+    shopReportPreview(ShopReportViewState(category: "ShopClosed", submitting: true)).preferredColorScheme(.light)
+}
+#Preview("Submitted") {
+    shopReportPreview(ShopReportViewState(submitted: true)).preferredColorScheme(.light)
+}
 #Preview("Unconfirmed") {
-    ShopReportScreen(state: ShopReportViewState(unconfirmed: true),
-                     strings: ShopReportStrings(languageTag: "ru"), shopTitle: "Кофейня",
-                     selectCategory: { _ in }, changeDescription: { _ in }, submit: {}, onBack: {})
-        .preferredColorScheme(.dark)
+    shopReportPreview(ShopReportViewState(unconfirmed: true)).preferredColorScheme(.dark)
+}
+#Preview("Report · Large text") {
+    shopReportPreview().preferredColorScheme(.dark).environment(\.dynamicTypeSize, .accessibility2)
 }

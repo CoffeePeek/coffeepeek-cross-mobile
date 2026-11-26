@@ -47,6 +47,46 @@ class AppReviewPromptTest {
         assertEquals(1, store.requests)
     }
 
+    @Test fun nativeOcclusionCancelsTheAttemptAndReturningCanTryAgain() = runTest {
+        val store = EligibleReviewStore()
+        val source = NativeAppReviewPrompt(store.platform(), backgroundScope)
+        source.presentation(true)
+        advanceTimeBy(4.seconds)
+        source.presentation(false)
+        advanceTimeBy(5.seconds)
+        runCurrent()
+        assertEquals(0, store.requests)
+        source.presentation(true)
+        advanceTimeBy(5.seconds)
+        runCurrent()
+        assertEquals(1, store.requests)
+        source.close()
+    }
+
+    @Test fun repeatedNativeEligibilityDoesNotRestartTheDelay() = runTest {
+        val store = EligibleReviewStore()
+        val source = NativeAppReviewPrompt(store.platform(), backgroundScope)
+        source.presentation(true)
+        advanceTimeBy(4.seconds)
+        source.presentation(true)
+        advanceTimeBy(1.seconds)
+        runCurrent()
+        assertEquals(1, store.requests)
+        source.close()
+    }
+
+    @Test fun disposedNativeControllerCannotClaimAnAttempt() = runTest {
+        val store = EligibleReviewStore()
+        val source = NativeAppReviewPrompt(store.platform(), backgroundScope)
+        source.presentation(true)
+        advanceTimeBy(4.seconds)
+        source.close()
+        source.presentation(true)
+        advanceTimeBy(5.seconds)
+        runCurrent()
+        assertEquals(0, store.requests)
+    }
+
     private class EligibleReviewStore {
         private val day = 1.days.inWholeSeconds
         private val firstDay = 20_000L

@@ -38,7 +38,7 @@ internal actual fun PlatformPhotoViewer(images: CoffeePeekPhotoViewerImages, ini
     DisposableEffect(source) { onDispose { source.close() } }
 }
 
-private fun photoPresentation(images: CoffeePeekPhotoViewerImages, index: Int, accounts: SessionReader,
+internal fun photoPresentation(images: CoffeePeekPhotoViewerImages, index: Int, accounts: SessionReader,
     fetcher: ImageUrlFetcher, language: LanguagePort, onDismiss: () -> Unit): IosCheckInPhotoPresentation {
     val generation = accounts.accountGeneration()
     val user = accounts.peekSession()?.userId

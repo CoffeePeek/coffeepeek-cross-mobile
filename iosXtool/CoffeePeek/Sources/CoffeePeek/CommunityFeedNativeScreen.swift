@@ -3,6 +3,7 @@ import SwiftUI
 struct CommunityFeedNativeContent: View {
     let state: CommunityFeedNativePresentation
     let actions: CommunityFeedNativeActions
+    var headerAction: AnyView? = nil
     @Environment(\.scenePhase) private var scenePhase
     @Namespace private var viewportSpace
     @State private var frames: [String: CGRect] = [:]
@@ -34,19 +35,19 @@ struct CommunityFeedNativeContent: View {
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
-            Text(state.title).font(CoffeePeekNativeStyle.rootHeadingFont)
-                .frame(maxWidth: .infinity, alignment: .leading).accessibilityAddTraits(.isHeader)
-            Color.clear.frame(width: 56, height: 44).accessibilityHidden(true)
-        }.frame(minHeight: 44).padding(.horizontal, 16).padding(.vertical, 12)
+        CoffeePeekNativeRootHeader(title: state.title) {
+            if let headerAction { headerAction }
+            else { AnyView(Color.clear.frame(width: 56, height: 48).accessibilityHidden(true)) }
+        }.padding(.horizontal, 16)
     }
 
     private var viewport: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
                 ScrollViewReader { proxy in
-                    ScrollView { feedList }
-                        .refreshable { await actions.refresh() }
+                    ScrollView {
+                        feedList.coffeePeekRefreshable(isRefreshing: state.refreshing, label: state.labels.loading) { await actions.refresh() }
+                    }
                         .accessibilityAction(named: Text(state.labels.refresh)) { actions.perform("refresh") }
                         .onChange(of: state.sessionGeneration) { _, _ in
                             frames = [:]
@@ -72,7 +73,7 @@ struct CommunityFeedNativeContent: View {
                 CommunityFeedConfirmedCard(id: id, labels: state.labels, perform: actions.perform).padding(.horizontal, 16)
             }
             if state.loading && state.rows.isEmpty {
-                ProgressView(state.labels.loading).tint(CoffeePeekNativeStyle.foreground)
+                CoffeePeekNativeLoader(label: state.labels.loading, color: CoffeePeekNativeStyle.foreground, size: 32, showsLabel: true)
                     .frame(maxWidth: .infinity).padding(.top, 8)
             } else {
                 ForEach(Array(state.rows.enumerated()), id: \.element.id) { index, row in
@@ -101,11 +102,8 @@ struct CommunityFeedNativeContent: View {
     private var pinnedSignIn: Bool { state.guest && !state.rows.isEmpty }
 
     private var signInButton: some View {
-        Button { actions.perform("signIn") } label: {
-            Text(state.labels.signIn).font(CoffeePeekNativeStyle.font(16, weight: "Semibold"))
-                .multilineTextAlignment(.center).frame(maxWidth: .infinity, minHeight: 32)
-        }
-        .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.large).foregroundStyle(.black)
+        CoffeePeekNativeActionButton(title: state.labels.signIn, fontSize: 16) { actions.perform("signIn") }
+        .fixedSize(horizontal: false, vertical: true)
         .background {
             GeometryReader { geometry in
                 Color.clear.preference(key: CommunityFeedSignInHeight.self, value: geometry.size.height)

@@ -20,8 +20,13 @@ import com.coffeepeek.feature.shop.impl.ShopCheckInListCallbacks
 import com.coffeepeek.feature.shop.impl.ShopCheckInListRow
 import com.coffeepeek.feature.shop.impl.createIosShopCheckInListSession
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import platform.UIKit.UIImage
 
@@ -40,6 +45,7 @@ class IosShopCheckInList internal constructor(
     private val host = ShopBrowsingHostViewModel(sessions, visibility)
     private val store = ViewModelStore().apply { put("ios-shop-check-in-host", host) }
     private var binding: BoundShopCheckIns? = null
+    private val visible = MutableStateFlow(false)
 
     fun currentState(): IosShopCheckInListState {
         val source = host.session.value
@@ -51,16 +57,27 @@ class IosShopCheckInList internal constructor(
         onPhoto: (IosPhotoViewer) -> Unit,
         unknownAuthor: String,
     ) = IosShopCheckInObservation(host.viewModelScope.launch {
-        host.session.collectLatest { source ->
-            val bound = bind(source)
-            onState(IosShopCheckInListState(source.generation, bound?.model?.current(), source.observationFailed))
-            if (bound != null) observeBinding(bound, onState, onPhoto, unknownAuthor)
+        coroutineScope {
+            launch { visible.collectLatest { shown -> if (shown) while (true) {
+                delay(60_000)
+                onState(currentState())
+            } } }
+            host.session.collectLatest { source ->
+                val bound = bind(source)
+                onState(IosShopCheckInListState(source.generation, bound?.model?.current(), source.observationFailed))
+                if (bound != null) observeBinding(bound, onState, onPhoto, unknownAuthor)
+            }
         }
     })
 
     fun dateLabel(raw: String) = formatDate(raw)
     fun back() = Navigator.popBack()
     fun resume() { currentModel()?.resume() }
+    fun setVisible(shown: Boolean) {
+        if (visible.value == shown) return
+        visible.value = shown
+        if (shown) resume()
+    }
     fun retry() {
         if (host.session.value.observationFailed) host.retry()
         else currentModel()?.retry()
@@ -82,8 +99,15 @@ class IosShopCheckInList internal constructor(
         IosShopCheckInObservation(host.viewModelScope.launch {
             val bound = bind(host.session.value) ?: return@launch
             val row = bound.model.current().rows.firstOrNull { it.id == id } ?: return@launch
-            val image = url(row)?.let { media.loadImage(it) }
-            if (bound.source.lease.isCurrent()) receive(image)
+            val path = url(row)?.takeIf(String::isNotBlank) ?: return@launch
+            try {
+                media.observeImage(path, bound.source.lease::isCurrent).collect {
+                    receive(it.takeIf { bound.source.lease.isCurrent() })
+                }
+            } catch (cancelled: CancellationException) {
+                receive(null)
+                throw cancelled
+            } catch (_: Exception) { receive(null) }
         })
 
     private suspend fun observeBinding(
@@ -91,11 +115,14 @@ class IosShopCheckInList internal constructor(
         onState: (IosShopCheckInListState) -> Unit,
         onPhoto: (IosPhotoViewer) -> Unit,
         unknownAuthor: String,
-    ) {
+    ): Nothing = coroutineScope {
         val state = bound.model.observeState {
             if (bound.source.lease.isCurrent()) onState(IosShopCheckInListState(bound.source.generation, it))
         }
-        val events = bound.model.observeEvents(ShopCheckInNavigation(bound.source.lease, blockActions, unknownAuthor, media, onPhoto))
+        val events = launch { visible.collectLatest { shown -> if (shown) {
+            val listener = bound.model.observeEvents(ShopCheckInNavigation(bound.source.lease, blockActions, unknownAuthor, media, onPhoto))
+            try { awaitCancellation() } finally { listener.cancel() }
+        } } }
         try { awaitCancellation() } finally {
             state.cancel()
             events.cancel()

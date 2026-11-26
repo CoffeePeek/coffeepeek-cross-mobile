@@ -22,7 +22,7 @@ import com.coffeepeek.feature.settings.api.LanguagePort
 import org.koin.compose.koinInject
 import platform.UIKit.UIViewController
 
-private lateinit var roasterController: (IosRoasterScreen) -> UIViewController
+internal lateinit var roasterController: (IosRoasterScreen) -> UIViewController
 internal val LocalIosRoasterDiscoverySink = staticCompositionLocalOf<((IosRoasterDiscovery?) -> Unit)?> { null }
 object IosRoasterControllers {
     fun configure(factory: (IosRoasterScreen) -> UIViewController) { roasterController = factory }
@@ -64,11 +64,12 @@ private fun RoasterDetailNativeContent(session: NativeRoasterDetailSession, host
     val accounts = koinInject<SessionReader>()
     val fetcher = koinInject<ImageUrlFetcher>()
     val ownership = koinInject<BusinessOwnershipEntry>()
+    val media = remember(fetcher) { IosCatalogueMedia(fetcher, Constants.BASE_URL) }
     val generation = accounts.accountGeneration()
     val source = remember(session, generation) {
-        IosRoasterDetail(session, host, language, accounts, IosCatalogueMedia(fetcher, Constants.BASE_URL)) { allowed ->
-            roasterOwnershipController(session, ownership, language, allowed)
-        }
+        IosRoasterDetail(session, host, language, accounts, media, ownership = { allowed ->
+            roasterOwnershipController(session, ownership, language, media, allowed)
+        })
     }
     val controller = remember(source) { roasterController(source) }
     val theme by ThemeManager.themeMode.collectAsState()
@@ -83,10 +84,10 @@ private fun RoasterDetailNativeContent(session: NativeRoasterDetailSession, host
     NativeEditorControllerHost(controller, host.modifier.fillMaxSize())
 }
 
-private fun roasterOwnershipController(session: NativeRoasterDetailSession, ownership: BusinessOwnershipEntry,
-    language: LanguagePort, allowed: () -> Boolean): UIViewController? {
+internal fun roasterOwnershipController(session: NativeRoasterDetailSession, ownership: BusinessOwnershipEntry,
+    language: LanguagePort, media: IosCatalogueMedia, allowed: () -> Boolean): UIViewController? {
     val details = session.current().details ?: return null
-    return iosOwnershipActionsController(ownership, language, "Roaster", details.id, details.address.slug,
+    return iosOwnershipActionsController(ownership, language, media, "Roaster", details.id, details.address.slug,
         allowed = { allowed() && session.current().details?.id == details.id })
 }
 

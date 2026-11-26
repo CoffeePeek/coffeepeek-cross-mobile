@@ -29,10 +29,7 @@ private final class ContributionsHostingController<Content: View>: UIHostingCont
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Use init(route:content:)") }
 
-    deinit {
-        let route = route
-        DispatchQueue.main.async { route.close() }
-    }
+    isolated deinit { route.close() }
 }
 
 struct ContributionsStrings {
@@ -56,27 +53,14 @@ struct ContributionsScaffold<Content: View>: View {
     let title: String
     let backLabel: String
     let onBack: (() -> Void)?
+    var showsHeader = true
     @ViewBuilder let content: Content
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                if let onBack {
-                    Button(action: onBack) {
-                        Image(systemName: "chevron.backward")
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(backLabel)
-                }
-                Text(title)
-                    .font(CoffeePeekNativeStyle.font(21, weight: "Bold", relativeTo: .title2))
-                    .accessibilityAddTraits(.isHeader)
-                Spacer(minLength: 0)
+            if showsHeader {
+                CoffeePeekNativeNavigationHeader(title: title, backLabel: backLabel, back: onBack)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 4)
             content.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
@@ -138,9 +122,10 @@ extension View {
 }
 
 
+@MainActor
 private func contributionsSendingPreview() -> some View {
     ContributionsScaffold(title: "Отправка", backLabel: "Назад", onBack: nil) {
-        ProgressView("Сохраняем заявку…")
+        CoffeePeekNativeLoader(label: "Сохраняем заявку…", size: 32, showsLabel: true)
     }
 }
 #Preview("Contributions sending light") { contributionsSendingPreview().preferredColorScheme(.light) }

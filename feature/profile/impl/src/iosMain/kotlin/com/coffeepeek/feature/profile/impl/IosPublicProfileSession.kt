@@ -50,6 +50,7 @@ class PublicProfileSnapshot internal constructor(
     val own = state.isOwnProfile && showsContent
     val signedIn = state.isSignedIn && showsContent
     val following = state.isFollowing && showsContent
+    val followingCount = state.followingCount.takeIf { showsContent }
     val followEnabled = showsContent && !state.isFollowLoading && !state.isLoading
     val followFailed = showsContent && state.followError != null
     val checkIns = if (showsContent) state.checkIns.map(::OwnProfileCheckInSnapshot) else emptyList()

@@ -91,7 +91,7 @@ struct EditProfileNativeAvatar: View {
                     Circle().fill(CoffeePeekNativeStyle.accent.gradient)
                     if let image { Image(uiImage: image).resizable().scaledToFill() }
                     else { Text(String(state.username.prefix(2)).uppercased()).font(CoffeePeekNativeStyle.font(30, weight: "Bold")) }
-                    if state.photoLoading { ProgressView().tint(.black) }
+                    if state.photoLoading { CoffeePeekNativeLoader(color: .black, size: 24) }
                 }.frame(width: 96, height: 96).clipShape(Circle())
                 Image(systemName: "camera").font(.system(size: 16)).frame(width: 32, height: 32)
                     .background(CoffeePeekNativeStyle.surface, in: Circle())

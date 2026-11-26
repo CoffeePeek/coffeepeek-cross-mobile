@@ -13,7 +13,7 @@ struct CommunityFeedNativeStatus: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if state.guest { signIn }
             }
-            if state.loadingMore { ProgressView(state.labels.loading).tint(CoffeePeekNativeStyle.foreground) }
+            if state.loadingMore { CoffeePeekNativeLoader(label: state.labels.loading, color: CoffeePeekNativeStyle.foreground, size: 32, showsLabel: true) }
         }.padding(.horizontal, 16)
     }
 
@@ -30,8 +30,8 @@ struct CommunityFeedNativeStatus: View {
     }
 
     private var signIn: some View {
-        Button { perform("signIn") } label: { Text(state.labels.signIn).frame(maxWidth: .infinity, minHeight: 32) }
-            .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.large).foregroundStyle(.black)
+        CoffeePeekNativeActionButton(title: state.labels.signIn, fontSize: 16) { perform("signIn") }
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private static let errorMascot: UIImage? = {

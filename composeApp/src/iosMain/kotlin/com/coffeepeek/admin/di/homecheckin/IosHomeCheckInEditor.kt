@@ -9,7 +9,7 @@ import com.coffeepeek.feature.settings.api.LanguagePort
 import kotlinx.coroutines.*
 import platform.UIKit.UIImage
 
-/** Swift owns subscriptions; the composition entry owns this editor and its feature session. */
+/** A native presentation owns the editor, feature session and media request lifetimes. */
 class IosHomeCheckInEditor internal constructor(
     private val session: NativeHomeCheckInSession,
     private val language: LanguagePort,
@@ -17,14 +17,24 @@ class IosHomeCheckInEditor internal constructor(
     private val imageLease: CheckInHistorySession,
     private val photos: () -> HomeCheckInPhotoPickerController?,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var presenter: () -> platform.UIKit.UIViewController? = { null }
+    private var release: () -> Unit = {}
+    private var revoked = false
+    private var closed = false
     fun current() = session.current().iosState()
     fun today() = session.today()
     fun languageTag() = language.current().languageTag
+    fun bindPresenter(presenter: () -> platform.UIKit.UIViewController?) { if (!revoked) this.presenter = presenter }
+    internal fun presentationHost() = presenter().takeIf { !revoked && session.isCurrent() }
+    internal fun bindDisposal(release: () -> Unit) { if (revoked) release() else this.release = release }
     fun observe(onState: (IosHomeCheckInState) -> Unit, onLanguage: (String) -> Unit): IosHomeCheckInObservation {
         return IosHomeCheckInObservation(
             scope.launch { session.state.collect { onState(it.iosState()) } },
-            scope.launch { language.observe().collect { onLanguage(it.languageTag); onState(current()) } },
+            scope.launch { language.observe().collect {
+                onLanguage(it.languageTag)
+                onState(current())
+            } },
         )
     }
 
@@ -79,13 +89,25 @@ class IosHomeCheckInEditor internal constructor(
             } catch (cancelled: CancellationException) {
                 onImage(null)
                 throw cancelled
-            }
+            } catch (_: Exception) { onImage(null) }
         })
     }
 
-    internal fun close() {
-        scope.cancel()
+    internal fun revoke() {
+        if (revoked) return
+        revoked = true
         session.close()
+        imageLease.revoke()
+        presenter = { null }
+        val dispose = release
+        release = {}
+        dispose()
+    }
+    fun close() {
+        if (closed) return
+        revoke()
+        closed = true
+        scope.cancel()
     }
 }
 

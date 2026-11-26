@@ -7,11 +7,10 @@ import UIKit
 
 struct ContributionPhotoPicker: UIViewControllerRepresentable {
     let request: ContributionMediaRequest
-    let onFinish: ([Data]) -> Void
+    let onSelection: ([NSItemProvider]) -> Void
     let onCamera: (UIImage?) -> Void
-    let onStart: () -> Void
 
-    func makeCoordinator() -> Coordinator { Coordinator(onFinish: onFinish, onCamera: onCamera, onStart: onStart) }
+    func makeCoordinator() -> Coordinator { Coordinator(onSelection: onSelection, onCamera: onCamera) }
 
     func makeUIViewController(context: Context) -> UIViewController {
         if request.camera {
@@ -31,34 +30,19 @@ struct ContributionPhotoPicker: UIViewControllerRepresentable {
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 
+    @MainActor
     final class Coordinator: NSObject, PHPickerViewControllerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let onFinish: ([Data]) -> Void
+        let onSelection: ([NSItemProvider]) -> Void
         let onCamera: (UIImage?) -> Void
-        let onStart: () -> Void
         private var finished = false
-        init(onFinish: @escaping ([Data]) -> Void, onCamera: @escaping (UIImage?) -> Void, onStart: @escaping () -> Void) {
-            self.onFinish = onFinish
+        init(onSelection: @escaping ([NSItemProvider]) -> Void, onCamera: @escaping (UIImage?) -> Void) {
+            self.onSelection = onSelection
             self.onCamera = onCamera
-            self.onStart = onStart
         }
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
             guard !finished else { return }
             finished = true
-            guard !results.isEmpty else { onFinish([]); return }
-            onStart()
-            let group = DispatchGroup()
-            let batch = ContributionPhotoDataBatch(count: results.count)
-            for (index, result) in results.enumerated() {
-                group.enter()
-                let type = result.itemProvider.registeredTypeIdentifiers.first {
-                    UTType($0)?.conforms(to: .image) == true
-                } ?? UTType.image.identifier
-                result.itemProvider.loadDataRepresentation(forTypeIdentifier: type) { data, _ in
-                    batch.store(data, at: index)
-                    group.leave()
-                }
-            }
-            group.notify(queue: .main) { self.onFinish(batch.results()) }
+            onSelection(results.map(\.itemProvider))
         }
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             guard !finished else { return }
@@ -119,19 +103,32 @@ struct ContributionRemoteImage: View {
 
 
 
-// Item-provider callbacks arrive on independent queues; keep the user's selection order.
-private final class ContributionPhotoDataBatch: @unchecked Sendable {
-    private let lock = NSLock()
-    private var values: [Data?]
-    init(count: Int) { values = Array(repeating: nil, count: count) }
-    func store(_ data: Data?, at index: Int) {
-        lock.lock()
-        defer { lock.unlock() }
-        values[index] = data
+@MainActor
+struct ContributionPhotoImport: Identifiable {
+    let id = UUID()
+    let providers: [NSItemProvider]
+    let request: ContributionMediaRequest
+
+    func load() async -> [Data] {
+        var result: [Data] = []
+        for provider in providers {
+            guard !Task.isCancelled else { return [] }
+            if let data = await load(provider) { result.append(data) }
+        }
+        return Task.isCancelled ? [] : result
     }
-    func results() -> [Data] {
-        lock.lock()
-        defer { lock.unlock() }
-        return values.compactMap { $0 }
+
+    private func load(_ provider: NSItemProvider) async -> Data? {
+        let type = provider.registeredTypeIdentifiers.first {
+            UTType($0)?.conforms(to: .image) == true
+        } ?? UTType.image.identifier
+        let response = AsyncStream<Data?>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        let progress = provider.loadDataRepresentation(forTypeIdentifier: type) { data, _ in
+            response.continuation.yield(data)
+            response.continuation.finish()
+        }
+        defer { progress.cancel(); response.continuation.finish() }
+        for await data in response.stream { return Task.isCancelled ? nil : data }
+        return nil
     }
 }

@@ -2,21 +2,77 @@ import ComposeApp
 import SwiftUI
 import UIKit
 
-enum OwnProfileStat: Equatable { case checkIns, shops, roasters, followers, avatar }
+enum OwnProfileStat: Equatable { case checkIns, shops, roasters, followers, following, avatar }
+
+struct CoffeePeekProfileSheetHeader: View {
+    let title: String
+    let closeLabel: String
+    let close: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(title).font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
+                .frame(maxWidth: .infinity, alignment: .leading).accessibilityAddTraits(.isHeader)
+            Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                .buttonStyle(.plain).shopDetailGlassCircle().accessibilityLabel(closeLabel)
+        }
+    }
+}
+
+struct CoffeePeekProfilePersonRow: View {
+    let person: IosOwnProfileFollower
+    let hint: String
+    let loadImage: ProfileImageLoader
+    let open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: 12) {
+                OwnProfileImage(url: person.avatar, symbol: "person.crop.circle", loadImage: loadImage)
+                    .frame(width: 40, height: 40).clipShape(Circle())
+                Text(person.name).frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.right").foregroundStyle(CoffeePeekNativeStyle.secondary).accessibilityHidden(true)
+            }.frame(minHeight: 48).contentShape(Rectangle())
+        }.buttonStyle(.plain).disabled(person.slug.isEmpty).accessibilityHint(hint)
+    }
+}
+
+@MainActor
+private func profileConnectionsPreview() -> some View {
+    VStack(spacing: 16) {
+        CoffeePeekProfileSheetHeader(title: "Подписчики", closeLabel: "Закрыть", close: {})
+        CoffeePeekProfilePersonRow(person: IosOwnProfileFollower(slug: "preview", name: "CoffeePeek", avatar: nil),
+            hint: "Открыть профиль", loadImage: { _, _ in nil }, open: {})
+    }.padding().background(CoffeePeekNativeStyle.background)
+}
+#Preview("Profile connections light") { profileConnectionsPreview().preferredColorScheme(.light) }
+#Preview("Profile connections dark") { profileConnectionsPreview().preferredColorScheme(.dark) }
 
 struct OwnProfileEmbedded: View {
     let controller: UIViewController
+    var drawsBackground = true
+    var fitsContent = false
 
     var body: some View {
-        OwnProfileControllerRepresentable(controller: controller)
-            .background(CoffeePeekNativeStyle.background)
+        OwnProfileControllerRepresentable(controller: controller, fitsContent: fitsContent)
+            .background(drawsBackground ? CoffeePeekNativeStyle.background : .clear)
     }
 }
 
 private struct OwnProfileControllerRepresentable: UIViewControllerRepresentable {
     let controller: UIViewController
+    let fitsContent: Bool
     func makeUIViewController(context: Context) -> UIViewController { controller }
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    func sizeThatFits(_ proposal: ProposedViewSize, uiViewController: UIViewController, context: Context) -> CGSize? {
+        guard fitsContent, let width = proposal.width, let content = controller as? CoffeePeekNativeContentSizing else { return nil }
+        return content.contentSize(width: width)
+    }
+}
+
+@MainActor
+protocol CoffeePeekNativeContentSizing: AnyObject {
+    func contentSize(width: CGFloat) -> CGSize
 }
 
 struct OwnProfileHeader: View {
@@ -27,7 +83,6 @@ struct OwnProfileHeader: View {
     var enabled: (OwnProfileStat) -> Bool = { _ in true }
     var imageLoader: ProfileImageLoader?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .caption) private var fourStatsWidth: CGFloat = 220
     @ScaledMetric(relativeTo: .caption) private var threeStatsWidth: CGFloat = 168
 
     var body: some View {
@@ -44,6 +99,9 @@ struct OwnProfileHeader: View {
                 }
             }
             bio
+            CoffeePeekProfileConnectionsRow(identity: identity, strings: strings) {
+                select($0 ? .followers : .following)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -55,7 +113,7 @@ struct OwnProfileHeader: View {
                 name
                 counts
             }
-            .frame(minWidth: identity.roasters > 0 ? fourStatsWidth : threeStatsWidth)
+            .frame(minWidth: threeStatsWidth)
         }
     }
 
@@ -65,10 +123,9 @@ struct OwnProfileHeader: View {
             countsGrid
         } else {
             HStack(alignment: .top, spacing: 8) {
-                stat(.checkIns)
-                stat(.shops)
-                if identity.roasters > 0 { stat(.roasters) }
-                stat(.followers)
+                stat(.checkIns, count: identity.checkIns, key: "profile_stat_check_ins")
+                stat(.shops, count: identity.shops, key: "profile_stat_shops")
+                stat(.roasters, count: identity.roasters, key: "profile_stat_roasters")
             }
         }
     }
@@ -76,18 +133,17 @@ struct OwnProfileHeader: View {
     private var countsGrid: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                stat(.checkIns)
-                stat(.shops)
+                stat(.checkIns, count: identity.checkIns, key: "profile_stat_check_ins")
+                stat(.shops, count: identity.shops, key: "profile_stat_shops")
             }
             HStack {
-                if identity.roasters > 0 { stat(.roasters) }
-                stat(.followers)
+                stat(.roasters, count: identity.roasters, key: "profile_stat_roasters")
             }
         }
     }
 
     private var name: some View {
-        Text(identity.name).font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
+        Text("@" + String(identity.name.drop(while: { $0 == "@" }))).font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
             .lineLimit(2)
             .accessibilityAddTraits(.isHeader)
     }
@@ -129,12 +185,11 @@ struct OwnProfileHeader: View {
     }
 
     @ViewBuilder
-    private func stat(_ kind: OwnProfileStat) -> some View {
-        let data = statValue(kind)
+    private func stat(_ kind: OwnProfileStat, count: Int32, key: String) -> some View {
+        let data = (count: count, key: key)
         if enabled(kind) {
             Button { select(kind) } label: { statLabel(data) }
                 .buttonStyle(.plain)
-                .disabled(kind == .followers && !identity.canOpenFollowers)
                 .accessibilityElement(children: .combine)
         } else {
             statLabel(data).accessibilityElement(children: .combine)
@@ -156,14 +211,36 @@ struct OwnProfileHeader: View {
         .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
     }
 
-    private func statValue(_ kind: OwnProfileStat) -> (count: Int32, key: String) {
-        switch kind {
-        case .checkIns: (identity.checkIns, "profile_stat_check_ins")
-        case .shops: (identity.shops, "profile_stat_shops")
-        case .roasters: (identity.roasters, "profile_stat_roasters")
-        case .followers: (identity.followers, "profile_stat_followers")
-        case .avatar: (0, "profile_open_avatar")
+}
+
+struct CoffeePeekProfileConnectionsRow: View {
+    let identity: IosOwnProfileIdentity
+    let strings: OwnProfileStrings
+    let select: (Bool) -> Void
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) { buttons }
+            VStack(spacing: 8) { buttons }
         }
+    }
+
+    @ViewBuilder private var buttons: some View {
+        connection(true, count: Int(identity.followers))
+        connection(false, count: identity.following?.intValue)
+    }
+
+    private func connection(_ followers: Bool, count: Int?) -> some View {
+        Button { select(followers) } label: {
+            HStack(spacing: 8) {
+                Image(systemName: followers ? "person.2" : "person").font(.system(size: 22)).accessibilityHidden(true)
+                Text(strings.connectionCount(count, followers: followers)).fixedSize(horizontal: false, vertical: true)
+            }.frame(maxWidth: .infinity, minHeight: 48).padding(.horizontal, 12).contentShape(Capsule())
+        }.buttonStyle(.plain).font(CoffeePeekNativeStyle.font(15, relativeTo: .subheadline))
+            .foregroundStyle(CoffeePeekNativeStyle.foreground)
+            .background(CoffeePeekNativeStyle.surface, in: Capsule())
+            .overlay { Capsule().strokeBorder(CoffeePeekNativeStyle.border).allowsHitTesting(false) }
+            .disabled(!identity.canOpenFollowers)
     }
 }
 
@@ -373,7 +450,7 @@ struct CoffeePeekPhotoPlaceholder: View {
 
 #Preview("Own profile header light") {
     OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: "Кофе и прогулки", avatar: nil,
-        checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true),
+        checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true, following: KotlinInt(int: 4)),
         strings: OwnProfileStrings(languageTag: "ru"), profile: nil, select: { _ in })
     .padding()
     .foregroundStyle(CoffeePeekNativeStyle.foreground)
@@ -383,7 +460,7 @@ struct CoffeePeekPhotoPlaceholder: View {
 
 #Preview("Own profile header dark") {
     OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: "Кава і прагулкі", avatar: nil,
-        checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true),
+        checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true, following: KotlinInt(int: 4)),
         strings: OwnProfileStrings(languageTag: "be"), profile: nil, select: { _ in })
     .padding()
     .foregroundStyle(CoffeePeekNativeStyle.foreground)
@@ -393,7 +470,7 @@ struct CoffeePeekPhotoPlaceholder: View {
 
 #Preview("Profile statistics narrow light") {
     OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: nil, avatar: nil,
-        checkIns: 13, shops: 4, roasters: 0, followers: 18, canOpenFollowers: true),
+        checkIns: 13, shops: 4, roasters: 0, followers: 18, canOpenFollowers: true, following: KotlinInt(int: 4)),
         strings: OwnProfileStrings(languageTag: "ru"), profile: nil, select: { _ in })
         .padding(16).frame(width: 320)
         .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
@@ -402,16 +479,17 @@ struct CoffeePeekPhotoPlaceholder: View {
 
 #Preview("Profile statistics large dark") {
     OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: nil, avatar: nil,
-        checkIns: 13, shops: 4, roasters: 0, followers: 18, canOpenFollowers: true),
+        checkIns: 13, shops: 4, roasters: 0, followers: 18, canOpenFollowers: true, following: KotlinInt(int: 4)),
         strings: OwnProfileStrings(languageTag: "be"), profile: nil, select: { _ in })
         .padding(16).frame(width: 320).dynamicTypeSize(.accessibility2)
         .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
         .preferredColorScheme(.dark)
 }
 
+@MainActor
 private func publicProfileHeaderPreview(languageTag: String, roasters: Int32) -> some View {
     OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: "Coffee · Кофе · Кава", avatar: nil,
-        checkIns: 1234, shops: 42, roasters: roasters, followers: 180, canOpenFollowers: true),
+        checkIns: 1234, shops: 42, roasters: roasters, followers: 180, canOpenFollowers: true, following: KotlinInt(int: 4)),
         strings: OwnProfileStrings(languageTag: languageTag), profile: nil, select: { _ in },
         enabled: { $0 == .followers })
         .padding(16).frame(width: 320)

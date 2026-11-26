@@ -119,6 +119,7 @@ struct OwnershipNativePhotos: View {
     }
 }
 
+@MainActor
 private func ownershipFormPreview(_ editor: Bool) -> some View {
     ScrollView {
         if editor { OwnershipNativeEditor(state: ownershipPreviewState("Editor"), strings: OwnershipNativeStrings("ru"), send: { _ in }, imageLoader: { _, _ in nil }).padding() }

@@ -11,6 +11,7 @@ func makeNotificationInboxController(inbox: IosNotificationInbox, languageTag: S
     return controller
 }
 
+@MainActor
 private final class NotificationInboxModel: ObservableObject {
     let inbox: IosNotificationInbox
     @Published private(set) var state: IosNotificationInboxState
@@ -33,7 +34,7 @@ private final class NotificationInboxModel: ObservableObject {
         inbox.dismiss(version: inbox.current().sheetVersion)
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
         inbox.close()
     }
@@ -56,7 +57,7 @@ private struct NotificationInboxHost: View {
             .sheet(item: presentation(version)) { route in
                 ActiveNotificationInbox(model: model, version: route.id, strings: strings)
                     .id(route.id)
-                    .presentationDetents([.medium, .large])
+                    .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
     }

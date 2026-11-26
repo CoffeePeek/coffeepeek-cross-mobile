@@ -117,6 +117,8 @@ private fun PublicProfileIdentity(state: PublicProfileState, profile: PublicProf
         onShopsClick = if (viewingOwn) ({ contributions(ProfileContribution.Shops) }) else null,
         onRoastersClick = if (viewingOwn) ({ contributions(ProfileContribution.Roasters) }) else null,
         onFollowersClick = { callbacks.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers)) },
+        followingCount = state.followingCount,
+        onFollowingClick = { callbacks.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Following)) },
         onAvatarClick = { profile.avatarUrl?.let { callbacks.onPhotoClick(listOf(it), listOf(it), 0) } })
 }
 

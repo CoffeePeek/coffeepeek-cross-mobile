@@ -37,9 +37,16 @@ internal fun iosShopCheckInListContent(): (String) -> UIViewController {
     val media = remember(imageFetcher) { IosCatalogueMedia(imageFetcher, Constants.BASE_URL) }
     val formatDate by rememberUpdatedState(rememberCheckInDateLabel())
     val languageTag by rememberUpdatedState(LocalCoffeePeekLanguageTag.current)
-    return { shopId ->
-        val language = languageTag
+    return iosShopCheckInListContent(factory, { languageTag }, sessions, visibility, accounts, details, votes, blockActions,
+        media, { formatDate(it) })
+}
+
+internal fun iosShopCheckInListContent(factory: (IosShopCheckInList, String) -> UIViewController,
+    languageTag: () -> String, sessions: SessionReader, visibility: AuthorVisibility, accounts: ProfileAccountPort,
+    details: ShopDetailsRepository, votes: ShopCheckInVoteRepository, blockActions: AuthorBlockActions,
+    media: IosCatalogueMedia, formatDate: (String) -> String,
+): (String) -> UIViewController = { shopId ->
+        val language = languageTag()
         factory(IosShopCheckInList(shopId, sessions, visibility, accounts, details, votes, blockActions,
             media, language, { raw -> formatDate(raw) }), language)
-    }
 }

@@ -23,7 +23,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
-import com.coffeepeek.feature.homecheckin.api.HomeCheckInNativeDetailRenderer
 import com.coffeepeek.feature.homecheckin.impl.resources.*
 import com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInDetailViewModel
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.component.*
@@ -39,7 +38,6 @@ internal fun HomeCheckInDetailScreen(
     modifier: Modifier,
     notice: String?,
     onDismissAllowedChange: (Boolean) -> Unit,
-    nativeRenderer: HomeCheckInNativeDetailRenderer? = null,
     onEvent: (HomeCheckInDetailEvent) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -66,8 +64,6 @@ internal fun HomeCheckInDetailScreen(
         if (visibleState.isAccessRevoked) currentEvent(HomeCheckInDetailEvent.Close)
         else viewModel.onAction(if (visibleState.showDeleteConfirmation) HomeCheckInDetailAction.CancelDelete else HomeCheckInDetailAction.Close)
     }
-    if (nativeRenderer?.invoke(nativeHomeDetailPresentation(visibleState, formatPreparedAt, formatBrewMethod, notice),
-            nativeHomeDetailActions(visibleState, viewModel::onAction) { currentEvent(HomeCheckInDetailEvent.Close) }, modifier) == true) return
     HomeCheckInDetailScreenContent(visibleState, viewModel::onAction, formatPreparedAt, formatBrewMethod,
         imageContent, modifier, notice)
 }

@@ -15,7 +15,14 @@ class IosShopDetail internal constructor(
     private val lease: ShopBrowsingSession,
     private val ownerFactory: (String, String, () -> Boolean, () -> Unit, () -> Unit) -> UIViewController?,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val mediaJob = SupervisorJob(scope.coroutineContext[Job])
+    private val mediaScope = CoroutineScope(scope.coroutineContext + mediaJob)
+    internal val screenVisible = MutableStateFlow(false)
+    var overlays: IosShopDetailOverlays? = null
+        private set
+    private var visibility: (Boolean) -> Unit = {}
+    private var release: () -> Unit = {}
     private var presentation: ShopDetailIosPresentation? = initial
     private var latestState = initial.state
     private var closed = false
@@ -26,6 +33,15 @@ class IosShopDetail internal constructor(
 
     fun currentState() = state.value
     fun observe(onState: (IosShopDetailState) -> Unit) = IosShopCheckInObservation(scope.launch { state.collect(onState) })
+    internal fun bindOwner(overlays: IosShopDetailOverlays, visible: (Boolean) -> Unit, release: () -> Unit) {
+        this.overlays = overlays
+        this.visibility = visible
+        this.release = release
+    }
+    fun setVisible(shown: Boolean) {
+        screenVisible.value = shown && allowed()
+        visibility(screenVisible.value)
+    }
 
     internal fun update(next: ShopDetailIosPresentation) {
         if (!allowed()) return
@@ -41,7 +57,7 @@ class IosShopDetail internal constructor(
     fun dismissMessage() { if (allowed()) presentation?.onDismissMessage?.invoke() }
     fun visible(names: List<String>) { exposures.value = names.toSet().takeIf { allowed() }.orEmpty() }
 
-    fun loadImage(url: String, onImage: (UIImage?) -> Unit) = IosShopCheckInObservation(scope.launch {
+    fun loadImage(url: String, onImage: (UIImage?) -> Unit) = IosShopCheckInObservation(mediaScope.launch {
         if (url.isBlank() || !allowed()) { onImage(null); return@launch }
         try { media.observeImage(url, ::allowed).collect { onImage(it.takeIf { allowed() }) } }
         catch (cancelled: CancellationException) {
@@ -63,12 +79,24 @@ class IosShopDetail internal constructor(
             { perform("suggest", "", 0) }, { if (allowed()) presentation?.onOwnerEdit?.invoke() })
     }
 
-    internal fun close() {
+    internal fun revoke() {
+        if (closed) return
         latestState = latestState.withoutContent(languageTag)
         closed = true
         presentation = null
         exposures.value = emptySet()
         state.value = IosShopDetailState(latestState, false)
+        screenVisible.value = false
+        visibility(false)
+        mediaJob.cancel()
+        overlays?.close()
+        val dispose = release
+        release = {}
+        dispose()
+    }
+
+    fun close() {
+        revoke()
         scope.cancel()
     }
 

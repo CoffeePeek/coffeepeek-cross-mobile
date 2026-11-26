@@ -19,10 +19,7 @@ private final class ContentReportHostingController: UIHostingController<ContentR
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Use init(report:languageTag:)") }
 
-    deinit {
-        let report = report
-        DispatchQueue.main.async { report.close() }
-    }
+    isolated deinit { report.close() }
 }
 
 private struct ContentReportHost: View {
@@ -132,20 +129,8 @@ private struct ContentReportScreen: View {
     }
 
     private var toolbar: some View {
-        HStack(spacing: 8) {
-            Button(action: close) {
-                Label(strings.text("content_report_back"), systemImage: "chevron.backward")
-                    .labelStyle(.iconOnly)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
-            }
-            Text(strings.text("content_report_title"))
-                .font(.headline)
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 12)
-        .background(.bar)
+        CoffeePeekNativeNavigationHeader(title: strings.text("content_report_title"),
+            backLabel: strings.text("content_report_back"), back: close)
     }
 
     private var form: some View {
@@ -160,7 +145,7 @@ private struct ContentReportScreen: View {
                 Text(error).foregroundStyle(.red)
             }
             if state.submitting {
-                ProgressView(strings.text("content_report_loading"))
+                CoffeePeekNativeLoader(label: strings.text("content_report_loading"), size: 32, showsLabel: true)
             } else {
                 Button(strings.text(state.preview ? "content_report_preview_submit" : "content_report_submit")) {
                     editorFocused = false
@@ -175,7 +160,7 @@ private struct ContentReportScreen: View {
 
     private var editor: some View {
         ZStack(alignment: .topLeading) {
-            TextEditor(text: Binding(get: { state.text }, set: changeText))
+            TextEditor(text: Binding(get: { state.text }, set: { changeText($0) }))
                 .frame(minHeight: 110)
                 .focused($editorFocused)
                 .disabled(!state.canEdit)

@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -106,6 +107,24 @@ class NativeShopCheckInSessionTest {
         assertFalse(session.current().active)
         assertEquals("Keep this draft", drafts.snapshot!!.input.text)
         assertTrue(drafts.snapshot!!.input.photos.isEmpty())
+    }
+
+    @Test fun aRetainedNativeObserverReceivesClearedContentWhenTheOwnerCloses() = runTest(dispatcher) {
+        val session = session()
+        val snapshots = mutableListOf<NativeShopCheckInSnapshot>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { session.state.collect { snapshots += it } }
+        runCurrent()
+        session.noteChanged("Private note")
+        session.photosAdded(listOf(photo()))
+        runCurrent()
+        assertEquals("Private note", snapshots.last().input.text)
+        assertEquals(1, snapshots.last().input.photos.size)
+        session.close()
+        runCurrent()
+        assertFalse(snapshots.last().active)
+        assertEquals("", snapshots.last().input.text)
+        assertTrue(snapshots.last().input.photos.isEmpty())
+        assertFalse(snapshots.last().confirmDiscard)
     }
 
     private fun session(repository: Repository = Repository(), drafts: Drafts = Drafts()): NativeShopCheckInSession {

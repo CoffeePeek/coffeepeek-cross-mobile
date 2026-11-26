@@ -53,8 +53,8 @@ struct RegisterScreen: View {
             fields.disabled(state.busy)
             RegisterConsent(
                 strings: strings,
-                termsAccepted: Binding(get: { state.termsAccepted }, set: actions.termsChanged),
-                analyticsAccepted: Binding(get: { state.analyticsAccepted }, set: actions.analyticsChanged),
+                termsAccepted: Binding(get: { state.termsAccepted }, set: { actions.termsChanged($0) }),
+                analyticsAccepted: Binding(get: { state.analyticsAccepted }, set: { actions.analyticsChanged($0) }),
                 termsError: state.termsError.map(strings.message),
                 openTerms: actions.openTerms, openPrivacy: actions.openPrivacy
             )

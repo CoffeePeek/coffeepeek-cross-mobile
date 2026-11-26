@@ -1,10 +1,5 @@
 package com.coffeepeek.feature.homecheckin.api
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-
-typealias HomeCheckInNativeDetailRenderer = @Composable (HomeCheckInDetailPresentation, HomeCheckInDetailCallbacks, Modifier) -> Boolean
-
 data class HomeCheckInDetailPresentation(
     val card: HomeCheckInDetailCard?, val title: String, val backLabel: String,
     val active: Boolean, val dismissAllowed: Boolean, val loadingLabel: String?,

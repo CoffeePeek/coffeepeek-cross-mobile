@@ -16,7 +16,7 @@ struct UsagePolicyScreen: View {
                     SettingsNativeLabel.toggle(
                         strings.text("settings_policy_analytics_title"),
                         description: strings.text(state.syncFailed ? "settings_analytics_sync_failed" : "settings_policy_analytics_text"),
-                        icon: "shield", isOn: Binding(get: { state.accepted }, set: setConsent), longDescription: true
+                        icon: "shield", isOn: Binding(get: { state.accepted }, set: { setConsent($0) }), longDescription: true
                     )
                 }
             }

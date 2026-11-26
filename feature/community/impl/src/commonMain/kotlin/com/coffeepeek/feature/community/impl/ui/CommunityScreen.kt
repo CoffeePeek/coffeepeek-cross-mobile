@@ -71,14 +71,7 @@ import com.coffeepeek.feature.community.impl.timeline.CommunityViewModel
 import com.coffeepeek.feature.community.impl.timeline.MessageKind
 
 /** What the screen asks the caller to do; navigation and the creation flow are not decided here. */
-internal class CommunityCallbacks(
-    val onSignIn: () -> Unit,
-    val onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
-    val onOpenShop: (slug: String) -> Unit,
-    val onEditHome: (id: String) -> Unit,
-    val onOpenPost: (id: String) -> Unit,
-    val onOpenCoffee: (slug: String) -> Unit,
-)
+internal typealias CommunityCallbacks = com.coffeepeek.feature.community.api.CommunityNavigation
 
 @Composable
 internal fun CommunityScreen(
@@ -139,13 +132,6 @@ internal fun CommunityContent(
     val savedContent = rememberSaveableStateHolder()
     var refreshKey by rememberSaveable { mutableLongStateOf(0L) }
     val leaders = host.leaders
-    if (host.nativeFeed != null && leaders == null) {
-        Box(modifier.fillMaxSize()) {
-            CommunityFeedContent(state, onAction, host, blockActions, callbacks, snackbar, bottomClearance,
-                rememberLazyListState(), { refreshKey++ }, floatingAction, headerAction)
-        }
-        return
-    }
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()
         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
         if (leadersSelected && leaders != null) savedContent.SaveableStateProvider("leaders") {

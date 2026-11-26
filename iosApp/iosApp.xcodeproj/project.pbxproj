@@ -22,7 +22,6 @@
 		B23122000000000000000021 /* CoffeePeekLocalBackProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */; };
 		B23122000000000000000011 /* CollectionEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000013 /* CollectionEditorContent.swift */; };
 		B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000003 /* CollectionPosterScreen.swift */; };
-
 		E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */; };
 		D15C0A000000000000000004 /* DiscoveryMapControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000004 /* DiscoveryMapControls.swift */; };
 		D15C0A000000000000000003 /* DiscoveryShopCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000003 /* DiscoveryShopCard.swift */; };
@@ -163,6 +162,8 @@
 		B0510A100000000000000004 /* OwnershipNativeQrSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */; };
 		B0510A100000000000000005 /* OwnershipNativeActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000005 /* OwnershipNativeActions.swift */; };
 		B0510A300000000000000001 /* NativeOwnership.strings in Resources */ = {isa = PBXBuildFile; fileRef = B0510A300000000000000004 /* NativeOwnership.strings */; };
+		CC3EB4067BD44B5EAF5746D4 /* NativeRootController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CA391DA525463FA268045B /* NativeRootController.swift */; };
+		41CD23D084804E1C98CC9E2F /* NativeRootModalPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7042FB2928046658CCFC580 /* NativeRootModalPresenter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -182,7 +183,6 @@
 		B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekLocalBackProtection.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLocalBackProtection.swift; sourceTree = "<group>"; };
 		B23122000000000000000013 /* CollectionEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionEditorContent.swift; sourceTree = "<group>"; };
 		B23122000000000000000003 /* CollectionPosterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionPosterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionPosterScreen.swift; sourceTree = "<group>"; };
-
 		E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryFilterSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryFilterSheet.swift; sourceTree = "<group>"; };
 		D15C0B000000000000000004 /* DiscoveryMapControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryMapControls.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryMapControls.swift; sourceTree = "<group>"; };
 		D15C0B000000000000000003 /* DiscoveryShopCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryShopCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryShopCard.swift; sourceTree = "<group>"; };
@@ -352,6 +352,8 @@
 		B0510A200000000000000005 /* OwnershipNativeActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeActions.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeActions.swift; sourceTree = "<group>"; };
 		B0510A300000000000000002 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
 		B0510A300000000000000003 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
+		70CA391DA525463FA268045B /* NativeRootController.swift */ = {isa = PBXFileReference; name = "NativeRootController.swift"; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/NativeRootController.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		A7042FB2928046658CCFC580 /* NativeRootModalPresenter.swift */ = {isa = PBXFileReference; name = "NativeRootModalPresenter.swift"; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/NativeRootModalPresenter.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -534,6 +536,8 @@
 				29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */,
 				C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */,
 				EA778DBEF66FD480C275D198 /* NativeAppUpdate.strings */,
+				70CA391DA525463FA268045B /* NativeRootController.swift */,
+				A7042FB2928046658CCFC580 /* NativeRootModalPresenter.swift */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -683,10 +687,16 @@
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
-			files = ();
-			inputPaths = ("$(SRCROOT)/copy-firebase-config.sh", "$(SRCROOT)/iosApp");
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/copy-firebase-config.sh",
+				"$(SRCROOT)/iosApp",
+			);
 			name = "Copy Firebase Configuration";
-			outputPaths = ("$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist");
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$SRCROOT/copy-firebase-config.sh\"\n";
@@ -854,6 +864,8 @@
 				A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */,
 				A10000000000000000000007 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift in Sources */,
 				A10000000000000000000004 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift in Sources */,
+				CC3EB4067BD44B5EAF5746D4 /* NativeRootController.swift in Sources */,
+				41CD23D084804E1C98CC9E2F /* NativeRootModalPresenter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -878,7 +890,6 @@
 			name = NativeAccountDeletion.strings;
 			sourceTree = "<group>";
 		};
-
 		5C13B3110000000000000008 /* NativeShopCheckIns.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -942,7 +953,14 @@
 			name = ContentReport.strings;
 			sourceTree = "<group>";
 		};
-		5E1FA2500000000000000003 /* NativeShelf.strings */ = {isa = PBXVariantGroup; children = (5E1FA2500000000000000002 /* ru */,); name = NativeShelf.strings; sourceTree = "<group>"; };
+		5E1FA2500000000000000003 /* NativeShelf.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5E1FA2500000000000000002 /* ru */,
+			);
+			name = NativeShelf.strings;
+			sourceTree = "<group>";
+		};
 		5E1FA2200000000000000006 /* NativeShelfArchive.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1016,14 +1034,14 @@
 			sourceTree = "<group>";
 		};
 		A0871E7B0000000000000008 /* NativeProfile.strings */ = {
-            isa = PBXVariantGroup;
-            children = (
-                A0871E7B0000000000000009 /* ru */,
-                A0871E7B000000000000000A /* be */,
-            );
-            name = NativeProfile.strings;
-            sourceTree = "<group>";
-        };
+			isa = PBXVariantGroup;
+			children = (
+				A0871E7B0000000000000009 /* ru */,
+				A0871E7B000000000000000A /* be */,
+			);
+			name = NativeProfile.strings;
+			sourceTree = "<group>";
+		};
 		A0871E7C000000000000000C /* NativeOwnProfile.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1079,14 +1097,14 @@
 			sourceTree = "<group>";
 		};
 		7E8B5C6A8BD94EDCB3E12F53 /* NativeEditProfile.strings */ = {
-            isa = PBXVariantGroup;
-            children = (
-                B901C8723E094C91B01145A3 /* ru */,
-                AE837BE2E3AD45E6A8F139A0 /* be */,
-            );
-            name = NativeEditProfile.strings;
-            sourceTree = "<group>";
-        };
+			isa = PBXVariantGroup;
+			children = (
+				B901C8723E094C91B01145A3 /* ru */,
+				AE837BE2E3AD45E6A8F139A0 /* be */,
+			);
+			name = NativeEditProfile.strings;
+			sourceTree = "<group>";
+		};
 		C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1105,7 +1123,15 @@
 			name = NativeAppUpdate.strings;
 			sourceTree = "<group>";
 		};
-		B0510A300000000000000004 /* NativeOwnership.strings */ = {isa = PBXVariantGroup; children = (B0510A300000000000000002 /* ru */, B0510A300000000000000003 /* be */,); name = NativeOwnership.strings; sourceTree = "<group>"; };
+		B0510A300000000000000004 /* NativeOwnership.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B0510A300000000000000002 /* ru */,
+				B0510A300000000000000003 /* be */,
+			);
+			name = NativeOwnership.strings;
+			sourceTree = "<group>";
+		};
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
@@ -1150,8 +1176,9 @@
 				PRODUCT_MODULE_NAME = CoffeePeek;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				SWIFT_STRICT_CONCURRENCY = complete;
 			};
 			name = Debug;
 		};
@@ -1181,9 +1208,10 @@
 				PRODUCT_MODULE_NAME = CoffeePeek;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
 			};
 			name = Release;
 		};

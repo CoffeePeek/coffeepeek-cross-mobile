@@ -75,6 +75,7 @@ class ShopCheckInListRow internal constructor(
     val canOpenAuthor = !checkIn.authorSlug.isNullOrBlank()
     val showHelpful = checkIn.visibility == ShopCheckInVisibility.Public || checkIn.helpfulCount > 0
     val ratingLabel = checkIn.rating?.let { formatShopRating(it.average) }
+    val ratingValue = checkIn.rating?.average
     val coffeeRating = checkIn.rating?.coffee ?: 0
     val serviceRating = checkIn.rating?.service ?: 0
     val placeRating = checkIn.rating?.place ?: 0
@@ -83,7 +84,8 @@ class ShopCheckInListRow internal constructor(
     fun canOpenPhoto(index: Int) = !checkIn.photoUrls.getOrNull(index).isNullOrBlank()
 
     fun thumbnail(index: Int): String? =
-        (checkIn.photoThumbnailUrls.getOrNull(index) ?: checkIn.photoUrls.getOrNull(index))?.takeIf(String::isNotBlank)
+        checkIn.photoThumbnailUrls.getOrNull(index)?.takeIf(String::isNotBlank)
+            ?: checkIn.photoUrls.getOrNull(index)?.takeIf(String::isNotBlank)
 }
 
 interface ShopCheckInListCallbacks {

@@ -13,7 +13,7 @@ struct ShelfNativeBagScreen: View {
                 else if state.missing { Text(strings["shelf_bag_missing_title"]).font(.title2); Text(strings["shelf_bag_missing_body"]) }
                 else if state.failed {
                     ShelfNativeStatus(message: strings["shelf_bag_offline_body"], retry: strings["shelf_retry"]) { model.action("retry") }
-                } else { ProgressView(strings["shelf_loading"]).frame(maxWidth: .infinity) }
+                } else { CoffeePeekNativeLoader(label: strings["shelf_loading"], size: 32, showsLabel: true).frame(maxWidth: .infinity) }
                 if let failure = state.failure { ShelfNativeStatus(message: strings.issue(failure), retry: strings["shelf_sheet_close"]) { model.action("dismiss") } }
             }.padding(16)
         }
@@ -65,8 +65,9 @@ private struct ShelfNativeBrewHost: View {
     var body: some View {
         Group {
             if let controller { OwnProfileEmbedded(controller: controller).ignoresSafeArea() }
-            else { ProgressView() }
+            else { CoffeePeekNativeLoader(label: model.strings["shelf_brew_action"], size: 24) }
         }.onAppear { if controller == nil { controller = model.screen.makeBrew() } }
+            .onDisappear { model.screen.releaseBrew(); controller = nil }
     }
 }
 
@@ -100,7 +101,7 @@ private struct ShelfNativeBagDetails: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(strings["shelf_brews_title"]).font(.headline)
             if !state.archived, let left = state.leftGrams { Text(String(format: strings["shelf_bag_left"], String(format: strings["shelf_weight"], left.intValue))) }
-            if state.brewsLoading { ProgressView(strings["shelf_brews_loading"]) }
+            if state.brewsLoading { CoffeePeekNativeLoader(label: strings["shelf_brews_loading"], size: 32, showsLabel: true) }
             else if state.brewsFailed {
                 ShelfNativeStatus(message: strings["shelf_brews_failed"], retry: strings["shelf_retry"]) { action("retryBrews") }
             } else if state.brews.isEmpty { Text(strings["shelf_brews_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary) }
@@ -133,6 +134,7 @@ private struct ShelfNativeBagDetails: View {
 
  }
 
+@MainActor
 private func shelfBagPreview() -> some View {
     ScrollView {
         ShelfNativeBagDetails(state: shelfNativePreviewState(), item: shelfNativePreviewItem(), strings: ShelfNativeStrings("ru"),

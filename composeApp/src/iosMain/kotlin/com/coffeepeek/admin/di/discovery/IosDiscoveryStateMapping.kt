@@ -21,7 +21,7 @@ internal fun DiscoveryIosState.toNative() = IosDiscoveryState(
     zone?.toNative(), zonesVisible, heatmapVisible,
     heatmapLoading, heatmapFailed, viewportFailed,
     truncated, chips.map { it.toNative() }, activeFilterCount,
-    labels,
+    labels, pickerResultQuery, pickerResultNearby, allResultsEmpty,
 )
 
 internal fun DiscoveryIosShop.toNative() = IosDiscoveryShop(

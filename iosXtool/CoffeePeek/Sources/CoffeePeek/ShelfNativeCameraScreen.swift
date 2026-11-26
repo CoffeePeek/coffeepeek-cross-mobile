@@ -2,6 +2,7 @@ import ComposeApp
 import SwiftUI
 import UIKit
 
+@MainActor
 private final class ShelfNativeCameraModel: ObservableObject {
     let screen: IosShelfScreen
     @Published var camera: IosShelfNativeCamera?
@@ -15,7 +16,7 @@ private final class ShelfNativeCameraModel: ObservableObject {
         observation = camera?.observe { [weak self] in self?.state = $0 }
     }
     func stop() { observation?.cancel(); observation = nil; screen.stopCamera(); camera = nil; state = nil }
-    deinit { observation?.cancel(); camera?.close() }
+    isolated deinit { observation?.cancel(); camera?.close() }
 }
 
 struct ShelfNativeCameraScreen: View {
@@ -52,7 +53,7 @@ struct ShelfNativeCameraScreen: View {
                     if cameraModel.state?.status != "Ready" {
                         ShelfNativeCameraStatus(status: cameraModel.state?.status, strings: strings, allow: { cameraModel.camera?.allow() })
                     }
-                    if cameraModel.state?.capturing == true { ProgressView().tint(.white) }
+                    if cameraModel.state?.capturing == true { CoffeePeekNativeLoader(label: strings["shelf_camera_hold"], color: .white, size: 24) }
                 }
                 .contentShape(Rectangle())
                 .onTapGesture(coordinateSpace: .local) { point in
@@ -88,7 +89,7 @@ private struct ShelfNativeCameraStatus: View {
                 Button(strings["shelf_camera_allow"], action: allow).buttonStyle(.bordered)
             }.padding().multilineTextAlignment(.center).background(.black.opacity(0.8))
         } else if status == "Unavailable" { Text(strings["shelf_camera_unavailable"]).padding() }
-        else { ProgressView().tint(.white) }
+        else { CoffeePeekNativeLoader(label: strings["shelf_scan_camera"], color: .white, size: 24) }
     }
 }
 

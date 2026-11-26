@@ -61,27 +61,10 @@ struct ContributionScheduleContent: View {
             } else {
                 timeRow("shop_opening", value: state.open) { onAction("open", 0, $0) }
                 timeRow("shop_closing", value: state.close) { onAction("close", 0, $0) }
-                presets
                 Text(strings.format("shop_work_days_count", 7 - state.closedDays.count)).font(.headline)
                 ForEach([1, 2, 3, 4, 5, 6, 0], id: \.self) { day in
                     Toggle(strings.text("shop_day_\(day)"), isOn: Binding(get: { !state.closedDays.contains(day) }, set: { _ in onAction("closed", day, 0) }))
                         .tint(CoffeePeekNativeStyle.accent)
-                }
-            }
-        }
-    }
-
-    private var presets: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(strings.text("shop_presets")).font(.headline)
-            ForEach([8, 9, 10], id: \.self) { hour in
-                let open = String(format: "%02d:00", hour)
-                let close = String(format: "%02d:00", hour + 12)
-                Button { onAction("preset", hour + 12, hour) } label: {
-                    HStack {
-                        Text(strings.format("shop_preset_label", open, close)); Spacer()
-                        if state.open == open && state.close == close { Image(systemName: "checkmark") }
-                    }.frame(minHeight: 44)
                 }
             }
         }
@@ -99,6 +82,7 @@ struct ContributionScheduleContent: View {
     }
 }
 
+@MainActor
 private func scheduleSample() -> some View {
     ContributionScheduleContent(state: ContributionFormSnapshot(kind: "AddShop", signedIn: 1, loading: false,
         open: "09:00", close: "21:00", days: [], closedDays: [0]),

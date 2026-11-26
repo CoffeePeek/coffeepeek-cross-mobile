@@ -58,6 +58,7 @@ struct ShopCheckInListRow: Identifiable {
     var note: String { value.note }
     var drink: String? { value.drink }
     var ratingLabel: String? { value.ratingLabel }
+    var ratingValue: Double? { value.ratingValue?.doubleValue }
     var coffeeRating: Int { Int(value.coffeeRating) }
     var serviceRating: Int { Int(value.serviceRating) }
     var placeRating: Int { Int(value.placeRating) }
@@ -94,10 +95,10 @@ struct ShopCheckInListCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
-            if let rating = row.ratingLabel {
-                ShopCheckInRatingLabel(title: rating)
-                    .accessibilityLabel(strings.format("shop_checkins_rating_description", row.coffeeRating,
-                                                       row.serviceRating, row.placeRating, rating))
+            if let rating = row.ratingLabel, let value = row.ratingValue {
+                CoffeePeekNativeRating(value: value, valueText: rating,
+                    label: strings.format("shop_checkins_rating_description", row.coffeeRating,
+                        row.serviceRating, row.placeRating, rating))
             }
             if !row.note.isEmpty { note }
             if row.photoCount > 0 { photos }
@@ -258,10 +259,13 @@ private struct ShopCheckInNoteClipped: PreferenceKey {
 }
 
 private struct ShopCheckInArtwork: View {
+    @Environment(\.scenePhase) private var scenePhase
     let load: (@escaping (UIImage?) -> Void) -> IosShopCheckInObservation?
     let placeholder: String?
     @State private var observation: IosShopCheckInObservation?
     @State private var image: UIImage?
+    @State private var requestID: UUID?
+    @State private var visible = false
 
     var body: some View {
         GeometryReader { bounds in
@@ -276,8 +280,27 @@ private struct ShopCheckInArtwork: View {
             .clipped()
         }
         .accessibilityHidden(true)
-        .onAppear { if image == nil { observation = load { image = $0 } } }
-        .onDisappear { observation?.cancel(); observation = nil }
+        .onAppear { visible = true; start() }
+        .onChange(of: scenePhase) { _, _ in start() }
+        .onDisappear { visible = false; cancel() }
+    }
+
+    private func start() {
+        cancel()
+        guard visible, scenePhase == .active else { return }
+        let id = UUID()
+        requestID = id
+        observation = load { next in
+            guard requestID == id else { return }
+            image = next
+        }
+    }
+
+    private func cancel() {
+        requestID = nil
+        observation?.cancel()
+        observation = nil
+        image = nil
     }
 }
 
@@ -305,6 +328,7 @@ private struct ShopCheckInHelpfulLabel: View {
     }
 }
 
+@MainActor
 private func shopCheckInCardComponentsPreview() -> some View {
     VStack(alignment: .leading, spacing: 16) {
         ShopCheckInListRatings(overall: "4.8", count: 24, isSample: false,
@@ -313,7 +337,7 @@ private func shopCheckInCardComponentsPreview() -> some View {
                         ShopCheckInRatingPresentation(value: 5, label: "5.0")],
             strings: ShopCheckInListStrings(languageTag: "ru"))
         VStack(alignment: .leading, spacing: 12) {
-            ShopCheckInRatingLabel(title: "5.0")
+            CoffeePeekNativeRating(value: 5, valueText: "5.0", label: "Rating")
             ShopCheckInArtwork(load: { _ in nil }, placeholder: nil)
                 .aspectRatio(4.0 / 3.0, contentMode: .fit).clipShape(RoundedRectangle(cornerRadius: 10))
             HStack(spacing: 24) {

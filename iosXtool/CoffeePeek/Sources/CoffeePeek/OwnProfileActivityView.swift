@@ -8,8 +8,8 @@ struct OwnProfileActivityView: View {
     let availableWidth: CGFloat
 
     var body: some View {
-        OwnProfileActivityCard(
-            state: state, strings: strings, profile: model.profile, availableWidth: availableWidth,
+        CoffeePeekProfileActivityCard(
+            state: state, strings: strings, loadImage: profileImageLoader(model.profile), availableWidth: availableWidth,
             toggle: model.toggleActivity,
             changeMonth: { model.profile.changeMonth(offset: Int32($0)) },
             openDay: model.selectDay,
@@ -18,18 +18,20 @@ struct OwnProfileActivityView: View {
     }
 }
 
-private struct OwnProfileActivityCard: View {
+struct CoffeePeekProfileActivityCard: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .body) private var minimumCellHeight: CGFloat = 44
     @State private var pagingDirection = 1
     let state: IosOwnProfileActivity
     let strings: OwnProfileStrings
-    let profile: IosOwnProfile?
+    let loadImage: ProfileImageLoader
     let availableWidth: CGFloat
     let toggle: () -> Void
     let changeMonth: (Int) -> Void
     let openDay: (String) -> Void
     let retry: () -> Void
+    var canExpand = true
+    var dayHint: String? = nil
     private let columns = Array(repeating: GridItem(.flexible(minimum: 1), spacing: 0), count: 7)
 
     var body: some View {
@@ -62,7 +64,7 @@ private struct OwnProfileActivityCard: View {
         }
         .overlay(alignment: .bottomTrailing) {
             if state.loading {
-                ProgressView().padding(8)
+                CoffeePeekNativeLoader(size: 24).padding(8)
                     .background(CoffeePeekNativeStyle.surface, in: Circle())
                     .padding(8).allowsHitTesting(false)
                     .accessibilityLabel(strings["history_activity_loading"])
@@ -77,7 +79,7 @@ private struct OwnProfileActivityCard: View {
                 monthTitle.fixedSize(horizontal: true, vertical: false)
                 if state.expanded { nextMonth }
                 Spacer(minLength: 0)
-                collapseButton
+                if canExpand { collapseButton }
             }
             VStack(alignment: .leading, spacing: 4) {
                 monthTitle
@@ -87,7 +89,7 @@ private struct OwnProfileActivityCard: View {
                         nextMonth
                     }
                     Spacer()
-                    collapseButton
+                    if canExpand { collapseButton }
                 }
             }
         }
@@ -148,7 +150,8 @@ private struct OwnProfileActivityCard: View {
             ForEach(0..<slotCount, id: \.self) { index in
                 if index < state.days.count, let date = state.days[index].date {
                     OwnProfileActivityCell(day: state.days[index], date: date, strings: strings,
-                                           profile: profile, cellWidth: cellWidth, cellHeight: cellHeight) { openDay(date) }
+                                           loadImage: loadImage, cellWidth: cellWidth, cellHeight: cellHeight,
+                                           hint: dayHint) { openDay(date) }
                 } else {
                     OwnProfileDaySlot(height: cellHeight) { Color.clear }.accessibilityHidden(true)
                 }
@@ -243,9 +246,10 @@ private struct OwnProfileActivityCell: View {
     let day: IosOwnProfileDay
     let date: String
     let strings: OwnProfileStrings
-    let profile: IosOwnProfile?
+    let loadImage: ProfileImageLoader
     let cellWidth: CGFloat
     let cellHeight: CGFloat
+    let hint: String?
     let open: () -> Void
 
     var body: some View {
@@ -258,7 +262,7 @@ private struct OwnProfileActivityCell: View {
         .opacity(day.enabled ? 1 : 0.35)
         .accessibilityLabel(ownProfileDayLabel(date, language: strings.languageTag))
         .accessibilityValue(strings.count("history_profile_day_count", Int(day.shopCount) + Int(day.homeCount)))
-        .accessibilityHint(strings[day.selected ? "profile_check_ins_clear_date" : "history_select_day"])
+        .accessibilityHint(hint ?? strings[day.selected ? "profile_check_ins_clear_date" : "history_select_day"])
         .accessibilityAddTraits(day.selected ? .isSelected : [])
     }
 
@@ -289,7 +293,7 @@ private struct OwnProfileActivityCell: View {
     @ViewBuilder
     private var monthMarker: some View {
         if let photo = day.photo {
-            OwnProfileImage(url: photo, profile: profile)
+            OwnProfileImage(url: photo, loadImage: loadImage)
                 .frame(width: photoSide, height: photoSide)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .padding(.bottom, visitCount > 0 ? 6 : 0)
@@ -383,7 +387,7 @@ private struct OwnProfileActivityPreview: View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(spacing: 12) {
-                    OwnProfileActivityCard(state: state, strings: OwnProfileStrings(languageTag: language), profile: nil,
+                    CoffeePeekProfileActivityCard(state: state, strings: OwnProfileStrings(languageTag: language), loadImage: { _, _ in nil },
                                            availableWidth: geometry.size.width - 32, toggle: toggle, changeMonth: changeMonth,
                                            openDay: { selected = selected == $0 ? nil : $0 }, retry: {})
                     OwnProfileTabs(selection: .checkIns, strings: OwnProfileStrings(languageTag: language),

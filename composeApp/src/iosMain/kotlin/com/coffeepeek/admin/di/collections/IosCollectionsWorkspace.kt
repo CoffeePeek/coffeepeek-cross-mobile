@@ -33,7 +33,6 @@ class IosCollectionsWorkspace internal constructor(
     fun save() { session?.save() }
     fun delete() { session?.delete() }
     fun removeCover() { session?.removeCover() }
-    fun feature(id: String?) { session?.feature(id) }
     fun togglePlace(key: String) { session?.togglePlace(key) }
     fun movePlace(key: String, target: String, after: Boolean) { session?.movePlace(key, target, after) }
     fun openCollection(id: String) { session?.openCollection(id) }
@@ -42,6 +41,11 @@ class IosCollectionsWorkspace internal constructor(
     fun shareLink() { session?.shareLink() ?: snapshot?.shareLink() }
     fun shareImages() { session?.shareImages() ?: snapshot?.shareImages() }
     fun format(story: Boolean) { session?.format(story) ?: snapshot?.format(story) }
+    fun query(value: String) { session?.query(value) }
+    fun quickTitle(value: String?) { session?.quickTitle(value) }
+    fun createQuick() { session?.createQuick() }
+    fun toggleMembership(id: String) { session?.toggleMembership(id) }
+    fun commitMemberships() { session?.commitMemberships() }
 
     fun coverPicked(data: NSData, version: Int) {
         val session = session ?: return

@@ -18,7 +18,7 @@ struct LanguageSettingsScreen: View {
                 languageOption("be", label: "settings_language_belarusian")
             }
             if state.saving {
-                ProgressView(strings.text("settings_language_saving"))
+                CoffeePeekNativeLoader(label: strings.text("settings_language_saving"), size: 32, showsLabel: true)
             } else if state.saveFailed {
                 SettingsNativeStyle.section {
                     SettingsRetryRow(

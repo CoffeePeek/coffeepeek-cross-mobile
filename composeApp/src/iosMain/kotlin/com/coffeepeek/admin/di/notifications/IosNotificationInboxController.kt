@@ -27,19 +27,22 @@ internal val LocalIosNotificationInboxController =
 
 @Composable
 internal fun iosNotificationInboxAction(): @Composable () -> Unit {
+    val make = iosNotificationInboxFactory()
+    val language by rememberUpdatedState(LocalCoffeePeekLanguageTag.current)
+    return { key(language) { NotificationInboxButton(make) } }
+}
+
+@Composable
+internal fun iosNotificationInboxFactory(): () -> UIViewController {
     val factory = LocalIosNotificationInboxController.current
     val feature = koinInject<NotificationFeature>()
     val renderer = koinInject<NotificationsRenderer>()
     val language by rememberUpdatedState(LocalCoffeePeekLanguageTag.current)
     return {
-        key(language) {
-            NotificationInboxButton {
-                val session = createIosNotificationInboxSession(feature, renderer::open) {
-                    Navigator.navigate(Navigator.Screen.Auth)
-                }
-                factory(IosNotificationInbox(session), language)
-            }
+        val session = createIosNotificationInboxSession(feature, renderer::open) {
+            Navigator.navigate(Navigator.Screen.Auth)
         }
+        factory(IosNotificationInbox(session), language)
     }
 }
 

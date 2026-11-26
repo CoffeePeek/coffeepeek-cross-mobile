@@ -4,9 +4,10 @@ import UIKit
 
 @MainActor
 func makeShelfArchiveController(archive: IosShelfArchive, languageTag: String) -> UIViewController {
-    UIHostingController(rootView: ShelfArchiveHost(archive: archive, strings: ShelfArchiveStrings(languageTag)))
+    UIHostingController(rootView: ShelfArchiveHost(archive: archive, languageTag: languageTag))
 }
 
+@MainActor
 private final class ShelfArchiveModel: ObservableObject {
     let archive: IosShelfArchive
     @Published private(set) var state: IosShelfArchiveState
@@ -28,26 +29,29 @@ private final class ShelfArchiveModel: ObservableObject {
         observation = nil
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
         archive.close()
     }
 }
 
-private struct ShelfArchiveHost: View {
+struct ShelfArchiveHost: View {
     @StateObject private var model: ShelfArchiveModel
-    let strings: ShelfArchiveStrings
+    private let strings: ShelfArchiveStrings
+    let settings: AnyView?
 
-    init(archive: IosShelfArchive, strings: ShelfArchiveStrings) {
+    init(archive: IosShelfArchive, languageTag: String, settings: AnyView? = nil) {
         _model = StateObject(wrappedValue: ShelfArchiveModel(archive: archive))
-        self.strings = strings
+        strings = ShelfArchiveStrings(languageTag)
+        self.settings = settings
     }
 
     var body: some View {
         ShelfArchiveScreen(
             state: model.state, strings: strings,
             onQuery: { model.archive.query(value: $0) }, onBack: model.archive.back,
-            onRetry: model.archive.retry, onMore: model.archive.more, onBag: { model.archive.openBag(id: $0) }
+            onRetry: model.archive.retry, onMore: model.archive.more, onBag: { model.archive.openBag(id: $0) },
+            settings: settings
         ) { item in
             ShelfArchiveCover(archive: model.archive, item: item)
         }
@@ -64,11 +68,18 @@ private struct ShelfArchiveScreen<Cover: View>: View {
     let onRetry: () -> Void
     let onMore: () -> Void
     let onBag: (String) -> Void
+    var settings: AnyView? = nil
     @ViewBuilder let cover: (IosShelfArchiveRow) -> Cover
 
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 8) {
+                if let settings {
+                    settings
+                    Divider().padding(.vertical, 12)
+                    Text(strings.text("archive.title")).font(.title3.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                    if state.signedIn { search }
+                }
                 if state.signedIn {
                     archiveContent
                 }
@@ -76,26 +87,18 @@ private struct ShelfArchiveScreen<Cover: View>: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
-        .safeAreaInset(edge: .top, spacing: 0) { header }
+        .safeAreaInset(edge: .top, spacing: 0) { if settings == nil { header } }
+        .scrollDismissesKeyboard(.interactively)
         .background(CoffeePeekNativeStyle.background)
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Button(action: onBack) {
-                    Label(strings.text("archive.back"), systemImage: "chevron.backward")
-                        .labelStyle(.iconOnly)
-                        .frame(minWidth: 44, minHeight: 44)
-                }
-                Text(strings.text("archive.title"))
-                    .font(CoffeePeekNativeStyle.font(18, weight: "SemiBold", relativeTo: .headline))
-                    .accessibilityAddTraits(.isHeader)
-            }
-            if state.signedIn { search }
+            CoffeePeekNativeNavigationHeader(title: strings.text("archive.title"),
+                backLabel: strings.text("archive.back"), back: onBack)
+            if state.signedIn { search.padding(.horizontal, 16) }
         }
-        .padding(.horizontal, 16)
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(CoffeePeekNativeStyle.background)
@@ -104,7 +107,7 @@ private struct ShelfArchiveScreen<Cover: View>: View {
     private var search: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass").accessibilityHidden(true)
-            TextField(strings.text("archive.search"), text: Binding(get: { state.query }, set: onQuery))
+            TextField(strings.text("archive.search"), text: Binding(get: { state.query }, set: { onQuery($0) }))
                 .disableAutocorrection(true)
             if !state.query.isEmpty {
                 Button { onQuery("") } label: {
@@ -128,7 +131,7 @@ private struct ShelfArchiveScreen<Cover: View>: View {
             empty
         }
         if state.loading && !state.sections.isEmpty {
-            ProgressView().frame(maxWidth: .infinity).accessibilityLabel(strings.text("archive.loading"))
+            CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity).accessibilityLabel(strings.text("archive.loading"))
         }
         ForEach(state.sections, id: \.id) { section in
             Text(strings.month(section))
@@ -149,7 +152,7 @@ private struct ShelfArchiveScreen<Cover: View>: View {
     }
 
     private var loader: some View {
-        ProgressView(strings.text("archive.loading"))
+        CoffeePeekNativeLoader(label: strings.text("archive.loading"), size: 32, showsLabel: true)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
     }
@@ -253,6 +256,7 @@ private struct ShelfArchiveStrings {
     }
 }
 
+@MainActor
 private func shelfArchivePreview() -> some View {
     let row = IosShelfArchiveRow(id: "sample", title: "Santa Rosa", roaster: "Sample Roaster",
         days: nil, daysKey: nil, rating: nil, hasPhoto: false)

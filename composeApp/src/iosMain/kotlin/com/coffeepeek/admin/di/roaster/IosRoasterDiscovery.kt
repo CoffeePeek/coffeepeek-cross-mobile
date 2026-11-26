@@ -6,6 +6,8 @@ import com.coffeepeek.feature.roaster.impl.NativeRoasterDiscoveryHost
 import com.coffeepeek.feature.roaster.impl.NativeRoasterListSession
 import com.coffeepeek.feature.settings.api.LanguagePort
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 
 class IosRoasterDiscovery internal constructor(
     private val session: NativeRoasterListSession,
@@ -13,6 +15,7 @@ class IosRoasterDiscovery internal constructor(
     language: LanguagePort, accounts: SessionReader, media: IosCatalogueMedia,
 ) : IosRoasterScreen(language, accounts, media::observeImage) {
     val search = host.search
+    private val hostRevision = MutableStateFlow(0L)
     fun current(): IosRoasterDiscoveryState {
         val state = session.current()
         val active = isCurrent()
@@ -22,7 +25,7 @@ class IosRoasterDiscovery internal constructor(
             state.tags.takeIf { active }.orEmpty().map { IosRoasterTag(it.id, it.name, it.selected) },
             state.messageKey.takeIf { active }, state.message.takeIf { active })
     }
-    fun observeState(receive: (IosRoasterDiscoveryState) -> Unit) = observe(session.state) { receive(current()) }
+    fun observeState(receive: (IosRoasterDiscoveryState) -> Unit) = observe(combine(session.state, hostRevision) { _, _ -> Unit }) { receive(current()) }
     fun observeEvents() = IosRoasterObservation(scope.launch {
         session.opened.collect { slug -> guarded { host.onOpen(slug) } }
     })
@@ -36,7 +39,7 @@ class IosRoasterDiscovery internal constructor(
     fun query(value: String) = guarded { host.onQuery(value) }
     fun add() = guarded(host.onAdd)
     fun cancel() = guarded(host.onCancel)
-    internal fun update(next: NativeRoasterDiscoveryHost) { host = next }
+    internal fun update(next: NativeRoasterDiscoveryHost) { host = next; hostRevision.value++ }
 }
 
 data class IosRoasterCard(

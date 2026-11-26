@@ -122,3 +122,39 @@ migration is not part of this feature slice.
 Open gaps from the legacy-first audit: S1–S5 (medium: S1 pre-send failures block resubmission). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
 
 Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.
+
+## Native form visual parity — 2026-11-25
+
+Source: `dce8989e5` plus `codex/migration-ios-shop-filter-parity` working changes.
+The active native report route uses a scrolling column instead of SwiftUI's grouped
+Form. Shop title and prompt stand above one outlined reason card. Its 24-point
+corners, 16-point gutters, 12-point gaps, 56-point rows, inset separators and reason
+order follow the Android renderer. Submission, success and recovery use the existing
+full-width native action button. Other's outlined editor scales with Dynamic Type.
+
+Verification plan: preserve single selection, Other validation/500-character limit,
+pending-state protection, errors, successful/unconfirmed delivery and session-ended
+recovery. Kotlin's existing report/session owners retain these rules and requests;
+Swift only renders state and forwards actions. Screen analytics remain owned by the
+root route controller; no analytics service or emission was added. Colocated fake-state
+previews cover both themes, Other, errors, sending, success, unconfirmed delivery,
+Belarusian copy and large text, without production DI or submissions.
+
+Executed checks: 11 report unit tests in 2 suites and 35 notification unit tests in
+4 suites passed, with zero failures, errors, skips or retries. Android `directDebug`
+(`com.coffeepeek.debug`, `1.2.0.3221-debug`) assembly and the packaged DEX runtime-class
+check passed with `--max-workers=6`; function limits reported 130 recorded and zero
+new violations. Both native launcher registration contracts passed. Swift 6.4.2
+syntax parsing with `-swift-version 6 -strict-concurrency=complete` passed for the
+changed report, list and inbox files; parsing is not SwiftUI type checking or a
+concurrency-safety build. No new Task, DispatchQueue, unchecked Sendable or isolation
+escape was introduced.
+
+The attempted `:composeApp:compileIosMainKotlinMetadata` failed in
+`:core:database:compileCommonMainKotlinMetadata`: Room's generated
+`CoffeePeekDatabaseConstructor` actual and expect declarations are in the same
+module. Database source/configuration is unchanged. This failed run is retained
+separately from the successful Android/unit run. Full iOS compilation and iOS-only
+contracts remain unverified. No device was selected or app installed. IDE/preview
+rendering, manual iPhone light/dark, keyboard, Dynamic Type, VoiceOver, navigation
+and modal checks, and real backend delivery remain acceptance gates.

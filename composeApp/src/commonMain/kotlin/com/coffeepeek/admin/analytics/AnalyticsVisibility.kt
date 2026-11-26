@@ -16,6 +16,9 @@ internal val LocalAnalyticsUnobscured = staticCompositionLocalOf { true }
 private val LocalAnalyticsOverlay = staticCompositionLocalOf<String?> { null }
 private val exposures = FeatureExposureLedger()
 
+internal fun reportNativeFeatureExposure(visit: String, feature: String, placement: String, send: () -> Boolean) =
+    exposures.report(visit, feature, placement, 1f, true, true, 500, send)
+
 /** A name comes only from the route's class, never from serialized route arguments. */
 internal fun analyticsPage(route: String?): String = when (route?.substringBefore('?')?.substringBefore('/')?.substringAfterLast('.')) {
     "Auth", "ForgotPassword", "ResetPassword" -> "login"
@@ -130,7 +133,7 @@ internal fun TrackNativeFeatureExposure(visible: Boolean, feature: String, place
         if (!eligible) return@LaunchedEffect
         delay(500)
         val visit = "${state.generation}:${state.visit}:${state.visitSequence}"
-        exposures.report(visit, feature, placement, 1f, state.foreground, unobscured, 500) {
+        reportNativeFeatureExposure(visit, feature, placement) {
             service.track(AnalyticsEvent.FEATURE_EXPOSED, mapOf("feature" to feature, "placement" to placement))
         }
     }

@@ -15,7 +15,7 @@ data class IosOwnProfileState(
     val checkInsLoading: Boolean,
     val checkInsFailed: Boolean,
     val checkIns: List<IosOwnProfileCheckIn>,
-    val followers: IosOwnProfileFollowers,
+    val connections: IosPublicProfileConnections,
     val moreCheckIns: Boolean = false,
     val loadingMoreCheckIns: Boolean = false,
     val moreCheckInsFailed: Boolean = false,
@@ -31,6 +31,7 @@ data class IosOwnProfileIdentity(
     val roasters: Int,
     val followers: Int,
     val canOpenFollowers: Boolean,
+    val following: Int? = null,
 )
 
 data class IosOwnProfileCheckIn(
@@ -44,11 +45,6 @@ data class IosOwnProfilePhoto(val url: String?, val canOpen: Boolean, val fallba
 data class IosOwnProfileBrew(
     val bean: String?, val roaster: String?, val method: String?, val dose: String?,
     val seconds: Int, val taste: Int, val cover: String?, val coffee: String?,
-)
-
-data class IosOwnProfileFollowers(
-    val open: Boolean, val loading: Boolean, val failed: Boolean, val more: Boolean,
-    val people: List<IosOwnProfileFollower>,
 )
 
 data class IosOwnProfileFollower(val slug: String, val name: String, val avatar: String?)
@@ -68,8 +64,10 @@ internal fun OwnProfileSnapshot.iosState(): IosOwnProfileState {
     return IosOwnProfileState(active, iosIdentity(), loading || publicLoading && !hasContent, refreshing,
         failed || publicFailed && !hasContent, refreshFailed || publicFailed && hasContent,
         false, false, emptyList(),
-        IosOwnProfileFollowers(followersOpen, followersLoading, followersFailed, moreFollowers,
-            followers.map { IosOwnProfileFollower(it.slug, it.userName, it.avatarUrl) }))
+        IosPublicProfileConnections(connectionsOpen,
+            connectionKind != com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind.Following,
+            connectionsLoading, connectionsFailed, moreConnections,
+            connections.map { IosOwnProfileFollower(it.slug, it.userName, it.avatarUrl) }))
 }
 
 private fun OwnProfileSnapshot.iosIdentity(): IosOwnProfileIdentity? {
@@ -79,7 +77,7 @@ private fun OwnProfileSnapshot.iosIdentity(): IosOwnProfileIdentity? {
     return IosOwnProfileIdentity(name, public?.about ?: own.about,
         public?.avatarUrl ?: own.avatarUrl, public?.stats?.checkIns ?: own.checkInCount,
         public?.stats?.coffeeShops ?: own.addedShopsCount, public?.stats?.roasters ?: own.addedRoastersCount,
-        public?.stats?.followers ?: own.followersCount, public != null)
+        public?.stats?.followers ?: own.followersCount, public != null, followingCount)
 }
 
 internal fun OwnProfileCheckInSnapshot.iosCheckIn(

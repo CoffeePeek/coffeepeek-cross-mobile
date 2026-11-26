@@ -57,7 +57,7 @@ struct CheckInDetailNativeContent: View {
         if state.loadingLabel != nil || state.errorText != nil {
             VStack(alignment: .leading, spacing: 12) {
                 if let loading = state.loadingLabel {
-                    ProgressView(loading).tint(CoffeePeekNativeStyle.foreground).frame(maxWidth: .infinity)
+                    CoffeePeekNativeLoader(label: loading, color: CoffeePeekNativeStyle.foreground, size: 32, showsLabel: true).frame(maxWidth: .infinity)
                 }
                 if let message = state.errorText {
                     Text(message).foregroundStyle(CoffeePeekNativeStyle.secondary).fixedSize(horizontal: false, vertical: true)

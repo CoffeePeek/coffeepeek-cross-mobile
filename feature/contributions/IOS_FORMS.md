@@ -49,3 +49,53 @@ that state for shop, roaster and change submissions, preventing stale button
 callbacks from popping and disposing an in-flight destination. The UIKit local
 back guard remains active. A non-UI contract holds all three fake submissions
 pending and verifies back is consumed without changing their state or drafts.
+
+
+## Native form parity — 2026-11-25, Debug 3226
+
+AddShop and AddRoaster share a native navigation header and Liquid Glass back
+control. Both omit the mandatory-field explanation and duplicate City caption;
+the picker retains its localized placeholder, selected city, accessibility label,
+validation and single-city restriction. Only existing fields are changed; no
+price/schedule fields are added to roasters.
+
+Shop price uses discovery's discrete native slider: unspecified plus three existing
+domain option IDs. Feature choices use the same selectable row as filters. Groups
+start collapsed, show selected names, animate with a system smooth transition and
+respect Reduce Motion. Logos retain the scoped loader; no alternate catalog or
+cross-feature dependency is introduced. The map uses a standard SF Symbols marker;
+My Location sits above the address card. Schedule presets are removed; manual times,
+per-day editing and working-day actions are preserved.
+
+Submission presentation follows Android: 88-point sending/error artwork, localized
+title/description, full-width retry/return actions with the retained draft,
+160-point existing success mascot, 48-point accent confirmation and shop summary.
+Success omits the form header. Existing submission, feedback, account and media
+owners remain in KMP; no new Task, queue or isolation escape was introduced.
+Editors retain their request/status actions through the same scaffold.
+
+Verification plan: compile the full native app, run contribution domain/data/impl
+unit contracts and Android directDebug assembly/DEX checks. Colocated fake previews
+cover fields, collapsed features, schedule, map, success and failure in both themes.
+They are not rendered on Windows. iPhone gates: keyboard/Dynamic Type, selection,
+slider values, map controls, back/cancel and safe-account submission outcomes.
+No real form is submitted and no automated UI/screenshot tests are added.
+
+
+2026-11-25 validation: final native Debug 1.2.2 (3226) compiled and signed. Domain
+17 tests/2 suites and data 35/2 executed; impl 82/9 results came FROM-CACHE, all with
+zero failures/errors/skips. Android directDebug assembly/packaged DEX and function
+limits passed. The packaged success mascot path was verified. Native previews have
+not been rendered and submission outcomes have not been exercised against a live
+account. Device layout/back/keyboard/map gates remain open pending USB access.
+
+
+After the user reconnected USB, InstallationProxy verified the in-place 3226
+installation on the agreed iPhone15,4 / iOS 27.2.1; the main application version
+was unchanged. The same native PID remained running across the 12-second startup
+observation. Local screenshots showed an active form transition and later the
+new success artwork/layout while the user was interacting. The agent sent no taps,
+text, form submission or account mutations; the inspection transport was closed
+to leave control to the user. These observations do not certify the remaining
+photo-failure exit, selection/map, dark mode, accessibility or complete submission
+contracts on a live backend. Captures remain local, outside tracked sources.

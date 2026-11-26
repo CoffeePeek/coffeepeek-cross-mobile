@@ -185,4 +185,10 @@
     <string name="profile_edit_display_shelf">Кававая паліца</string>
     <string name="profile_edit_camera">Зрабіць фота</string>
     <string name="profile_edit_gallery">Выбраць з галерэі</string>
+    <string name="profile_connections_followers_one">%1$d падпісчык</string>
+    <string name="profile_connections_followers_few">%1$d падпісчыкі</string>
+    <string name="profile_connections_followers_many">%1$d падпісчыкаў</string>
+    <string name="profile_connections_following_one">%1$d падпіска</string>
+    <string name="profile_connections_following_few">%1$d падпіскі</string>
+    <string name="profile_connections_following_many">%1$d падпісак</string>
 </resources>

@@ -1,4 +1,5 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class,
+    org.jetbrains.compose.resources.ExperimentalResourceApi::class)
 
 package com.coffeepeek.core.designsystem.component
 
@@ -23,10 +24,32 @@ import androidx.compose.ui.unit.LayoutDirection
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import org.jetbrains.skia.Image
+import org.jetbrains.compose.resources.decodeToImageVector
 import platform.Foundation.NSData
 import platform.Foundation.create
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageRenderingMode.UIImageRenderingModeAlwaysTemplate
+import platform.UIKit.UIScreen
+
+/** Drawable resources can contain either raster data or Android vector XML. */
+fun coffeePeekNativeDrawableImage(bytes: ByteArray, size: Float = 20f,
+    scale: Float = UIScreen.mainScreen.scale.toFloat()): UIImage {
+    require(bytes.isNotEmpty() && size.isFinite() && size > 0 && scale.isFinite() && scale > 0)
+    val raster = bytes.usePinned {
+        UIImage.imageWithData(NSData.create(bytes = it.addressOf(0), length = bytes.size.toULong()), scale.toDouble())
+    }
+    return raster?.imageWithRenderingMode(UIImageRenderingModeAlwaysTemplate)
+        ?: coffeePeekNativeVectorImage(bytes.decodeToImageVector(Density(scale)), size, scale)
+}
+
+/** Resolves an existing vector asset without starting a renderer/composition lifetime. */
+fun coffeePeekNativeVectorImage(vector: ImageVector, size: Float = 20f, scale: Float = UIScreen.mainScreen.scale.toFloat(),
+    direction: LayoutDirection = LayoutDirection.Ltr): UIImage {
+    require(size.isFinite() && size > 0 && scale.isFinite() && scale > 0)
+    val density = Density(scale)
+    val bitmap = coffeePeekVectorBitmap(vector, (size * scale).toInt().coerceAtLeast(1), density, direction)
+    return coffeePeekEncodeNativeImage(bitmap, scale.toDouble())
+}
 
 /** Keeps the actual design-system icon, including custom vectors without an SF Symbol equivalent. */
 @Composable
@@ -54,10 +77,14 @@ private fun coffeePeekRenderNativeImage(painter: Painter, density: Density, dire
     CanvasDrawScope().draw(density, direction, Canvas(bitmap), Size(side.toFloat(), side.toFloat())) {
         with(painter) { draw(size) }
     }
+    return coffeePeekEncodeNativeImage(bitmap, density.density.toDouble())
+}
+
+private fun coffeePeekEncodeNativeImage(bitmap: ImageBitmap, scale: Double): UIImage {
     val image = Image.makeFromBitmap(bitmap.asSkiaBitmap())
     try {
         val data = checkNotNull(image.encodeToData())
-        try { return coffeePeekTemplateImage(data.bytes, density.density.toDouble()) }
+        try { return coffeePeekTemplateImage(data.bytes, scale) }
         finally { data.close() }
     } finally {
         image.close()

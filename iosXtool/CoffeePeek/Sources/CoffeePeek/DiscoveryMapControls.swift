@@ -53,7 +53,7 @@ struct DiscoveryMapControls: View {
                 action: "heatmap", selected: state.heatmapVisible)
                 .overlay {
                     if state.heatmapLoading {
-                        CoffeePeekNativeLoader(label: text("loading")).scaleEffect(0.55).allowsHitTesting(false)
+                        CoffeePeekNativeLoader(label: text("loading"), size: 22).allowsHitTesting(false)
                     }
                 }
             control("square.3.layers.3d", label: text(state.zonesVisible ? "zones-hide" : "zones-show"),
@@ -131,7 +131,7 @@ private struct DiscoveryMapCarousel: View {
 
     var body: some View {
         TabView(selection: $page) {
-            ForEach(0..<(shops.count > 1 ? shops.count * 3 : 1), id: \.self) { index in
+            ForEach(0..<(shops.count > 1 ? shops.count * 3 : shops.count), id: \.self) { index in
                 let shop = shops[index % shops.count]
                 DiscoveryShopCard(shop: shop, picker: false, compact: true, labels: labels, actions: actions,
                     action: shop.id == selectedId ? "map-open" : "map-select")
@@ -141,21 +141,26 @@ private struct DiscoveryMapCarousel: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never)).frame(height: dynamicTypeSize.isAccessibilitySize ? 240 : 104)
-        .onAppear {
+        .task(id: shops.map(\.id)) {
+            initialized = false
+            recentering = false
+            guard !shops.isEmpty else { return }
             page = (shops.count > 1 ? shops.count : 0) + (shops.firstIndex { $0.id == selectedId } ?? 0)
-            DispatchQueue.main.async { initialized = true }
+            await Task.yield()
+            if !Task.isCancelled { initialized = true }
         }
         .onChange(of: page) { _, newPage in
-            guard initialized else { return }
+            guard initialized, !shops.isEmpty else { return }
             if recentering { recentering = false; return }
             let shop = shops[newPage % shops.count]
             if shop.id != selectedId { actions.call("carousel", shop.id) }
-            if shops.count > 1 && (newPage < shops.count || newPage >= shops.count * 2) {
-                DispatchQueue.main.async {
-                    recentering = true
-                    page = shops.count + newPage % shops.count
-                }
-            }
+        }
+        .task(id: shops.map(\.id) + [String(page)]) {
+            guard initialized, shops.count > 1, page < shops.count || page >= shops.count * 2 else { return }
+            recentering = true
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) { page = shops.count + page % shops.count }
         }
         .onChange(of: selectedId) { _, id in
             guard let index = shops.firstIndex(where: { $0.id == id }), page % shops.count != index else { return }
@@ -200,6 +205,7 @@ struct DiscoveryChipArtwork: View {
     }
 }
 
+@MainActor
 private func discoveryChipArtworkPreview() -> some View {
     HStack(spacing: 16) {
         ForEach(["nearby", "open-only", "new", "visited", "favorites", "Specialty", "CoffeeBar", "Cafe"], id: \.self) {

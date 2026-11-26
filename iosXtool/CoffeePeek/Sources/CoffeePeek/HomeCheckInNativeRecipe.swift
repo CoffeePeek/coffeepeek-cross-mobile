@@ -6,6 +6,8 @@ struct HomeCheckInNativeRecipe: View {
     let strings: CheckInNativeStrings
     let actions: HomeCheckInNativeActions
     @State private var expanded: Bool?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private var isExpanded: Bool { expanded ?? (hasRecipe || recipeError) }
     private var hasRecipe: Bool {
         state.draft.methodCode != nil || state.draft.beanName != nil || state.draft.shelfBagId != nil ||
         !state.draft.dose.isEmpty || state.draft.durationSeconds != nil
@@ -13,24 +15,32 @@ struct HomeCheckInNativeRecipe: View {
     private var recipeError: Bool { state.issues.fields.contains { ["Method", "Bean", "Dose", "Duration"].contains($0.field) } }
 
     var body: some View {
-        DisclosureGroup(isExpanded: Binding(get: { expanded ?? (hasRecipe || recipeError) }, set: { expanded = $0 })) {
-            VStack(alignment: .leading, spacing: 12) {
-                method
-                bean
-                CheckInNativeField(title: strings["home_check_in_dose_label"], error: error("Dose"), style: .home) {
-                    CheckInNativeInput(title: strings["home_check_in_dose_description"], placeholder: strings["home_check_in_dose_hint"],
-                        value: Binding(get: { state.draft.dose }, set: { actions.dose(String($0.prefix(8))) }), keyboard: .decimalPad, style: .home, error: error("Dose"))
-                }
-                HomeCheckInNativeDuration(seconds: state.draft.durationSeconds?.intValue, error: error("Duration"),
-                                          strings: strings, changed: actions.duration)
-            }.padding(.top, 12)
+        DisclosureGroup(isExpanded: Binding(get: { isExpanded }, set: { expanded = $0 })) {
+            recipeFields.padding(.top, 12).transition(reduceMotion ? .identity : .opacity)
         } label: {
             Text(strings["home_check_in_recipe_title"]).font(CoffeePeekNativeStyle.font(17, weight: "Semibold"))
-                .frame(minHeight: 48)
+                .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                .contentShape(Rectangle())
         }
+        .disclosureGroupStyle(.automatic)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: isExpanded)
         .tint(CoffeePeekNativeStyle.foreground).disabled(!state.status.canEdit)
         .onChange(of: state.status.saveAttempt) { _, _ in if recipeError { expanded = true } }
         .onChange(of: recipeError) { _, failed in if failed { expanded = true } }
+    }
+
+    private var recipeFields: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            method
+            bean
+            CheckInNativeField(title: strings["home_check_in_dose_label"], error: error("Dose"), style: .home) {
+                CheckInNativeInput(title: strings["home_check_in_dose_description"], placeholder: strings["home_check_in_dose_hint"],
+                    value: Binding(get: { state.draft.dose }, set: { actions.dose(String($0.prefix(8))) }),
+                    keyboard: .decimalPad, style: .home, error: error("Dose"))
+            }
+            HomeCheckInNativeDuration(seconds: state.draft.durationSeconds?.intValue, error: error("Duration"),
+                                      strings: strings, changed: actions.duration)
+        }
     }
 
     private var method: some View {
@@ -46,7 +56,7 @@ struct HomeCheckInNativeRecipe: View {
             } label: {
                 HomeCheckInNativeSelection(label: methodLabel, symbol: "cup.and.saucer", error: error("Method"))
             }.disabled(state.catalog.methodsLoading).accessibilityLabel(strings["home_check_in_method_action"])
-            if state.catalog.methodsLoading { ProgressView(strings["home_check_in_methods_loading"]) }
+            if state.catalog.methodsLoading { CoffeePeekNativeLoader(label: strings["home_check_in_methods_loading"], size: 32, showsLabel: true) }
             if state.catalog.methodsIssueKey != nil {
                 Button(strings["home_check_in_methods_retry"], action: actions.retryMethods)
             }
@@ -68,7 +78,7 @@ struct HomeCheckInNativeRecipe: View {
                 HStack(spacing: 12) {
                     HomeCheckInNativeRemoteImage(url: url, load: actions.loadImage)
                         .frame(width: 56, height: 72).clipShape(RoundedRectangle(cornerRadius: 4))
-                    Toggle(isOn: Binding(get: { state.draft.showShelfBag }, set: actions.showBag)) {
+                    Toggle(isOn: Binding(get: { state.draft.showShelfBag }, set: { actions.showBag($0) })) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(strings["home_check_in_show_bag_title"])
                             Text(strings["home_check_in_show_bag_hint"]).font(CoffeePeekNativeStyle.font(13))
@@ -150,4 +160,36 @@ struct HomeCheckInNativeDuration: View {
 #Preview("Home recipe dark") {
     HomeCheckInNativeRecipe(state: homeCheckInNativePreviewState(), strings: homeCheckInNativePreviewStrings("be"), actions: .init())
         .padding().background(CoffeePeekNativeStyle.background).preferredColorScheme(.dark)
+}
+
+private struct HomeRecipeDisclosurePreview: View {
+    @State private var showError = false
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                HomeCheckInNativeRecipe(state: homeRecipeDisclosurePreviewState(showError: showError),
+                    strings: homeCheckInNativePreviewStrings("ru"), actions: .init())
+                Button("Показать ошибку дозы") { showError = true }
+            }.padding(16)
+        }
+        .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+    }
+}
+
+private func homeRecipeDisclosurePreviewState(showError: Bool) -> IosHomeCheckInState {
+    let base = homeCheckInNativePreviewState()
+    let draft = IosHomeCheckInDraft(preparedOn: "2026-11-25", dateLabel: "25.11.2026", methodCode: nil,
+        dose: "", durationSeconds: nil, tasteScore: nil, note: "", drinkName: "", isPublic: nil,
+        beanName: nil, shelfBagId: nil, showShelfBag: false, shelfBagCardUrl: nil,
+        photos: [], existingPhotoUrls: [], customBeanName: nil)
+    let fields = showError ? [IosHomeCheckInFieldIssue(field: "Dose", messageKey: "home_check_in_error_dose")] : []
+    return IosHomeCheckInState(draft: draft, status: base.status, catalog: base.catalog,
+        issues: IosHomeCheckInIssues(loadKey: nil, saveKey: nil, fields: fields), saved: nil)
+}
+
+#Preview("Recipe disclosure light") { HomeRecipeDisclosurePreview().preferredColorScheme(.light) }
+#Preview("Recipe disclosure dark") { HomeRecipeDisclosurePreview().preferredColorScheme(.dark) }
+#Preview("Recipe disclosure large text") {
+    HomeRecipeDisclosurePreview().preferredColorScheme(.dark).environment(\.dynamicTypeSize, .accessibility2)
 }

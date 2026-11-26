@@ -50,7 +50,7 @@ private struct ContributionsListNativeScreen: View {
             if let state, !state.loading {
                 content(state)
             } else {
-                ProgressView(strings.text("loading"))
+                CoffeePeekNativeLoader(label: strings.text("loading"), size: 32, showsLabel: true)
             }
         }
     }
@@ -75,8 +75,8 @@ private struct ContributionsListNativeScreen: View {
                     .foregroundStyle(CoffeePeekNativeStyle.secondary)
                     .frame(maxWidth: .infinity)
                     .padding(24)
+                    .coffeePeekRefreshable(isRefreshing: state.loading, label: strings.text("loading")) { refresh() }
             }
-            .refreshable { refresh() }
         }
     }
 
@@ -113,9 +113,9 @@ private struct ContributionsListNativeScreen: View {
                 pageControl(state, selected: selected)
             }
             .padding(16)
+            .coffeePeekRefreshable(isRefreshing: state.loading, label: strings.text("loading")) { refresh() }
         }
         .id(selected)
-        .refreshable { refresh() }
     }
 
     @ViewBuilder
@@ -124,7 +124,7 @@ private struct ContributionsListNativeScreen: View {
             Button(strings.text("load_more_failed")) { loadMore(selected) }
                 .frame(minHeight: 44)
         } else if state.loadingMore || state.hasMore {
-            ProgressView(strings.text("loading"))
+            CoffeePeekNativeLoader(label: strings.text("loading"), size: 32, showsLabel: true)
                 .task(id: state.items.count) {
                     if state.hasMore && !state.loadingMore { loadMore(selected) }
                 }
@@ -180,6 +180,7 @@ private struct ContributionNativeCard: View {
     }
 }
 
+@MainActor
 private func contributionsListPreview() -> some View {
     ContributionsListNativeScreen(
         kind: "shops",

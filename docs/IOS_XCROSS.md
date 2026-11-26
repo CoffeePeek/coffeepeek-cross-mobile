@@ -1,5 +1,34 @@
 # Local iOS Debug builds with xcross
 
+## Cached development signing — Keychain correction, 2026-11-25
+
+The pinned xcross 2.1.1 SDK leaves provisioning wildcards in Keychain access groups.
+The 3222 signature contained `<prefix>.*` as the default group, preventing reliable
+session persistence. A successful install/startup alone does not verify this path.
+Use `tools/ios/sign_cached_debug.dart` for the cached-profile signing path; it keeps
+the validated profile/certificate, signs nested bundles normally, then re-signs the
+root executable with concrete runtime groups using the pinned SDK Mach-O signer.
+No profile permissions, certificates or existing application data are changed.
+
+```text
+dart --packages=<xcross-package-config.json> tools/ios/sign_cached_debug.dart <app> <profile> <identity-directory> <device> <declared-entitlements.json>
+python tools/ios/verify_signed_app.py <signed-app>
+dart tools/ios/CachedSigningEntitlementsTests.dart
+```
+
+The SDK internal Mach-O signer API is a compatibility dependency of this local
+workflow, not an application runtime dependency. Recheck it when updating xcross.
+The Python verifier inspects runtime entitlements in the signed executable and
+checks the default group, unresolved wildcards and Apple-provider availability;
+it does not replace OS signature validation during installation. The test bundle
+must keep the existing app identifier and signing identity for an in-place update.
+Do not use an older artifact whose default group check fails for auth acceptance.
+
+Before signing, the cached-profile wrapper sets `CoffeePeekAppleSignInEnabled`
+from the profile's actual capability. This profile does not enable Apple Sign-In;
+email/password remains available. Xcode's normal provisioning path is unchanged.
+See [Apple TN2415](https://developer.apple.com/library/archive/technotes/tn2415/).
+
 Windows integration checkpoint, 2026-11-16. Linux and Release are untested.
 Build and device acceptance are recorded separately below.
 

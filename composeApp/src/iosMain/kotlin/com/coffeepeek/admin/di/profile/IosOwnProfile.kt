@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
@@ -63,17 +62,21 @@ class IosOwnProfile internal constructor(
     fun changeMonth(offset: Int) { if (isCurrent()) history.changeMonth(offset) }
     fun retryActivity(expanded: Boolean) { if (isCurrent()) history.retryCalendar() }
     fun moreCheckIns() { if (isCurrent()) history.more() }
-    fun resume() { if (isCurrent()) history.resume() }
+    fun resume() {
+        if (!isCurrent()) return
+        history.resume()
+        profile.refreshFollowingCount()
+    }
 
     fun refresh() {
         profile.refresh()
         if (isCurrent()) history.refresh()
     }
     fun retryCheckIns() { if (isCurrent()) history.retry() }
-    fun openFollowers() = profile.openFollowers()
-    fun closeFollowers() = profile.closeFollowers()
-    fun retryFollowers() = profile.retryFollowers()
-    fun moreFollowers() = profile.moreFollowers()
+    fun openConnections(followers: Boolean) = profile.openConnections(followers)
+    fun closeConnections() = profile.closeConnections()
+    fun retryConnections() = profile.retryConnections()
+    fun moreConnections() = profile.moreConnections()
     fun logout() = profile.logout()
 
     fun edit() = navigate(Navigator.Screen.EditProfile)
@@ -89,9 +92,9 @@ class IosOwnProfile internal constructor(
     fun consumeShelfRequest() { if (isCurrent()) Navigator.consumeProfileShelf() }
     fun consumeCheckInsRequest() { if (isCurrent()) Navigator.consumeProfileCheckIns() }
 
-    fun openFollower(slug: String) {
-        val person = profile.current().followers.firstOrNull { it.slug == slug } ?: return
-        profile.closeFollowers()
+    fun openConnection(slug: String) {
+        val person = profile.current().connections.firstOrNull { it.slug == slug } ?: return
+        profile.closeConnections()
         navigate(Navigator.Screen.UserProfile(person.slug, person.userName, person.avatarUrl))
     }
 
@@ -138,8 +141,6 @@ class IosOwnProfile internal constructor(
     }
 
     fun makeCollections(): UIViewController = collections("Owner", null, null)
-
-    fun makeCollectionPreferences(): UIViewController = collections("Preference", null, null)
 
     fun makeShelf(): UIViewController = shelfController(::isCurrent)
 

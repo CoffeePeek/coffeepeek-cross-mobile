@@ -10,13 +10,18 @@ abstract class IosRoasterScreen internal constructor(
     private val language: LanguagePort,
     protected val accounts: SessionReader,
     private val images: (String, () -> Boolean) -> Flow<UIImage?>,
+    private val dispose: () -> Unit = {},
 ) {
-    protected val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val generation = accounts.accountGeneration()
     private val account = accounts.peekSession()?.userId
     private val signedIn = accounts.isActiveSession(accounts.peekSession())
-    private var revoked = false
+    private val revoked = MutableStateFlow(false)
+    private var closed = false
+    private var released = false
     internal val fractions = MutableStateFlow<Map<String, Double>>(emptyMap())
+    internal val screenVisible = MutableStateFlow(false)
+    fun setVisible(visible: Boolean) { screenVisible.value = visible && isCurrent() }
     fun languageTag() = language.current().languageTag
     fun observeLanguage(receive: (String) -> Unit) = IosRoasterObservation(scope.launch {
         language.observe().collect { receive(it.languageTag) }
@@ -31,23 +36,29 @@ abstract class IosRoasterScreen internal constructor(
         images(url, ::isCurrent).collect(receive)
     })
     protected fun <T> observe(flow: Flow<T>, receive: () -> Unit) = IosRoasterObservation(scope.launch {
-        val accountChanges = accounts.observeSession().catch {
+        val accountChanges = accounts.observeSession().onEach { if (!isCurrent()) revoke() }.catch {
             if (it is CancellationException) throw it
-            revoked = true
+            revoke()
             emit(null)
         }
         combine(flow, accountChanges) { _, _ -> Unit }.collect { receive() }
     })
     protected fun guarded(action: () -> Unit) { if (isCurrent()) action() }
     internal fun isCurrent(): Boolean {
-        if (accounts.accountGeneration() != generation || accounts.peekSession()?.userId != account ||
-            accounts.isActiveSession(accounts.peekSession()) != signedIn) revoked = true
-        return !revoked
+        return !revoked.value && accounts.accountGeneration() == generation && accounts.peekSession()?.userId == account &&
+            accounts.isActiveSession(accounts.peekSession()) == signedIn
     }
-    internal fun close() {
-        revoked = true
-        fractions.value = emptyMap()
+    fun close() {
+        if (closed) return
+        closed = true
+        revoke()
         scope.cancel()
+    }
+    private fun revoke() {
+        revoked.value = true
+        screenVisible.value = false
+        fractions.value = emptyMap()
+        if (!released) { released = true; dispose() }
     }
 }
 

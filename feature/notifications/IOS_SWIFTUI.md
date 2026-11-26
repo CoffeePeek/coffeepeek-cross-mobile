@@ -22,3 +22,28 @@ open, enabling permission, and leaving or replacing the active account.
 
 The community tab, post cards, check-in detail, leaderboard and inline
 edit/delete/report sheets remain Compose. They form the next community UI slice.
+
+## Native sheet chrome — 2026-11-25
+
+Source: `dce8989e5` plus `codex/migration-ios-shop-filter-parity` working changes.
+The inbox opens at the large native sheet detent. A modal-owned NavigationStack
+provides the inline title and system close toolbar button instead of a drawn header.
+Date groups use compact rows and inset separators; Read all includes the Android
+checkmark and existing gold action color. Existing localized strings are reused.
+
+The Kotlin sheet version, account guards, permission opportunity, pagination and
+destination actions are unchanged. The existing SwiftUI lifecycle-owned task still
+requires half the row to be visible continuously for two seconds in the foreground;
+the viewport measurement now naturally excludes the native navigation bar. No new
+task, isolation escape, permission request or analytics emission was added. Fake-state
+previews cover populated and guest sheets in both themes, long body text, read/unread
+rows, both date groups, Belarusian guest copy and large text.
+
+All 35 notification unit tests in 4 suites executed successfully, with zero failures,
+errors, skips or retries. Swift 6 syntax parsing, native launcher registration checks,
+Android assembly/DEX and function limits passed. The failed Room metadata attempt and
+subsequent successful Android/unit run are recorded in
+[the report verification](../shop-report/README.md#native-form-visual-parity--2026-11-25).
+iOS-only inbox session contracts, full SwiftUI compilation, IDE preview rendering and
+manual iPhone sheet, VoiceOver, scroll/visible-read, background cancellation and swipe
+dismissal checks remain open. No device was selected, app installed or live data changed.

@@ -28,6 +28,14 @@ internal class SessionShopCheckInEntry(
     private val photos: ShopCheckInPhotoPicker,
     private val onCheckInCreated: () -> Unit,
 ) : ShopCheckInCreateEntry {
+    internal fun nativeForm(context: com.coffeepeek.feature.shop.api.ShopDetailContext, callbacks: ShopCheckInNativeCallbacks): NativeShopCheckInForm {
+        val lease = ShopCheckInSession(sessions, repository, onCheckInCreated)
+        val historyLease = CheckInHistorySession(sessions)
+        val draft = lease.userId?.takeIf { lease.isCurrent() }?.let { drafts.forShop(context.shopId, context.shopSlug, it) }
+        val form = draft?.let { ShopCheckInNativeForm(context.shopId, context.shopSlug, context.shopName, context.shopAddress,
+            lease, it, dates, photos, HistoryShopCheckInPublicationReader(historyLease.bind(history)), lease::isCurrent, callbacks) }
+        return NativeShopCheckInForm(form, lease, historyLease)
+    }
     @Composable
     override fun Content(
         shopId: String,
@@ -65,6 +73,15 @@ internal class SessionShopCheckInEntry(
             ShopCheckInNativeCallbacks(onDismiss, onChangeShop, { if (lease.isCurrent()) onSubmitted() },
                 { if (lease.isCurrent()) onGoToFeed() }, { if (lease.isCurrent()) onOpenHistory() }))
         SessionShopCheckInContent(form)
+    }
+}
+
+internal class NativeShopCheckInForm(val form: ShopCheckInNativeForm?, private val lease: ShopCheckInSession,
+    private val history: CheckInHistorySession,
+) {
+    fun close() {
+        lease.revoke()
+        history.revoke()
     }
 }
 

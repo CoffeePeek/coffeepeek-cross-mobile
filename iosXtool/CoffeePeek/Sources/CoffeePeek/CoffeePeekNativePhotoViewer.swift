@@ -63,7 +63,7 @@ private struct CoffeePeekPhotoSource {
         self.count = count
         initialIndex = min(max(0, selected), max(0, count - 1))
         loadPreview = { index, _, receive in load(index, receive) }
-        loadOriginal = loadPreview
+        loadOriginal = { _, _, receive in receive(nil); return {} }
         setVisible = { _ in }
     }
 
@@ -74,7 +74,7 @@ private struct CoffeePeekPhotoSource {
             receive(images.indices.contains(index) ? images[index] : nil)
             return {}
         }
-        loadOriginal = loadPreview
+        loadOriginal = { _, _, receive in receive(nil); return {} }
         setVisible = { _ in }
     }
 
@@ -103,6 +103,7 @@ private struct CoffeePeekNativePhotoViewer: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dismiss) private var dismiss
     @State private var selected: Int
     @State private var zoom: CGFloat = 1
     @State private var pan = CGSize.zero
@@ -111,15 +112,17 @@ private struct CoffeePeekNativePhotoViewer: View {
     @State private var dragDirection: DragDirection?
     @State private var displacement = CGSize.zero
     @State private var controlsVisible = true
-    @State private var originalRequested = false
     private let source: CoffeePeekPhotoSource
     private let strings: CoffeePeekPhotoViewerStrings
     private let onDismiss: () -> Void
+    private let usesNativeDismissal: Bool
 
-    init(source: CoffeePeekPhotoSource, languageTag: String, onDismiss: @escaping () -> Void) {
+    init(source: CoffeePeekPhotoSource, languageTag: String, usesNativeDismissal: Bool = false,
+         onDismiss: @escaping () -> Void) {
         self.source = source
         strings = CoffeePeekPhotoViewerStrings(languageTag: languageTag)
         self.onDismiss = onDismiss
+        self.usesNativeDismissal = usesNativeDismissal
         _selected = State(initialValue: source.initialIndex)
     }
 
@@ -131,18 +134,18 @@ private struct CoffeePeekNativePhotoViewer: View {
                     pages(viewport: proxy.size)
                 }
             }
-            if controlsVisible || voiceOver { toolbar }
+            toolbar
         }
         .foregroundStyle(.white)
         .statusBarHidden(true)
-        .accessibilityAction(.escape) { onDismiss() }
+        .accessibilityAction(.escape, close)
         .onAppear { source.setVisible(true) }
         .onDisappear { source.setVisible(false) }
     }
 
     private var toolbar: some View {
         ZStack(alignment: .topTrailing) {
-            if source.count > 1 {
+            if source.count > 1 && (controlsVisible || voiceOver) {
                 Text(strings.position(selected, source.count))
                     .font(.subheadline.weight(.semibold).monospacedDigit())
                     .padding(.horizontal, 12)
@@ -152,7 +155,7 @@ private struct CoffeePeekNativePhotoViewer: View {
                     .accessibilityLabel(strings.description(selected, source.count))
                     .accessibilityAdjustableAction(adjustPage)
             }
-            Button(action: onDismiss) {
+            Button(action: close) {
                 Image(systemName: "xmark")
                     .font(.body.weight(.semibold))
                     .frame(width: 44, height: 44)
@@ -161,8 +164,15 @@ private struct CoffeePeekNativePhotoViewer: View {
             .buttonStyle(.plain)
             .accessibilityLabel(strings.text("close"))
         }
+        .frame(maxWidth: .infinity, alignment: .topTrailing)
         .padding(.horizontal, 16)
         .padding(.top, 8)
+    }
+
+    private func close() {
+        source.setVisible(false)
+        if !usesNativeDismissal { dismiss() }
+        onDismiss()
     }
 
     private func pages(viewport: CGSize) -> some View {
@@ -173,7 +183,7 @@ private struct CoffeePeekNativePhotoViewer: View {
                 let current = index == selected
                 CoffeePeekPhotoPage(
                     source: source, strings: strings, index: index, selected: selected,
-                    original: current && originalRequested, zoom: current ? zoom : 1,
+                    original: current, zoom: current ? zoom : 1,
                     pan: current ? pan : .zero
                 )
                 .frame(width: viewport.width, height: viewport.height)
@@ -244,7 +254,7 @@ private struct CoffeePeekNativePhotoViewer: View {
                     select(selected + (distance < 0 ? 1 : -1))
                 }
             case .vertical:
-                if value.translation.height >= 120 || value.predictedEndTranslation.height >= 180 { onDismiss() }
+                if value.translation.height >= 120 || value.predictedEndTranslation.height >= 180 { close() }
             case nil: break
             }
         }
@@ -264,7 +274,6 @@ private struct CoffeePeekNativePhotoViewer: View {
             selected = index
             zoom = 1
             pan = .zero
-            originalRequested = false
         }
     }
 
@@ -281,7 +290,6 @@ private struct CoffeePeekNativePhotoViewer: View {
         pan = clamped(CGSize(width: (start.pan.width - x) * ratio + x,
                              height: (start.pan.height - y) * ratio + y), scale: next, viewport: viewport)
         zoom = next
-        if next > 1 { originalRequested = true }
     }
 
     private func clamped(_ offset: CGSize, scale: CGFloat, viewport: CGSize) -> CGSize {
@@ -327,9 +335,9 @@ private struct CoffeePeekPhotoPage: View {
                     .offset(pan)
                     .accessibilityLabel(strings.description(index, source.count))
             } else if images.isLoading {
-                ProgressView().tint(.white).accessibilityLabel(strings.text("loading"))
+                CoffeePeekNativeLoader(color: .white, size: 24).accessibilityLabel(strings.text("loading"))
             } else if index == selected {
-                Button { reload() } label: {
+                Button { reload(retry: true) } label: {
                     Label(strings.text("retry"), systemImage: "arrow.clockwise")
                         .padding(12)
                 }
@@ -341,46 +349,72 @@ private struct CoffeePeekPhotoPage: View {
         .onDisappear(perform: images.cancel)
     }
 
-    private func reload() {
-        images.loadPreview(source, page: index, selected: selected)
-        updateOriginal()
+    private func reload(retry: Bool = false) {
+        images.loadPreview(source, page: index, selected: selected, retry: retry)
+        images.loadOriginal(source, page: index, selected: selected, request: original, retry: retry)
     }
 
     private func updateOriginal() { images.loadOriginal(source, page: index, selected: selected, request: original) }
 }
 
+@MainActor
 private final class CoffeePeekPhotoPageImages: ObservableObject {
     @Published private(set) var preview: UIImage?
     @Published private(set) var original: UIImage?
-    @Published private(set) var isLoading = true
+    @Published private var previewLoading = true
+    @Published private var originalLoading = false
+    var isLoading: Bool { previewLoading || originalLoading }
     private var previewTask: (() -> Void)?
     private var originalTask: (() -> Void)?
+    private var previewID: UUID?
+    private var originalID: UUID?
 
-    deinit { previewTask?(); originalTask?() }
-
-    func loadPreview(_ source: CoffeePeekPhotoSource, page: Int, selected: Int) {
-        previewTask?()
-        preview = nil
-        isLoading = true
+    func loadPreview(_ source: CoffeePeekPhotoSource, page: Int, selected: Int, retry: Bool = false) {
+        guard previewTask == nil || (preview == nil && (retry || (page == selected && !previewLoading))) else { return }
+        cancelPreview()
+        let id = UUID()
+        previewID = id
+        previewLoading = true
         previewTask = source.loadPreview(page, selected) { [weak self] image in
-            self?.preview = image
-            self?.isLoading = false
+            guard let self, previewID == id else { return }
+            preview = image
+            previewLoading = false
         }
     }
 
-    func loadOriginal(_ source: CoffeePeekPhotoSource, page: Int, selected: Int, request: Bool) {
+    func loadOriginal(_ source: CoffeePeekPhotoSource, page: Int, selected: Int, request: Bool, retry: Bool = false) {
+        guard request else { cancelOriginal(); return }
+        guard retry || originalTask == nil else { return }
+        cancelOriginal()
+        let id = UUID()
+        originalID = id
+        originalLoading = true
+        originalTask = source.loadOriginal(page, selected) { [weak self] image in
+            guard let self, originalID == id else { return }
+            original = image
+            originalLoading = false
+        }
+    }
+
+    private func cancelPreview() {
+        previewID = nil
+        previewTask?()
+        previewTask = nil
+        previewLoading = false
+    }
+
+    private func cancelOriginal() {
+        originalID = nil
         originalTask?()
+        originalTask = nil
         original = nil
-        originalTask = request ? source.loadOriginal(page, selected) { [weak self] in self?.original = $0 } : nil
+        originalLoading = false
     }
 
     func cancel() {
-        previewTask?()
-        originalTask?()
-        previewTask = nil
-        originalTask = nil
+        cancelPreview()
+        cancelOriginal()
         preview = nil
-        original = nil
     }
 }
 
@@ -416,10 +450,13 @@ private struct CoffeePeekPhotoViewerStrings {
 
 @MainActor
 func makeCheckInPhotoController(presentation: IosCheckInPhotoPresentation) -> UIViewController {
+    let completion = CoffeePeekNativeModalDismissal()
     let controller = UIHostingController(rootView: CoffeePeekNativePhotoViewer(
         source: CoffeePeekPhotoSource(presentation.viewer), languageTag: presentation.languageTag,
-        onDismiss: presentation.dismiss))
-    controller.modalPresentationStyle = .fullScreen
+        usesNativeDismissal: true,
+        onDismiss: { completion.finish(presentation.dismiss) }))
+    completion.controller = controller
+    controller.modalPresentationStyle = .overFullScreen
     controller.isModalInPresentation = true
     return controller
 }

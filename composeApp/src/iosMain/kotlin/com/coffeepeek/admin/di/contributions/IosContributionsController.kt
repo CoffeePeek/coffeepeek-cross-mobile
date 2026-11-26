@@ -26,10 +26,16 @@ internal fun iosContributionsContent(): (Navigator.Screen) -> (() -> UIViewContr
     val forms = iosContributionFormsContent(factory) { languageTag }
     val repository = koinInject<ContributionsRepository>()
     val sessions = koinInject<SessionReader>()
+    return iosContributionsContent(factory, { languageTag }, repository, sessions, forms)
+}
+
+internal fun iosContributionsContent(factory: (IosContributionsRoute, String) -> UIViewController, language: () -> String,
+    repository: ContributionsRepository, sessions: SessionReader, forms: (Navigator.Screen) -> (() -> UIViewController)?,
+): (Navigator.Screen) -> (() -> UIViewController)? {
     return { screen ->
         when (screen) {
-            is Navigator.Screen.MyContributions -> { { factory(listRoute(screen.kind, repository, sessions), languageTag) } }
-            is Navigator.Screen.ShopChangeRequestDetail -> { { factory(detailRoute(screen.requestId, repository, sessions), languageTag) } }
+            is Navigator.Screen.MyContributions -> { { factory(listRoute(screen.kind, repository, sessions), language()) } }
+            is Navigator.Screen.ShopChangeRequestDetail -> { { factory(detailRoute(screen.requestId, repository, sessions), language()) } }
             else -> forms(screen)
         }
     }

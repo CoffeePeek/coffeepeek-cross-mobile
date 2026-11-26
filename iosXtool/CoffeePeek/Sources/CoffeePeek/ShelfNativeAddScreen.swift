@@ -70,12 +70,15 @@ struct ShelfNativeAddScreen: View {
             photo(add)
             Text(strings["shelf_prepare_title"]).font(.title2.weight(.semibold))
             Text(strings["shelf_prepare_body"])
-            if add.scanner == "Checking" { ProgressView(strings["shelf_scanner_checking"]) }
+            if add.scanner == "Checking" { CoffeePeekNativeLoader(label: strings["shelf_scanner_checking"], size: 32, showsLabel: true) }
             else if add.scanner == "Downloading" {
                 if add.downloadTotal > 0 {
-                    ProgressView(value: Double(add.downloadDone), total: Double(add.downloadTotal))
-                        .accessibilityLabel(strings["shelf_scanner_downloading_unknown"])
-                } else { ProgressView(strings["shelf_scanner_downloading_unknown"]) }
+                    VStack(spacing: 8) {
+                        CoffeePeekNativeLoader(label: strings["shelf_scanner_downloading_unknown"], size: 32)
+                        Text(min(1, max(0, Double(add.downloadDone) / Double(add.downloadTotal))), format: .percent)
+                            .monospacedDigit()
+                    }
+                } else { CoffeePeekNativeLoader(label: strings["shelf_scanner_downloading_unknown"], size: 32, showsLabel: true) }
             } else {
                 if add.scanner == "DownloadFailed" { Text(strings["shelf_scanner_download_failed"]) }
                 Button(add.downloadBytes > 0 ? String(format: strings["shelf_scanner_prepare"], Int((add.downloadBytes + 1_048_575) / 1_048_576)) : strings["shelf_scanner_download"]) {
@@ -95,7 +98,7 @@ struct ShelfNativeAddScreen: View {
                     Text(stageText(stage.name))
                 }.foregroundStyle(stage.status == "Done" ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.secondary)
             }
-            ProgressView().frame(maxWidth: .infinity)
+            CoffeePeekNativeLoader(label: strings["shelf_scan_title"], size: 24).frame(maxWidth: .infinity)
         }
         .task(id: add.step) {
             if add.step == "Revealing" {

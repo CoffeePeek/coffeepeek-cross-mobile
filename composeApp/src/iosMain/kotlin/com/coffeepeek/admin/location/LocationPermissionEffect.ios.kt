@@ -24,33 +24,49 @@ actual fun LocationPermissionEffect(
 ) {
     val grantedState = rememberUpdatedState(onGranted)
     val deniedState = rememberUpdatedState(onDenied)
-    // iOS has no transient denial: once the user refuses, only Settings can undo it.
     val permanentlyDeniedState = rememberUpdatedState(onPermanentlyDenied)
-    val delegate = remember {
-        LocationPermissionDelegate(
-            onGranted = { grantedState.value() },
-            onDenied = { permanentlyDeniedState.value() },
-        )
-    }
-    val manager = remember { CLLocationManager() }
-
-    DisposableEffect(manager, delegate) {
-        manager.delegate = delegate
-        onDispose { manager.delegate = null }
-    }
-
+    val permission = remember { IosLocationPermission() }
+    DisposableEffect(permission) { onDispose { permission.close() } }
     LaunchedEffect(requestKey) {
-        if (requestKey <= 0) return@LaunchedEffect
-        when (manager.authorizationStatus) {
-            kCLAuthorizationStatusAuthorizedAlways,
-            kCLAuthorizationStatusAuthorizedWhenInUse -> grantedState.value()
-            kCLAuthorizationStatusDenied,
-            kCLAuthorizationStatusRestricted -> permanentlyDeniedState.value()
-            kCLAuthorizationStatusNotDetermined -> manager.requestWhenInUseAuthorization()
-            else -> deniedState.value()
-        }
+        permission.request(requestKey, { grantedState.value() }, { deniedState.value() }, { permanentlyDeniedState.value() })
     }
 }
+
+/** One request source and native lifetime; an unsolicited delegate callback has no action. */
+internal class IosLocationPermission {
+    private val manager = CLLocationManager()
+    private var lastKey = 0
+    private var closed = false
+    private var pending: LocationPermissionCallbacks? = null
+    private val delegate = LocationPermissionDelegate(
+        onGranted = { complete { it.granted() } }, onDenied = { complete { it.permanentlyDenied() } })
+    init { manager.delegate = delegate }
+    fun request(key: Int, granted: () -> Unit, denied: () -> Unit, permanentlyDenied: () -> Unit) {
+        if (closed || key <= lastKey) return
+        lastKey = key
+        pending = LocationPermissionCallbacks(granted, denied, permanentlyDenied)
+        when (manager.authorizationStatus) {
+            kCLAuthorizationStatusAuthorizedAlways,
+            kCLAuthorizationStatusAuthorizedWhenInUse -> complete { it.granted() }
+            kCLAuthorizationStatusDenied,
+            kCLAuthorizationStatusRestricted -> complete { it.permanentlyDenied() }
+            kCLAuthorizationStatusNotDetermined -> manager.requestWhenInUseAuthorization()
+            else -> complete { it.denied() }
+        }
+    }
+    private fun complete(action: (LocationPermissionCallbacks) -> Unit) {
+        val receiver = pending ?: return
+        pending = null
+        if (!closed) action(receiver)
+    }
+    fun close() {
+        closed = true
+        pending = null
+        manager.delegate = null
+    }
+}
+
+private class LocationPermissionCallbacks(val granted: () -> Unit, val denied: () -> Unit, val permanentlyDenied: () -> Unit)
 
 private class LocationPermissionDelegate(
     private val onGranted: () -> Unit,

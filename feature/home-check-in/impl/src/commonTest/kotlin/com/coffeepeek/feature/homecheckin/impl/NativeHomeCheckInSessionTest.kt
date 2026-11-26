@@ -42,6 +42,21 @@ class NativeHomeCheckInSessionTest {
         assertNull(editor.current().draft.tasteScore)
     }
 
+    @Test fun theRetainedEditorObserverReceivesClearedContentOnFinalClose() = runTest(dispatcher) {
+        val editor = session()
+        val snapshots = mutableListOf<NativeHomeCheckInState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { editor.state.collect { snapshots += it } }
+        runCurrent()
+        editor.noteChanged("Private note")
+        runCurrent()
+        assertEquals("Private note", snapshots.last().draft.note)
+        editor.close()
+        runCurrent()
+        assertEquals("", snapshots.last().draft.note)
+        assertTrue(snapshots.last().draft.photos.isEmpty())
+        assertTrue(snapshots.last().status.closed)
+    }
+
     @Test fun selectingSameCivilDatePreservesExactEditTimestampAndNullableVisibility() = runTest(dispatcher) {
         val repository = Repository()
         val editor = session(repository, "home")

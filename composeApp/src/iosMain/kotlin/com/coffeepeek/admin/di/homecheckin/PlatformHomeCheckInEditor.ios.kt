@@ -15,6 +15,7 @@ import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.ui.component.NativeEditorControllerHost
+import com.coffeepeek.admin.ui.component.PresentNativeController
 import com.coffeepeek.core.media.ImageUrlFetcher
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.homecheckin.impl.NativeHomeCheckInSession
@@ -23,6 +24,7 @@ import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInPhotoPickerCon
 import com.coffeepeek.feature.settings.api.LanguagePort
 import org.koin.compose.koinInject
 import platform.UIKit.UIViewController
+import platform.UIKit.UIModalPresentationFullScreen
 
 internal val LocalIosHomeCheckInEditorController = staticCompositionLocalOf<(IosHomeCheckInEditor) -> UIViewController> {
     error("The iOS app must provide a home check-in editor controller")
@@ -61,7 +63,10 @@ private fun HomeCheckInNativeHost(session: NativeHomeCheckInSession, allowed: Bo
     }
     DisposableEffect(editor) { onDispose { photos.value = null; editor.close() } }
     HomeCheckInNativeEffects(session, allowed, onClose, onSaved, onDismissAllowed)
-    NativeEditorControllerHost(controller, modifier.fillMaxSize())
+    if (LocalNativeHomeFullScreen.current) {
+        SideEffect { controller.modalPresentationStyle = UIModalPresentationFullScreen }
+        PresentNativeController(controller, LocalUIViewController.current)
+    } else NativeEditorControllerHost(controller, modifier.fillMaxSize())
 }
 
 @Composable

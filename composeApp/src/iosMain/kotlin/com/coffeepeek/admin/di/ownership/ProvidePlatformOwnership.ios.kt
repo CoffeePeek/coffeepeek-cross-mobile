@@ -13,7 +13,7 @@ import com.coffeepeek.feature.settings.api.LanguagePort
 import org.koin.compose.koinInject
 import platform.UIKit.UIViewController
 
-private lateinit var ownershipFactory: (IosOwnershipScreen) -> UIViewController
+internal lateinit var ownershipFactory: (IosOwnershipScreen) -> UIViewController
 internal fun configureNativeOwnership(factory: (IosOwnershipScreen) -> UIViewController) { ownershipFactory = factory }
 
 @Composable

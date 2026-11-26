@@ -4,24 +4,67 @@ import UIKit
 
 @MainActor
 func makeCheckInDetailController(detail: IosCheckInDetail) -> UIViewController {
-    UIHostingController(rootView: CheckInDetailNativeHost(detail: detail))
+    CheckInDetailHostingController(detail: detail)
 }
 
+@MainActor
+private final class CheckInDetailHostingController: UIHostingController<CheckInDetailNativeHost> {
+    private let detail: IosCheckInDetail
+    private let visibility: CoffeePeekNativeControllerVisibility
+    private var navigationObservation: IosCheckInDetailObservation?
+    init(detail: IosCheckInDetail) {
+        self.detail = detail
+        let visibility = CoffeePeekNativeControllerVisibility { detail.setVisible(visible: $0) }
+        self.visibility = visibility
+        super.init(rootView: CheckInDetailNativeHost(detail: detail, visibility: visibility))
+        navigationObservation = detail.observe { [weak self] state in self?.updateTitle(state.title) }
+        view.backgroundColor = .clear
+    }
+    @MainActor required dynamic init?(coder: NSCoder) { return nil }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        updateTitle(detail.current().title)
+        visibility.setShowing(true)
+    }
+    override func viewWillDisappear(_ animated: Bool) {
+        visibility.setShowing(false)
+        super.viewWillDisappear(animated)
+    }
+    private func updateTitle(_ title: String) {
+        self.title = title
+        if let parent { parent.navigationItem.title = title }
+    }
+    isolated deinit {
+        navigationObservation?.cancel()
+        detail.close()
+    }
+}
+
+@MainActor
 private struct CheckInDetailNativeHost: View {
     @StateObject private var model: CheckInDetailNativeModel
+    let visibility: CoffeePeekNativeControllerVisibility
+    @Environment(\.scenePhase) private var scenePhase
 
-    init(detail: IosCheckInDetail) {
+    init(detail: IosCheckInDetail, visibility: CoffeePeekNativeControllerVisibility) {
         _model = StateObject(wrappedValue: CheckInDetailNativeModel(detail: detail))
+        self.visibility = visibility
     }
 
     var body: some View {
         CheckInDetailNativeContent(state: model.presentation, loadImage: model.loadImage,
             perform: { model.detail.perform(action: $0) },
             openPhoto: { model.detail.openPhoto(index: Int32($0)) })
-            .onAppear(perform: model.observe)
+            .onAppear {
+                model.observe()
+                visibility.setForeground(scenePhase == .active)
+            }
+            .onChange(of: scenePhase) { _, phase in visibility.setForeground(phase == .active) }
+            .coffeePeekCommunityOverlays(model.detail.overlays)
     }
 }
 
+@MainActor
 private final class CheckInDetailNativeModel: ObservableObject {
     let detail: IosCheckInDetail
     @Published private(set) var state: IosCheckInDetailState
@@ -32,7 +75,7 @@ private final class CheckInDetailNativeModel: ObservableObject {
         state = detail.current()
     }
 
-    deinit { observation?.cancel() }
+    isolated deinit { observation?.cancel() }
 
     func observe() {
         guard observation == nil else { return }

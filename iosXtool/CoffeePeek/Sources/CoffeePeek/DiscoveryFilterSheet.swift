@@ -30,7 +30,7 @@ private struct DiscoveryFilterHost: View {
         DiscoveryFilterSheet(
             state: state,
             actions: DiscoveryFilterActions(
-                reset: filters.reset, done: filters.apply, close: filters.close,
+                reset: filters.reset, close: filters.apply,
                 price: { filters.price(index: $0) }, toggle: { filters.toggle(section: $0, id: $1) },
                 retry: filters.retry, image: { filters.loadImage(url: $0, onImage: $1) }
             )
@@ -49,7 +49,6 @@ private struct DiscoveryFilterHost: View {
 
 private struct DiscoveryFilterActions {
     var reset: () -> Void = {}
-    var done: () -> Void = {}
     var close: () -> Void = {}
     var price: (Int32) -> Void = { _ in }
     var toggle: (String, String) -> Void = { _, _ in }
@@ -90,7 +89,6 @@ private struct DiscoveryFilterSheet: View {
                 Spacer(minLength: 0)
                 title
                 Spacer(minLength: 0)
-                doneButton
                 closeButton
             }
             VStack(spacing: 4) {
@@ -98,7 +96,6 @@ private struct DiscoveryFilterSheet: View {
                 HStack {
                     resetButton
                     Spacer(minLength: 0)
-                    doneButton
                     closeButton
                 }
             }
@@ -120,14 +117,6 @@ private struct DiscoveryFilterSheet: View {
             .frame(minHeight: 44)
     }
 
-    private var doneButton: some View {
-        Button(action: actions.done) {
-            Text(state.done).fontWeight(.semibold)
-                .frame(minHeight: 44)
-                .foregroundStyle(CoffeePeekNativeStyle.foreground)
-        }
-    }
-
     private var closeButton: some View {
         Button(action: actions.close) {
             Image(systemName: "xmark")
@@ -141,7 +130,7 @@ private struct DiscoveryFilterSheet: View {
         if let status = state.catalogStatus {
             HStack(alignment: .center, spacing: 10) {
                 if state.isLoading {
-                    CoffeePeekNativeLoader(label: status).scaleEffect(0.55).accessibilityHidden(true)
+                    CoffeePeekNativeLoader(label: status, size: 22).accessibilityHidden(true)
                 }
                 Text(status).foregroundStyle(CoffeePeekNativeStyle.secondary)
                 if let retry = state.retry {
@@ -154,23 +143,37 @@ private struct DiscoveryFilterSheet: View {
     }
 
     private var priceSection: some View {
+        CoffeePeekNativePriceSlider(title: state.priceTitle, prices: state.prices,
+            selectedIndex: Int(state.priceIndex), select: { actions.price(Int32($0)) })
+    }
+}
+
+struct CoffeePeekNativePriceSlider: View {
+    let title: String
+    let prices: [String]
+    let selectedIndex: Int
+    var showsValue = true
+    let select: (Int) -> Void
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ViewThatFits(in: .horizontal) {
                 HStack {
-                    Text(state.priceTitle).font(.headline).accessibilityAddTraits(.isHeader)
+                    Text(title).font(.headline).accessibilityAddTraits(.isHeader)
                     Spacer()
-                    Text(selectedPrice).foregroundStyle(CoffeePeekNativeStyle.secondary)
+                    if showsValue { Text(selectedPrice).foregroundStyle(CoffeePeekNativeStyle.secondary) }
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(state.priceTitle).font(.headline).accessibilityAddTraits(.isHeader)
-                    Text(selectedPrice).foregroundStyle(CoffeePeekNativeStyle.secondary)
+                    Text(title).font(.headline).accessibilityAddTraits(.isHeader)
+                    if showsValue { Text(selectedPrice).foregroundStyle(CoffeePeekNativeStyle.secondary) }
                 }
             }
-            if state.prices.count > 1 {
-                Slider(value: Binding(get: { Double(state.priceIndex) }, set: { actions.price(Int32($0.rounded())) }),
-                       in: 0...Double(state.prices.count - 1), step: 1) {
-                    Text(state.priceTitle)
+            if prices.count > 1 {
+                Slider(value: Binding(get: { Double(min(max(0, selectedIndex), prices.count - 1)) }, set: { select(Int($0.rounded())) }),
+                       in: 0...Double(prices.count - 1), step: 1) {
+                    Text(title)
                 }
+                .tint(CoffeePeekNativeStyle.accent)
                 .accessibilityValue(selectedPrice)
                 .frame(minHeight: 44)
             }
@@ -182,8 +185,7 @@ private struct DiscoveryFilterSheet: View {
     }
 
     private var selectedPrice: String {
-        let index = Int(state.priceIndex)
-        return state.prices.indices.contains(index) ? state.prices[index] : ""
+        prices.indices.contains(selectedIndex) ? prices[selectedIndex] : ""
     }
 }
 
@@ -205,12 +207,12 @@ private struct DiscoveryFilterSectionView: View {
             if let selectedLabel = section.selectedLabel {
                 Text(selectedLabel).font(.subheadline).foregroundStyle(CoffeePeekNativeStyle.secondary)
             }
-            ForEach(choices, id: \.id) { choice in
-                if section.id != "Tags" { Divider().overlay(CoffeePeekNativeStyle.border) }
+            ForEach(Array(choices.enumerated()), id: \.element.id) { index, choice in
+                if index > 0 { Divider().overlay(CoffeePeekNativeStyle.border) }
                 choiceRow(choice)
             }
             if section.choices.count > 5 {
-                if section.id != "Tags" { Divider().overlay(CoffeePeekNativeStyle.border) }
+                Divider().overlay(CoffeePeekNativeStyle.border)
                 Button(expanded ? section.collapse : section.showAll) { expanded.toggle() }
                     .tint(CoffeePeekNativeStyle.foreground)
                     .frame(minHeight: 44)
@@ -223,31 +225,8 @@ private struct DiscoveryFilterSectionView: View {
     }
 
     private func choiceRow(_ choice: IosDiscoveryFilterChoice) -> some View {
-        Button { actions.toggle(section.id, choice.id) } label: {
-            choiceContent(choice).foregroundStyle(CoffeePeekNativeStyle.foreground)
-                .padding(.vertical, 6).padding(.horizontal, section.id == "Tags" ? 12 : 0)
-                .frame(minHeight: 44).contentShape(Rectangle())
-                .background {
-                    if section.id == "Tags" { Capsule().fill(choice.selected ? CoffeePeekNativeStyle.accent.opacity(0.18) : CoffeePeekNativeStyle.surface) }
-                }
-                .overlay {
-                    if section.id == "Tags" { Capsule().strokeBorder(choice.selected ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.border, lineWidth: 1) }
-                }
-        }
-        .buttonStyle(.plain)
-        .padding(.vertical, section.id == "Tags" ? 4 : 0)
-        .accessibilityAddTraits(choice.selected ? .isSelected : [])
-    }
-
-    private func choiceContent(_ choice: IosDiscoveryFilterChoice) -> some View {
-        HStack(spacing: 12) {
-            choiceIcon(choice)
-            Text(choice.title).frame(maxWidth: .infinity, alignment: .leading)
-            if choice.selected {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(CoffeePeekNativeStyle.accent).accessibilityHidden(true)
-            }
-        }
+        CoffeePeekNativeChoiceRow(title: choice.title, selected: choice.selected,
+            action: { actions.toggle(section.id, choice.id) }) { choiceIcon(choice) }
     }
 
     @ViewBuilder private func choiceIcon(_ choice: IosDiscoveryFilterChoice) -> some View {
@@ -264,6 +243,40 @@ private struct DiscoveryFilterSectionView: View {
     }
 
 }
+
+struct CoffeePeekNativeChoiceRow<Icon: View>: View {
+    let title: String
+    let selected: Bool
+    let action: () -> Void
+    @ViewBuilder let icon: Icon
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                icon
+                Text(title).frame(maxWidth: .infinity, alignment: .leading)
+                if selected {
+                    Image(systemName: "checkmark").font(.system(size: 20))
+                        .foregroundStyle(CoffeePeekNativeStyle.accent).accessibilityHidden(true)
+                }
+            }.foregroundStyle(CoffeePeekNativeStyle.foreground)
+                .padding(.vertical, 12).frame(minHeight: 48).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+@MainActor
+private func nativeFilterControlsPreview() -> some View {
+    VStack(spacing: 16) {
+        CoffeePeekNativePriceSlider(title: "Цена", prices: ["Любая", "< 8 BYN", "8 BYN", "> 8 BYN"],
+            selectedIndex: 2, select: { _ in })
+        CoffeePeekNativeChoiceRow(title: "Обжарщик", selected: true, action: {}) {
+            Image(systemName: "cup.and.saucer").frame(width: 28, height: 28)
+        }
+    }.padding().background(CoffeePeekNativeStyle.surface)
+}
+#Preview("Native filter controls light") { nativeFilterControlsPreview().preferredColorScheme(.light) }
+#Preview("Native filter controls dark") { nativeFilterControlsPreview().preferredColorScheme(.dark) }
 
 private struct DiscoveryFilterLogo: View {
     let url: String?
@@ -308,10 +321,15 @@ private var discoveryFilterPreview: IosDiscoveryFilterState {
                 ]
             ),
             IosDiscoveryFilterSection(
-                id: "Tags", title: "Features", selectedLabel: "Selected: 1", showAll: "Show all", collapse: "Collapse",
+                id: "Tags", title: "Особенности", selectedLabel: "Выбрано: 1", showAll: "Показать все (7)", collapse: "Свернуть",
                 choices: [
-                    IosDiscoveryFilterChoice(id: "pet_friendly", title: "Pet friendly", selected: true, photoUrl: nil, icon: nil),
-                    IosDiscoveryFilterChoice(id: "outside-seating", title: "Outside seating", selected: false, photoUrl: nil, icon: nil)
+                    IosDiscoveryFilterChoice(id: "roastery", title: "Roastery", selected: false, photoUrl: nil, icon: UIImage(systemName: "building.2")),
+                    IosDiscoveryFilterChoice(id: "beans-for-sale", title: "Зерно на продажу", selected: false, photoUrl: nil, icon: UIImage(systemName: "bag")),
+                    IosDiscoveryFilterChoice(id: "decaf", title: "Decaf", selected: false, photoUrl: nil, icon: UIImage(systemName: "cup.and.saucer")),
+                    IosDiscoveryFilterChoice(id: "to-go", title: "To Go", selected: false, photoUrl: nil, icon: UIImage(systemName: "figure.walk")),
+                    IosDiscoveryFilterChoice(id: "plant-based-milk", title: "Растительное молоко", selected: false, photoUrl: nil, icon: UIImage(systemName: "leaf")),
+                    IosDiscoveryFilterChoice(id: "pet-friendly", title: "Можно с питомцами", selected: true, photoUrl: nil, icon: UIImage(systemName: "pawprint")),
+                    IosDiscoveryFilterChoice(id: "outside-seating", title: "Терраса", selected: false, photoUrl: nil, icon: UIImage(systemName: "sun.max"))
                 ]
             )
         ]
@@ -326,5 +344,16 @@ private var discoveryFilterPreview: IosDiscoveryFilterState {
 #Preview("Discovery filters - Dark and Large Type") {
     DiscoveryFilterSheet(state: discoveryFilterPreview, actions: DiscoveryFilterActions())
         .preferredColorScheme(.dark)
+        .environment(\.dynamicTypeSize, .accessibility2)
+}
+
+#Preview("Discovery filters - Dark") {
+    DiscoveryFilterSheet(state: discoveryFilterPreview, actions: DiscoveryFilterActions())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Discovery filters - Light and Large Type") {
+    DiscoveryFilterSheet(state: discoveryFilterPreview, actions: DiscoveryFilterActions())
+        .preferredColorScheme(.light)
         .environment(\.dynamicTypeSize, .accessibility2)
 }

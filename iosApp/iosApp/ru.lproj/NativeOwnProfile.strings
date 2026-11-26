@@ -75,3 +75,22 @@
 
 "profile_check_ins_clear_date" = "Сбросить дату";
 "profile_check_in_open" = "Открыть чекин";
+
+"profile_connections_followers_one" = "%d подписчик";
+"profile_connections_followers_few" = "%d подписчика";
+"profile_connections_followers_many" = "%d подписчиков";
+"profile_connections_following_one" = "%d подписка";
+"profile_connections_following_few" = "%d подписки";
+"profile_connections_following_many" = "%d подписок";
+
+"profile_followers" = "Подписчики";
+
+"profile_following_title" = "Подписки";
+
+"profile_following_empty" = "Пока нет подписок";
+
+"profile_following_failed" = "Не удалось загрузить подписки";
+
+"profile_close" = "Закрыть";
+
+"profile_open_user" = "Открыть профиль";

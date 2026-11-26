@@ -2,6 +2,54 @@ import ComposeApp
 import SwiftUI
 import UIKit
 
+@MainActor
+func makeShopCheckInRouteController(route: IosShopCheckInRoute) -> UIViewController {
+    UIHostingController(rootView: ShopCheckInRouteHost(model: ShopCheckInRouteModel(route)))
+}
+
+@MainActor
+private struct ShopCheckInRouteHost: View {
+    @StateObject var model: ShopCheckInRouteModel
+    var body: some View {
+        Group {
+            if let editor = model.state.editor {
+                ShopCheckInRouteContent(editor: editor).id(ObjectIdentifier(editor)).ignoresSafeArea(.container)
+            } else {
+                CoffeePeekNativeRouteStatus(failed: model.state.failed, title: model.state.title, retry: model.state.retry,
+                    back: model.state.back, onRetry: { model.route.retry() }, onBack: { model.route.back() })
+            }
+        }
+        .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
+        .onAppear(perform: model.observe)
+        .background(CoffeePeekLocalBackProtection(protected: model.state.editor != nil))
+    }
+}
+
+@MainActor
+private final class ShopCheckInRouteModel: ObservableObject {
+    let route: IosShopCheckInRoute
+    @Published private(set) var state: IosShopCheckInRouteState
+    private var observation: IosShopCheckInObservation?
+    init(_ route: IosShopCheckInRoute) {
+        self.route = route
+        state = route.current()
+    }
+    isolated deinit {
+        observation?.cancel()
+        route.close()
+    }
+    func observe() {
+        guard observation == nil else { return }
+        observation = route.observe { [weak self] in self?.state = $0 }
+    }
+}
+
+private struct ShopCheckInRouteContent: UIViewControllerRepresentable {
+    let editor: IosShopCheckInEditor
+    func makeUIViewController(context: Context) -> UIViewController { makeShopCheckInEditorController(editor: editor) }
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+}
+
 struct ShopCheckInNativeActions {
     var noteChanged: (String) -> Void = { _ in }
     var ratingChanged: (Int32, Int32, Int32) -> Void = { _, _, _ in }
@@ -26,7 +74,19 @@ struct ShopCheckInNativeActions {
 
 @MainActor
 func makeShopCheckInEditorController(editor: IosShopCheckInEditor) -> UIViewController {
-    UIHostingController(rootView: ShopCheckInNativeHost(editor: editor))
+    ShopCheckInHostingController(editor: editor)
+}
+
+@MainActor
+private final class ShopCheckInHostingController: UIHostingController<ShopCheckInNativeHost> {
+    private let editor: IosShopCheckInEditor
+    init(editor: IosShopCheckInEditor) {
+        self.editor = editor
+        super.init(rootView: ShopCheckInNativeHost(editor: editor))
+        editor.bindPresenter { [weak self] in self }
+    }
+    @MainActor required dynamic init?(coder: NSCoder) { return nil }
+    isolated deinit { editor.close() }
 }
 
 private struct ShopCheckInNativeHost: View {
@@ -39,7 +99,7 @@ private struct ShopCheckInNativeHost: View {
     var body: some View {
         ShopCheckInNativeScreen(state: model.state, strings: model.strings, actions: model.actions)
             .onAppear(perform: model.observe)
-            .onDisappear(perform: model.stopObserving)
+            .background(CoffeePeekLocalBackProtection(protected: true))
     }
 }
 
@@ -56,7 +116,7 @@ final class ShopCheckInNativeModel: ObservableObject {
         strings = CheckInNativeStrings(languageTag: editor.languageTag(), table: "NativeShopCheckIn")
     }
 
-    deinit { observation?.cancel() }
+    isolated deinit { observation?.cancel() }
 
     var actions: ShopCheckInNativeActions {
         ShopCheckInNativeActions(noteChanged: editor.noteChanged, ratingChanged: editor.ratingChanged,
@@ -78,10 +138,6 @@ final class ShopCheckInNativeModel: ObservableObject {
         })
     }
 
-    func stopObserving() {
-        observation?.cancel()
-        observation = nil
-    }
 }
 
 struct ShopCheckInNativeScreen: View {
@@ -97,17 +153,19 @@ struct ShopCheckInNativeScreen: View {
                 VStack(alignment: .leading, spacing: 24) {
                     if !state.active { Text(strings["shop_checkin_error_unauthorized"]) }
                     else if state.loading || state.submitting {
-                        ProgressView(strings["shop_checkin_form_sending"])
+                        CoffeePeekNativeLoader(label: strings["shop_checkin_form_sending"], size: 32, showsLabel: true)
                             .frame(maxWidth: .infinity).padding(.vertical, 32)
                     } else if state.submitted {
                         ShopCheckInNativeOutcome(state: state, strings: strings, feed: actions.goToFeed)
                     } else {
-                        warnings
+                        if hasWarnings { warnings }
                         ShopCheckInNativeFields(state: state, strings: strings, actions: actions)
                     }
                 }.padding(.horizontal, 16).padding(.vertical, 16)
             }
             .scrollDismissesKeyboard(.interactively)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             if state.active && !state.loading && !state.submitting && !state.submitted && !keyboardVisible { footer }
         }
         .font(CoffeePeekNativeStyle.font(16))
@@ -134,9 +192,15 @@ struct ShopCheckInNativeScreen: View {
             Spacer()
             Button(action: actions.dismiss) {
                 Image(systemName: "xmark").frame(width: 44, height: 44)
-            }.accessibilityLabel(strings["shop_checkin_form_dismiss"])
+            }.buttonStyle(.plain).shopDetailGlassCircle()
+                .accessibilityLabel(strings["shop_checkin_form_dismiss"])
                 .disabled(state.submitting || state.discarding)
         }.padding(.horizontal, 16).padding(.vertical, 8)
+    }
+
+    private var hasWarnings: Bool {
+        state.deliveryUnconfirmed || state.draftFailed || state.serverMessage?.isEmpty == false ||
+            state.failureKey != nil || state.validationKey != nil
     }
 
     private var warnings: some View {
@@ -158,7 +222,7 @@ struct ShopCheckInNativeScreen: View {
 
     private var footer: some View {
         VStack(spacing: 12) {
-            Toggle(isOn: Binding(get: { state.isPublic }, set: actions.visibilityChanged)) {
+            Toggle(isOn: Binding(get: { state.isPublic }, set: { actions.visibilityChanged($0) })) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(strings["shop_checkin_form_public"])
                     Text(strings["shop_checkin_form_public_hint"])

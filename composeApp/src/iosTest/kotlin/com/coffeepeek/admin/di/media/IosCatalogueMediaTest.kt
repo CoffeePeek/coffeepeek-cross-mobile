@@ -29,10 +29,10 @@ class IosCatalogueMediaTest {
     fun protectedCheckInAndBagPhotosUseAuthorizedTransportAndDecode() = runTest {
         val fixture = MediaFixture()
         try {
-            for (path in listOf(CHECK_IN_PHOTO, BAG_PHOTO)) {
+            for (path in listOf(CHECK_IN_PHOTO, BAG_PHOTO, CHECK_IN_VARIANT)) {
                 assertNotNull(fixture.media.observeImage(path) { true }.first())
             }
-            assertEquals(2, fixture.protectedRequests)
+            assertEquals(3, fixture.protectedRequests)
             assertEquals(0, fixture.publicRequests)
         } finally { fixture.close() }
     }
@@ -119,6 +119,7 @@ private object GuestImages : SessionReader {
 }
 
 private const val CHECK_IN_PHOTO = "/api/v1/check-ins/fixture/photos/photo"
+private const val CHECK_IN_VARIANT = "$CHECK_IN_PHOTO/variants/revision/1/thumb.jpg"
 private const val BAG_PHOTO = "/api/v1/shelf/bags/fixture/photos/photo"
 private val IMAGE_HEADERS = headersOf(HttpHeaders.ContentType to listOf("image/png"),
     HttpHeaders.CacheControl to listOf("private, no-store"))

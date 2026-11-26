@@ -14,7 +14,7 @@ struct CitySettingsScreen: View {
                                         description: strings.text("settings_city_description"))
             SettingsNativeStyle.section {
                 if state.loading {
-                    ProgressView(strings.text("settings_loading"))
+                    CoffeePeekNativeLoader(label: strings.text("settings_loading"), size: 32, showsLabel: true)
                         .padding(16)
                 } else if state.failed || state.cities.isEmpty {
                     SettingsRetryRow(

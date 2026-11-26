@@ -1,50 +1,43 @@
 package com.coffeepeek.feature.community.impl.ui
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.intl.Locale
-import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.feature.community.api.*
 import com.coffeepeek.feature.community.domain.model.DrinkOption
 import com.coffeepeek.feature.community.domain.rules.*
 import com.coffeepeek.feature.community.impl.resources.*
 import com.coffeepeek.feature.community.impl.timeline.PostEditState
 
-@Composable
+internal data class NativeEditorTexts(
+    val title: String, val shop: String, val kept: String, val ratingsTitle: String, val ratingsHint: String,
+    val note: String, val notePlaceholder: String, val drink: String, val none: String, val other: String,
+    val customDrink: String, val catalogError: String, val retry: String, val saving: String, val save: String, val cancel: String,
+)
+
 internal fun nativeEditorPresentation(edit: PostEditState, drinks: List<DrinkOption>, failed: Boolean,
-    saving: Boolean): CommunityEditorPresentation {
-    val choices = nativeEditorDrinks(edit, drinks, Locale.current.language,
-        stringResource(Res.string.community_drink_none), stringResource(Res.string.community_drink_other))
+    saving: Boolean, language: String, texts: NativeEditorTexts, ratings: List<CommunityEditorRating>, error: String?): CommunityEditorPresentation {
+    val choices = nativeEditorDrinks(edit, drinks, language, texts.none, texts.other)
     return CommunityEditorPresentation(
-        title = stringResource(Res.string.community_edit_title),
-        shopName = edit.source.shopName.ifBlank { stringResource(Res.string.community_shop_default) },
-        keptText = stringResource(Res.string.community_edit_kept),
-        ratingsTitle = stringResource(Res.string.community_ratings_title),
-        ratingsHint = stringResource(Res.string.community_ratings_hint), ratings = nativeEditorRatings(edit),
-        noteLabel = stringResource(Res.string.community_note_label),
-        notePlaceholder = stringResource(Res.string.community_note_placeholder), note = edit.text, noteLimit = MAX_NOTE_LENGTH,
-        drinkLabel = stringResource(Res.string.community_drink_label), drinks = choices,
+        title = texts.title, shopName = edit.source.shopName.ifBlank { texts.shop }, keptText = texts.kept,
+        ratingsTitle = texts.ratingsTitle, ratingsHint = texts.ratingsHint, ratings = ratings,
+        noteLabel = texts.note, notePlaceholder = texts.notePlaceholder, note = edit.text, noteLimit = MAX_NOTE_LENGTH,
+        drinkLabel = texts.drink, drinks = choices,
         selectedDrink = nativeDrinkKey(edit.drinkSlug),
         customDrink = edit.customDrinkName.orEmpty().takeIf { edit.drinkSlug == OTHER_DRINK },
-        customDrinkLabel = stringResource(Res.string.community_drink_custom), customDrinkLimit = MAX_DRINK_NAME_LENGTH,
-        catalogError = stringResource(Res.string.community_drink_error).takeIf { failed },
-        retryLabel = stringResource(Res.string.community_drink_retry), error = edit.error?.let { editErrorText(it) },
-        submitLabel = stringResource(if (saving) Res.string.community_saving else Res.string.community_save),
-        cancelLabel = stringResource(Res.string.community_cancel), busy = saving,
+        customDrinkLabel = texts.customDrink, customDrinkLimit = MAX_DRINK_NAME_LENGTH,
+        catalogError = texts.catalogError.takeIf { failed }, retryLabel = texts.retry, error = error,
+        submitLabel = if (saving) texts.saving else texts.save, cancelLabel = texts.cancel, busy = saving,
     )
 }
 
-@Composable
-private fun nativeEditorRatings(edit: PostEditState): List<CommunityEditorRating> = listOf(
-    nativeEditorRating("coffee", stringResource(Res.string.community_rating_coffee), edit.rating.coffee),
-    nativeEditorRating("service", stringResource(Res.string.community_rating_service), edit.rating.service),
-    nativeEditorRating("atmosphere", stringResource(Res.string.community_rating_atmosphere), edit.rating.place),
+internal fun nativeEditorAxes(edit: PostEditState) = listOf(
+    "coffee" to edit.rating.coffee, "service" to edit.rating.service, "atmosphere" to edit.rating.place,
 )
 
-@Composable
-private fun nativeEditorRating(key: String, label: String, value: Int) = CommunityEditorRating(
-    key, label, value, Res.getUri("drawable/community_rating_$key.png"),
-    (1..5).map { stringResource(Res.string.community_choose_rating, label, it) },
-)
+internal fun nativeEditorRatingResource(key: String) = when (key) {
+    "coffee" -> Res.string.community_rating_coffee
+    "service" -> Res.string.community_rating_service
+    "atmosphere" -> Res.string.community_rating_atmosphere
+    else -> error("Unknown community rating axis: $key")
+}
 
 internal fun nativeEditorDrinks(edit: PostEditState, drinks: List<DrinkOption>, language: String,
     none: String, other: String): List<CommunityEditorDrink> {

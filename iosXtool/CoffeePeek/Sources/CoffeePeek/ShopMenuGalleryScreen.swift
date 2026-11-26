@@ -40,6 +40,7 @@ private struct ShopMenuGalleryHost: View {
     }
 }
 
+@MainActor
 private final class ShopMenuGalleryModel: ObservableObject {
     @Published private(set) var state: IosShopMenuGalleryState
     @Published private(set) var viewer: IosPhotoViewer?
@@ -51,7 +52,7 @@ private final class ShopMenuGalleryModel: ObservableObject {
         state = gallery.currentState()
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
         gallery.close()
     }
@@ -90,7 +91,7 @@ private struct ShopMenuGalleryScreen<Photo: View>: View {
     var body: some View {
         Group {
             if state.isLoading {
-                ProgressView().accessibilityLabel(strings.text("gallery.loading"))
+                CoffeePeekNativeLoader(size: 24).accessibilityLabel(strings.text("gallery.loading"))
             } else if state.hasError || state.previewUrls.isEmpty {
                 statusMessage
             } else {
@@ -103,20 +104,8 @@ private struct ShopMenuGalleryScreen<Photo: View>: View {
     }
 
     private var header: some View {
-        HStack(spacing: 8) {
-            Button(action: onBack) {
-                Label(strings.text("gallery.back"), systemImage: "chevron.backward")
-                    .labelStyle(.iconOnly)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
-            }
-            Text(strings.text("gallery.title"))
-                .font(.headline)
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 12)
-        .background(.bar)
+        CoffeePeekNativeNavigationHeader(title: strings.text("gallery.title"),
+            backLabel: strings.text("gallery.back"), back: onBack)
     }
 
     private var statusMessage: some View {

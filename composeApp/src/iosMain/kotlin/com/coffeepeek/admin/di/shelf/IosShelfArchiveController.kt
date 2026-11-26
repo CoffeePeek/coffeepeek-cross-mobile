@@ -27,9 +27,15 @@ internal fun iosShelfArchiveContent(): () -> UIViewController {
     val sessions = koinInject<SessionReader>()
     val imageFetcher = koinInject<ImageUrlFetcher>()
     val media = remember(imageFetcher) { IosCatalogueMedia(imageFetcher, Constants.BASE_URL) }
+    return iosShelfArchiveContent(factory, { languageTag }, feature, sessions, media)
+}
+
+internal fun iosShelfArchiveContent(factory: (IosShelfArchive, String) -> UIViewController, language: () -> String,
+    feature: IosShelfFeature, sessions: SessionReader, media: IosCatalogueMedia,
+): () -> UIViewController {
     return {
         val archive = IosShelfArchive(feature::archive, SessionShelfAccount(sessions), media, Navigator::popBack,
             { id -> Navigator.navigate(Navigator.Screen.ShelfBag(id)) })
-        factory(archive, languageTag)
+        factory(archive, language())
     }
 }

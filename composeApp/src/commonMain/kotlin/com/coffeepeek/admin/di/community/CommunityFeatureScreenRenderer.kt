@@ -71,11 +71,7 @@ internal fun communityHost() = CommunityHost(
     // Temporarily show only Feed; ranking implementation remains available for re-enabling.
     leaders = null,
     share = ShareHelper::shareText,
-    nativeEditor = nativeCommunityEditorRenderer(),
-    nativeReport = nativeCommunityReportRenderer(),
     nativeCard = nativeCommunityCardRenderer(),
-    nativeDetail = nativeCommunityDetailRenderer(),
-    nativeFeed = nativeCommunityFeedRenderer(),
 )
 
 internal fun featureCommunityScreenRenderer(

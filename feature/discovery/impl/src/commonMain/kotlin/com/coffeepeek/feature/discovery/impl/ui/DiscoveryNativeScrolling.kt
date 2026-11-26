@@ -1,18 +1,18 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.coffeepeek.feature.discovery.impl.search.SearchState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /** Native drag and geometry changes include deceleration; prompt eligibility stays in Kotlin. */
 internal class DiscoveryNativeScrolling(private val scope: CoroutineScope) {
-    var active by mutableStateOf(false)
-        private set
+    private val mutableActive = MutableStateFlow(false)
+    val activity = mutableActive.asStateFlow()
+    val active get() = mutableActive.value
     private var dragging = false
     private var settling: Job? = null
 
@@ -35,18 +35,18 @@ internal class DiscoveryNativeScrolling(private val scope: CoroutineScope) {
     }
 
     private fun moved() {
-        active = true
+        mutableActive.value = true
         settling?.cancel()
         if (!dragging) settling = scope.launch {
             delay(350)
-            active = false
+            mutableActive.value = false
         }
     }
 
     fun reset() {
         settling?.cancel()
         dragging = false
-        active = false
+        mutableActive.value = false
     }
 }
 

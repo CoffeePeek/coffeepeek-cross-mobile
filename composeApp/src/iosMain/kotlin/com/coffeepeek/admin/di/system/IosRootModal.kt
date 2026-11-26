@@ -20,7 +20,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import platform.UIKit.UIViewController
 
-private lateinit var nativeRootModal: (IosRootModal) -> UIViewController
+internal lateinit var nativeRootModal: (IosRootModal) -> UIViewController
 
 internal fun configureNativeRootModals(factory: (IosRootModal) -> UIViewController) { nativeRootModal = factory }
 

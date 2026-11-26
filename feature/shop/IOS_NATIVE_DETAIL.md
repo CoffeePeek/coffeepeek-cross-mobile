@@ -130,3 +130,77 @@ price-disposal assertion, native ownership adoption and shared card visuals
 require verification on the final head. The latest Windows metadata check
 passed commonMain/iOSMain; body limits only reported the pre-#404 ownership
 factory from that earlier base, with no new Shop violations.
+
+## Hours and check-in header parity, 2026-11-25
+
+Source `dce8989e5` plus `codex/migration-ios-shop-filter-parity` working changes.
+Schedule expansion drives a 250 ms layout animation on the detail's content stack,
+so the panel, arrow and following sections move together. The day list fades as one
+group. Reduce Motion disables the animation. The check-in header uses a 48-point
+glass chevron button with the existing localized accessibility label and navigation
+action. As on Android, the button appears when preview rows are available.
+
+Colocated light/dark previews cover the check-in header with and without the button,
+large text and interactive weekly schedule expansion. Reduce Motion requires device review. Swift 6.4.2
+syntax parsing passed. Android `directDebug` (`com.coffeepeek.debug`,
+`1.2.0.3221-debug`) assembled with `--max-workers=6`, passed the packaged DEX check
+and introduced zero body-limit violations. Shop's 112 unit tests in 11 suites
+executed successfully, with zero failures, errors or skips. Existing Gradle and
+preview deprecation warnings remain. Full native compilation and manual iPhone
+animation, VoiceOver and navigation acceptance remain open.
+
+## Guest check-ins and shared account prompt, 2026-11-25
+
+The detail preview and full check-in list now compose the existing
+`CoffeePeekGuestAccountCard`, also used by the guest Profile, using their existing
+localized labels and auth actions. Hidden rows use one feature-owned
+`ShopCheckInGuestPlaceholder`: blurred neutral skeleton shapes, clipped to the
+existing card surface. Hidden photos/text are never supplied to this view; the
+placeholder is non-interactive and hidden from accessibility. The previous
+CoffeePeek image/lock placeholder is removed from these guest rows.
+
+Paired light/dark fake previews cover the placeholder and guest list. The final
+Debug 3224 compiled and linked all changed Swift, was signed with validated runtime
+entitlements, and installed/launched on the agreed iPhone. Shop's 112 unit results
+were UP-TO-DATE in that final check; Android assembly/DEX passed. Guest detail/list
+visual acceptance, auth-card back/cancel, dark mode and accessibility remain manual
+gates. No account changes or automated UI tests were performed.
+
+## Protected photos and native rating parity — 2026-11-25, Debug 3225
+
+The full check-in list previously called the raw one-shot image decoder for
+protected photos. That path has no permission scope; `grantOnlinePhoto` requires
+one and fails closed, so the decoder returns nil. The full list now uses the same
+`IosCatalogueMedia.observeImage` stream as shop detail, including permission scope,
+expiry/session invalidation and cancellation. Cancellation still clears the frame
+and rethrows CancellationException; failures clear the placeholder. The same raw
+call was found in Shelf archive covers and changed to its existing owner-scoped
+stream, preserving the current-photo check. Public-only one-shot callers remain.
+A blank thumbnail now falls back to the original photo, like a missing thumbnail.
+
+The existing KMP average is exported through the app-owned row value, so the native
+shop card can render five stars and the formatted score like Android. Shop detail,
+full list, feed, profile and check-in detail share the native rating renderer.
+Ratings round to tenths as in CoffeePeekRating. Full stars bypass masking entirely;
+fractional masks use the actual resizable symbol bounds, avoiding intrinsic-glyph
+clipping. Accessibility retains each feature's existing localized description.
+
+Non-UI iOS contracts now cover the exposed average, blank thumbnail fallback and
+authorized immutable-variant decoding alongside original/bag photos. Native test
+execution and real photo rendering must be recorded separately from compilation.
+No protected URL/token or photo bytes are added to diagnostics or tracked fixtures.
+
+Final 3225 native compilation/linking and cached signing passed, including the
+new KMP average export and both protected-image consumers. The shared execution
+plan records the exact artifact/source hashes. The first install attempt could
+not find the agreed USB phone; photo rendering, five/full/fractional stars and
+native editor appearance have not yet been observed on this build. JVM/cache and
+native-test limitations above remain explicit.
+
+The agreed iPhone accepted the 3225 in-place update after USB reconnection; its OS
+is now 27.2.1. Developer-image setup/transport interrupted automated startup
+observation, as recorded in the shared execution plan. The user's subsequent
+photo-viewer lock-in report is addressed by the native-only 3226 follow-up: an
+always available close control, native dismissal independent of a loading callback,
+and immediate selected-original loading while retaining the valid preview. Owner,
+authorization expiry and cancellation policies remain in the existing KMP ports.

@@ -26,8 +26,14 @@ internal fun iosCoffeeDetailContent(): (String) -> UIViewController {
     val repository = koinInject<CoffeeRepository>()
     val imageFetcher = koinInject<ImageUrlFetcher>()
     val media = remember(imageFetcher) { IosCatalogueMedia(imageFetcher, Constants.BASE_URL) }
+    return iosCoffeeDetailContent(factory, { languageTag }, repository, media)
+}
+
+internal fun iosCoffeeDetailContent(factory: (IosCoffeeDetail, String) -> UIViewController, language: () -> String,
+    repository: CoffeeRepository, media: IosCatalogueMedia,
+): (String) -> UIViewController {
     return { slug ->
         val session = createIosCoffeeDetailSession(slug, repository, CoffeeCatalogueAnalytics.detail())
-        factory(IosCoffeeDetail(session, media), languageTag)
+        factory(IosCoffeeDetail(session, media), language())
     }
 }

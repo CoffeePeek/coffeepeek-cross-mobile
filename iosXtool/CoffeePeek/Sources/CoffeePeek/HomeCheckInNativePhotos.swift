@@ -6,7 +6,6 @@ struct HomeCheckInNativePhotos: View {
     let state: IosHomeCheckInState
     let strings: CheckInNativeStrings
     let actions: HomeCheckInNativeActions
-    @State private var sourcePresented = false
     @State private var preview: Int?
     private var count: Int { state.status.editing ? state.draft.existingPhotoUrls.count : state.draft.photos.count }
     private var editable: Bool { state.status.canEdit && !state.status.editing && !state.status.photosPreparing }
@@ -23,11 +22,6 @@ struct HomeCheckInNativePhotos: View {
             } else { creationHeader }
             attachments
         }
-        .confirmationDialog(strings["home_check_in_add_photos"], isPresented: $sourcePresented, titleVisibility: .visible) {
-            Button(strings["home_check_in_gallery"]) { actions.photos(false) }
-            Button(strings["home_check_in_camera"]) { actions.photos(true) }
-            Button(strings["home_check_in_cancel"], role: .cancel) {}
-        }
         .coffeePeekPhotoViewer(count: count, selection: $preview, languageTag: strings.languageTag, load: loadPhoto)
         .onChange(of: identities) { _, _ in resetInteraction() }
         .onChange(of: state.status.canEdit) { _, _ in resetInteraction() }
@@ -40,12 +34,14 @@ struct HomeCheckInNativePhotos: View {
         CoffeePeekPhotoAttachmentGrid(count: count, editable: editable, viewable: state.status.canEdit,
             managesPhotos: !state.status.editing,
             showAdd: !state.status.editing && count < 5, preparing: state.status.photosPreparing, revision: identities,
-            labels: .init(add: strings["home_check_in_add_photos"],
+            labels: .init(add: strings["home_check_in_add_photos"], sourceTitle: strings["home_check_in_add_photos"],
+                gallery: strings["home_check_in_gallery"], camera: strings["home_check_in_camera"],
+                cancel: strings["home_check_in_cancel"],
                 description: { strings.format("home_check_in_photo_description", $0 + 1, count) },
                 remove: { strings.format("coffeepeek_photo_remove", $0 + 1) },
                 earlier: strings["coffeepeek_photo_move_earlier"], later: strings["coffeepeek_photo_move_later"]),
             open: { preview = $0 }, move: actions.movePhoto, remove: actions.removePhoto,
-            add: { if state.status.canAddPhotos { sourcePresented = true } }, thumbnail: photo)
+            add: { if state.status.canAddPhotos { actions.photos($0) } }, thumbnail: photo)
     }
 
     private var photoError: String? {
@@ -85,7 +81,6 @@ struct HomeCheckInNativePhotos: View {
 
     private func resetInteraction() {
         preview = nil
-        sourcePresented = false
     }
 }
 
@@ -188,4 +183,22 @@ private func homePhotoPreviewDraft(count: Int, editing: Bool) -> IosHomeCheckInD
 #Preview("Check-in photo placeholder dark") {
     HomeCheckInNativeRemoteImage(url: nil, load: { _, _ in nil }).frame(width: 160, height: 200)
         .preferredColorScheme(.dark)
+}
+
+@MainActor
+private func homePhotoSourceAnchorPreview() -> some View {
+    ScrollView {
+        VStack(alignment: .leading, spacing: 24) {
+            Color.clear.frame(height: 180).accessibilityHidden(true)
+            HomeCheckInNativePhotos(state: homePhotoPreviewState(count: 4),
+                strings: homeCheckInNativePreviewStrings("ru"), actions: .init())
+            Color.clear.frame(height: 180).accessibilityHidden(true)
+        }.padding(16)
+    }.background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Photo source anchor light") { homePhotoSourceAnchorPreview().preferredColorScheme(.light) }
+#Preview("Photo source anchor dark") { homePhotoSourceAnchorPreview().preferredColorScheme(.dark) }
+#Preview("Photo source anchor large text") {
+    homePhotoSourceAnchorPreview().preferredColorScheme(.light).environment(\.dynamicTypeSize, .accessibility2)
 }

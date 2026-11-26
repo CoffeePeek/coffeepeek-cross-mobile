@@ -51,15 +51,12 @@ internal class FeatureRoasterScreenRenderer(
     private fun addRoaster() = Navigator.navigate(Navigator.Screen.AddRoaster)
 
     private fun openRoaster(slug: String) {
-        val session = sessions.peekSession()
-        val destination = if (session != null && sessions.isActiveSession(session)) {
-            Navigator.Screen.RoasterDetail(slug)
-        } else {
-            Navigator.Screen.Auth
-        }
-        Navigator.navigate(destination)
+        Navigator.navigate(roasterDiscoveryDestination(slug, sessions))
     }
 }
+
+internal fun roasterDiscoveryDestination(slug: String, sessions: SessionReader): Navigator.Screen =
+    if (sessions.isActiveSession(sessions.peekSession())) Navigator.Screen.RoasterDetail(slug) else Navigator.Screen.Auth
 
 internal fun roasterScreenRenderer(
     repository: RoasterRepository,

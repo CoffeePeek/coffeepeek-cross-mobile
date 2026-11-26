@@ -65,6 +65,7 @@ struct CoffeePeekCardImage: View {
     var detail: String?
     let symbol: String?
     var fits = false
+    var imageAlignment: Alignment = .center
     let loadImage: CoffeePeekCardImageLoader
     var decoded: (CGSize) -> Void = { _ in }
     @State private var image: UIImage?
@@ -83,7 +84,7 @@ struct CoffeePeekCardImage: View {
             Group {
                 if let image {
                     Image(uiImage: image).resizable().aspectRatio(contentMode: fits ? .fit : .fill)
-                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .frame(width: geometry.size.width, height: geometry.size.height, alignment: imageAlignment)
                 } else if let symbol {
                     CoffeePeekNativeStyle.surface.overlay {
                         Image(systemName: symbol).foregroundStyle(CoffeePeekNativeStyle.secondary)
@@ -184,3 +185,22 @@ struct CoffeePeekCardImage: View {
     CoffeePeekCheckInPhotoStrip(photos: [CoffeePeekCheckInPhoto(id: "fixture", preview: nil, detail: nil, label: "Photo")],
         loadImage: { _, _ in nil }, openPhoto: { _ in }).preferredColorScheme(.dark)
 }
+
+@MainActor
+private func cardImageAlignmentPreview() -> some View {
+    HStack(alignment: .bottom, spacing: 16) {
+        ForEach(0..<2) { index in
+            CoffeePeekCardImage(url: "preview-bag", symbol: nil, fits: true,
+                imageAlignment: index == 0 ? .center : .bottom, loadImage: { _, receive in
+                    receive(UIImage(systemName: "bag.fill")?.withTintColor(.systemYellow, renderingMode: .alwaysOriginal))
+                    return nil
+                })
+                .frame(width: 100, height: 180)
+                .background(CoffeePeekNativeStyle.surfaceVariant)
+                .overlay(alignment: .bottom) { Rectangle().fill(CoffeePeekNativeStyle.accent).frame(height: 2) }
+        }
+    }.padding().background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Image alignment light") { cardImageAlignmentPreview().preferredColorScheme(.light) }
+#Preview("Image alignment dark") { cardImageAlignmentPreview().preferredColorScheme(.dark) }

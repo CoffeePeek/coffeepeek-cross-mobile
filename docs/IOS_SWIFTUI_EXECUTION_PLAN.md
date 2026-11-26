@@ -1036,3 +1036,393 @@ preview, reordering and removal, and session revocation while a photo is
 open. Preserve existing sheet dismissal and creation/editing data contracts.
 Run the Windows xcross build and Android directDebug/DEX and verify the
 signed IPA. Confirm real device rendering and interactions if available.
+
+### 2026-11-25 — Debug 3221 build, installation and startup
+
+Built the current `codex/migration-ios-shop-filter-parity` working tree on top of
+`dce8989e58b109f0c6e9bfbf31b6713430eba8a7`, including the pending filter, shop
+detail/report/check-ins, notifications, check-in picker/editor, profile menu and
+search-empty-state changes. This is a dirty-source build; the local signed build
+receipt and source manifest identify the 24 changed source files by SHA-256.
+The installed application is `CoffeePeek Xcross`, `com.coffeepeek.xcross`, Debug
+`1.2.2 (3221)`, ARM64. It uses the existing Windows scanner-disabled xcross path.
+
+Full compilation and linking passed with xcross `2.1.1 coffeepeek.8`, Swift
+`6.4.2` and Kotlin `2.4.21`. Swift packages took 8m15s, Kotlin compilation 2m20s,
+framework linking 14m09s, Swift runner compilation 3m43s and assembly 2.0s.
+The native build closes the earlier application compilation gate; it does not
+erase the previously recorded Room metadata-only failure. Existing Swift language
+compatibility settings remain in place; a Swift 6 compiler build is not evidence
+of a Swift 6 language-mode/complete strict-concurrency migration. Three invalid
+preview overrides of read-only `accessibilityReduceMotion` were removed before
+the successful build; runtime Reduce Motion handling remains intact.
+
+Both native factory-registration tests passed. The xcross helper suite passed
+5/5 after the build restored the scannerless package manifest. Its first attempt
+during the temporary scannerless context had one fixture-read error; that initial
+result is retained in local diagnostics. The package manifest is restored and
+`git diff --check` passed. The affected feature records retain their Android
+assembly/DEX, function-limit and executed JVM unit-test evidence. No Kotlin/Native
+tests or automated UI/instrumentation/screenshot tests were executed here.
+
+The existing cached development certificate/profile signed the app. Archive
+integrity, embedded signature/profile, bundle/version, absence of private-key
+files, the Android empty-state illustration bytes and RU/BE check-in resources
+were checked. The signed IPA SHA-256 is
+`6a6b1634c73f23dd23dfb1183407bc5f5d42ac1b49e66df301630d109fdbd7a8`.
+The IPA and sanitized build/sign/install/launch diagnostics remain local.
+
+After the user connected the previously used USB iPhone, pairing, Developer Mode,
+installed version and signing identity were checked. InstallationProxy confirmed
+an in-place update from `1.2.1 (3215)` to `1.2.2 (3221)` on `iPhone15,4`, iOS
+`27.0.1`. The separately installed `com.coffeepeek` version remained unchanged.
+CoreDevice launched the updated test app; the same process was still running
+12 seconds later. Installation/startup completed on 2026-11-25 Europe/Minsk.
+No uninstall, data clearing, account replacement or live account writes were used.
+
+This verifies device installation and startup only. The feature-specific manual
+gates remain: light/dark layout, keyboard and modal placement, animations and
+Reduce Motion, Dynamic Type/VoiceOver, camera/gallery round trips and the reported
+flows. The scanner is disabled in this build. No valid Firebase configuration is
+available locally; Firebase initialization is guarded, and push delivery is not
+verified by this package or startup check.
+
+### 2026-11-25 — Startup onboarding interaction fix, Debug 3222
+
+The user reported that the startup onboarding buttons did not work in 3221.
+That build's recorded device check covered installation and process survival,
+not these interactions. The follow-up changes are in
+`feature/home-check-in/IOS_CHECK_IN_CREATE.md`: preserve the Compose owner under
+the native presentation, keep the existing analytics-overlay guard, make native
+action-button padding tappable, restore tappable page indicators and reset hold
+state when a gesture is cancelled. No navigation/session ownership or new
+unstructured Swift concurrency is introduced.
+
+Full final Debug `1.2.2 (3222)` compilation/linking and cached development signing
+passed. The local receipt identifies base `dce8989e5` plus 28 changed source files.
+Swift packages took 28.4s, Kotlin compilation 1m04s, framework linking 13m34s,
+Swift runner compilation 3m16s and assembly 1.9s. All 58 analytics unit tests in
+12 suites passed, as did Android assembly/DEX and function limits (130 recorded,
+zero new). The final iOS tooling retry passed 32/32; the initial three sandbox/MSYS
+failures and the earlier incorrect Android SDK invocation remain recorded in the
+feature plan. No automated UI tests were created or run.
+
+Signed IPA SHA-256:
+`e2a44cc512290a702871baf8be83cefb255a6ea2f86a6cd7e1b6d7431b7f5deb`.
+Its archive, signature/profile and source manifest were verified. USB enumeration
+after signing did not find the agreed iPhone; installation and manual interaction
+acceptance await reconnection. The 3221 signed IPA remains intact. Scanner,
+Firebase configuration and Swift language-mode limitations remain unchanged.
+
+The follow-up route review found the main product screens connected to native
+renderers. Compose still hosts lifecycle/ViewModel subscriptions, some screen
+containers and sheet presentation/sizing; `NativeScreenController`,
+`NativeEditorControllerHost` and `CoffeePeekNativeModalSheet` are active examples.
+Removing these hosts and proving all device interactions remain separate work
+from having a SwiftUI renderer registered for each route.
+
+After the user reconnected the phone, opening Apple Devices restored usbmux long
+enough to install 3222 in place. InstallationProxy verified the new version on
+`iPhone15,4` / iOS `27.0.1`; the main app version was unchanged. The USB endpoint
+disappeared again before launch. The signed receipt records installation, with
+startup/device interaction verification still false; this connection failure is
+not evidence about whether the onboarding actions now work.
+
+### 2026-11-25 — Combined guest/auth/onboarding fixes, Debug 3224
+
+Built the same migration working tree above `dce8989e5`, with a local source
+manifest covering 37 changed Swift/Kotlin/tooling files. The intermediate 3223
+compiled the onboarding visual changes; 3224 also contains the shared guest
+account card, blurred neutral check-in placeholders, compact feed CTA, persistent
+Discovery map anchor, glass auth navigation and cached-signing correction. Feature
+records describe each scope. No session repository, backend contract or analytics
+ownership was replaced.
+
+Full native compilation/linking passed with xcross 2.1.1 coffeepeek.8, Swift 6.4.2
+and Kotlin 2.4.21. Kotlin compilation took 16.5s, framework linking 2.4s, Swift
+runner compilation 3m10s and assembly 1.6s. Swift syntax parsing under Swift 6 /
+complete strict concurrency also passed; full application compilation still uses
+the existing compatibility language mode, so a whole-app Swift 6 migration is not
+certified. All 39 Python tooling tests and 10 Dart signing scenarios passed.
+The final Gradle invocation freshly executed 151 unit tests: auth-domain 11,
+auth-data 29, auth-impl 39 and Community 72, all without failures/errors/skips.
+Discovery 187 and Shop 112 results were UP-TO-DATE. Android directDebug assembly,
+packaged DEX verification and body limits passed (130 recorded, zero new).
+
+The final signed Mach-O has a concrete default Keychain group equal to its
+application identifier; the old 3222 signature fails the new validator. The
+cached profile has no Apple Sign-In capability, so this test build does not
+register that provider. Email/password remains available. This corrects a real
+signing defect which can map session-persistence failure to a generic login error;
+the actual status/result of the user's original attempt was not captured. The
+profile, certificate and Keychain implementation are unchanged.
+
+Signed IPA: `CoffeePeek-Xcross-1.2.2-3224-signed.ipa`, 55,907,342 bytes.
+SHA-256: `044926f22ced51f8f7c3ad743ec63e7e454f88bcc325e0880f1fb6ae4ebc19ff`.
+Executable and source-manifest hashes are retained in the local signed receipt.
+Runtime entitlement validation passed both before installation and independently
+afterward; actual iOS installation/startup also accepted the signature.
+
+After the user reconnected/unlocked USB, InstallationProxy confirmed an in-place
+update from 3222 to Debug `1.2.2 (3224)`, `com.coffeepeek.xcross`, on iPhone15,4 /
+iOS 27.0.1. The separate main application's version remained unchanged. The
+launched process remained active for 12 seconds. A manual tap on the onboarding
+Sign In button opened the native login form, with its glass back control visible.
+The startup capture shows the compact dots and close control above the artwork.
+Captures are local outside tracked sources; no account identity is published.
+
+Phone control ended as the user began entering their own credentials. Real login
+and session persistence await user confirmation. Register, guest close, repeated
+search/cancel and map restoration, guest shop/feed visuals, exact carousel cadence
+and hold/release, dark mode, large text and accessibility remain manual gates.
+No agent-submitted login, uninstall, data clearing, security-setting change or
+automated UI/screenshot/instrumentation test was performed. Scanner-disabled,
+Firebase/push and native language-mode limitations from 3221 remain.
+
+### 2026-11-25 — Caption, auth transitions, protected photos and ratings, Debug 3225
+
+Scope stays on the same migration branch/base. The onboarding slide measures its
+full caption before allocating artwork height, with vertical scrolling for large
+text. Native login/registration replace the current form in one UIKit stack update
+instead of showing the entry screen between PopBack and NavigateTo. Recovery and
+the separate check-in continuation keep their existing paths and state contracts.
+
+Full shop check-in photos and archived bag covers previously used the raw decoder,
+which cannot grant protected-photo access without a scope. Both now collect the
+existing owner-scoped media stream, including expiry/invalidation and cancellation.
+Artwork request identities prevent a cancelled callback clearing a newer frame;
+background/disappearance stops the request and clears displayed content. Blank
+thumbnails fall back to originals. No authentication/cache bypass or native-only
+photo network stack is introduced. Core/media and the existing account leases own
+authorization; private URLs/bytes are not added to tracked diagnostics.
+
+Shop cards expose the existing KMP average and use the same five-star renderer as
+feed/profile/detail cards. The renderer rounds to tenths, skips masks for complete
+stars and measures fractional masks against the actual symbol bounds. Both editors
+use the existing glass close control, a bottom safe-area footer and no empty-warning
+gap. Helpers stay in existing Xcode-registered Swift files; the project has explicit
+file references, so no unsupported assumption of folder synchronization is needed.
+Swift 6.4.2 is installed; no package update or project-file rewrite was required.
+
+Preflight executed 687 root application JVM tests / 153 suites with zero failures,
+errors or skips, including two new auth replacement tests. Media 71 / 10 results
+were FROM-CACHE; Shop 112 / 11, Home 93 / 6 and Auth 39 / 4 were UP-TO-DATE.
+Android directDebug assembly and packaged DEX checks passed. All 39 Python tooling
+tests passed (1.409s); changed Swift parsed with Swift 6 / complete strict concurrency.
+The separate function-body check passed: 130 recorded, zero new. Added/extended iOS
+photo/row contracts require native test execution separately from these JVM results.
+
+The first native attempt built Swift packages (2m31s) but stopped before application
+compilation because Gradle could not locate its required JDK 17. That JDK exists in
+a nonstandard local directory; the retry supplies its path alongside xcross's JDK
+21 explicitly. The initial failure log is retained; it is not a passing native
+build. Build/sign/install and manual outcomes must be appended after observation.
+
+The retry passed full application compilation and linking: Swift packages 1m39s,
+Kotlin 2m06s, ComposeApp.framework 17m55s, Swift Runner 3m14s, assembly 2.0s.
+Before the Runner stage, the startup modal callback was additionally serialized
+through a MainActor-owned UIKit dismissal adapter, avoiding simultaneous dismissal
+and auth push. The SDK's runner reads the existing source paths directly; the log
+still showed framework compilation both before and after this Swift-only edit.
+The final manifest matches all 52 changed source/tooling files, including that
+adapter. A standalone Swift 6 / complete strict-concurrency typecheck of the same
+MainActor callback-passing pattern also passed. Full application language-mode
+limitations remain as recorded for 3224; this is not a whole-app Swift 6 migration.
+
+After restoration of the temporary SwiftPM manifest, all 39 tooling tests passed
+again (2.888s). `git diff --check` passed. Cached signing, ZIP integrity, runtime
+application/Keychain group and Apple-provider availability checks passed. No
+profile/certificate permissions or existing application data were changed.
+
+Signed Debug `1.2.2 (3225)`, bundle `com.coffeepeek.xcross`:
+`CoffeePeek-Xcross-1.2.2-3225-signed.ipa`, 55,930,592 bytes.
+IPA SHA-256: `a09531f535b2cfffcd8961cf3eb68bad0fe639558479b21ceb0b99e53c19124a`.
+Executable SHA-256: `fe440f9c8fe74c819046eb18ac8238391744534637f3272802ada59fb4f8f2d3`.
+The older 3224 signed package remains intact. Signing completed 2026-11-25 at
+04:37 Europe/Minsk. This package keeps the existing scanner/Firebase/Apple-provider
+limitations of the local test profile; no Release build or distribution occurred.
+
+The initial 3225 installation attempt found no agreed iPhone in USB enumeration
+and ended after its bounded wait. The user has been asked to reconnect/unlock now
+that the signed build is ready. The phone's last verified installation remains
+3224. Thus 3225 installation/startup and all five new manual visual/interaction
+checks are still open; compilation/signing is not reported as device acceptance.
+
+After the user reconnected USB with Apple Devices open, InstallationProxy verified
+the in-place 3225 update on the same iPhone15,4, now running iOS 27.2.1. The main app
+version was unchanged. The first launch attempt failed because the OS update left
+no DeveloperDiskImage mounted. The normal personalized-image helper mounted one
+without replacing an existing image or changing Developer Mode/security settings.
+The developer transport then disconnected before the startup observation completed;
+a subsequent read could no longer enumerate USB. Thus installation is verified,
+startup is not. The user subsequently reported being stuck in the check-in viewer.
+
+### 2026-11-25 — Photo viewer exit and background original, Debug 3226
+
+Source inspection found a UIKit `.fullScreen` photo modal whose dismissal depended
+on its covered Compose owner, and a toolbar that could hide its only close button.
+The native modal now uses overFullScreen plus the shared MainActor dismissal adapter;
+SwiftUI covers dismiss through their environment directly. Close remains visible
+and right-aligned independently of loading/controls, and cancels photo work. Kotlin
+still receives the existing final dismissal action after the native transition.
+
+The selected page now requests its original immediately, instead of waiting for
+zoom. Preview and original have separate loading flags and observation identities;
+waiting/failure of the original leaves the valid preview available. Selection does
+not restart an already loaded preview. Retry and disposal invalidate identities
+before cancelling old work, so late callbacks cannot clear/restore a newer frame.
+Both streams still honor nil authorization/invalidation frames; no permission or
+photo-cache policy is bypassed. Local images/single-quality loaders do not perform
+a duplicate original request. No new Task, queue, unchecked Sendable or nonisolated
+escape was introduced; view disappearance and the existing source own cancellation.
+
+Verification plan: compile the complete native app, sign/validate a fresh 3226 IPA
+and update the agreed phone in place. Keep 3225's installation/failed startup record.
+Manually exercise exit during pending/failed media, preview-to-original upgrade,
+paging, retry, zoom and cancel on the device without writing account/check-in data.
+No automated UI or screenshot tests are created. The new non-UI tooling contract
+compiles the actual Swift loading-model source in Swift 6 / complete strict
+concurrency with fake frame ports and minimal observation stubs; it exercises ten
+loading/failure/cancellation/revocation scenarios, without SwiftUI, UIKit, network
+or photos. All 40 tooling tests passed in 10.943s before the final local-source
+deduplication adjustment. These contracts do not certify presentation/gestures.
+
+
+### 2026-11-25 — Headers and contribution parity, Debug 3226
+
+Profile (including guest), Feed and Settings use one native title row: 28-point
+bold title, minimum 48-point row and 12-point vertical padding. Existing UIKit/
+SwiftUI safe-area owners remain intact; extra guest top/settings bottom padding is
+removed. Shared fake light/dark/large-type previews are colocated.
+
+Contribution forms/history and titled back destinations compose a centered,
+wrapping native header and 44-point Liquid Glass back control. Collection menu/new
+actions retain their commands/trailing slot. Settings pages, edit profile, bean
+picker, shelf/archive, reports and menu gallery use it. Image-backed shop/roaster/
+coffee and public-profile toolbars retain their layouts with the same glass style.
+Calendar, photo reorder and pagination arrows are not navigation controls; existing
+system navigation bars retain their native back implementation.
+
+Form scope/manual gates are recorded in feature/contributions/IOS_FORMS.md.
+Analytics/routes, validation, draft retention, account guards and submissions retain
+their owners. New code adds no Task, DispatchQueue, unchecked Sendable or nonisolated
+escape. Existing whole-app concurrency debt remains; Swift 6 parsing is not whole-
+application complete strict typechecking.
+
+An intermediate 3226 compile reached Runner before the choice helper was added and
+failed on that declaration; its log is retained. A restricted toolchain invocation
+then failed before compilation; the same installed compiler/model contract worked
+with external-cache execution access. Only a complete build after all source edits
+will be signed. Intermediate manifests do not certify the final artifact.
+
+
+Final frozen-source build passed: Swift packages 26.8s, Kotlin 16.1s,
+ComposeApp.framework 2.3s, Runner 2m55s, assembly 1.6s. All 75 changed source/tooling
+hashes match the manifest. The existing success mascot is present at its exact
+Bundle resource path. SwiftPM's temporary scanner manifest was restored. Intermediate
+source-changing/compiler failures remain recorded separately and were not signed.
+
+All 40 Python tooling tests passed in 2.430s, including the actual Swift loading
+model compiled/executed in Swift 6 with complete strict concurrency and fake ports.
+Contribution domain 17 tests/2 suites and data 35/2 executed with no failures/errors/
+skips; presentation 82/9 results were FROM-CACHE. Android directDebug assembly,
+packaged DEX checks and function limits (130 recorded, zero new) passed in 37s.
+Colocated previews are compiled, not rendered; no automated UI tests ran.
+
+Cached development signing, concrete Keychain group/application identity, Apple
+availability flag, ZIP integrity and absence of private signing files passed.
+Signed Debug com.coffeepeek.xcross 1.2.2 (3226):
+CoffeePeek-Xcross-1.2.2-3226-signed.ipa, 55,912,924 bytes.
+IPA SHA-256: a029b4562562d5d8bcb9d4b215a76cf6d2484356bdf72acbd0cf2853fe8aa4d1.
+Executable SHA-256: 1378cc34373c5be05991e2e87399e2e739591929ee91f0afca3ae90b12536e22.
+The older signed 3225/3224 artifacts remain intact. Installation/startup and visual
+checks remain unverified until the agreed USB phone is successfully reached.
+
+
+After the user reconnected USB, InstallationProxy verified the in-place 3226
+installation on the agreed iPhone15,4 / iOS 27.2.1; the main application version
+was unchanged. The same native PID remained running across the 12-second startup
+observation. Local screenshots showed an active form transition and later the
+new success artwork/layout while the user was interacting. The agent sent no taps,
+text, form submission or account mutations; the inspection transport was closed
+to leave control to the user. These observations do not certify the remaining
+photo-failure exit, selection/map, dark mode, accessibility or complete submission
+contracts on a live backend. Captures remain local, outside tracked sources.
+
+
+### 2026-11-25 — Shop, roaster and profile visual follow-up, Debug 3227
+
+Scope: restore semantic icons in the shop/roaster ownership menu; replace the
+Discovery root disabled environment with hit-testing suppression so inactive
+navigation states retain normal card rendering. Existing active/account action
+guards remain authoritative. Shop/profile See All actions use common glass-chevron
+buttons with localized accessibility labels. Feature expansion remains local to
+the same shared action.
+
+City selection is a full-width native Menu/Picker label with left-aligned selected
+name/placeholder and trailing up/down symbol. Its visual padding is inside the
+hit target; available one-city lists remain openable. Existing required-city
+validation still owns submission. The entire schedule header, including padding,
+is one Button label. Contact icons share a 28-point native renderer, with a
+recognizable Instagram outline instead of a camera and native phone/mail/web glyphs.
+
+Roaster detail was compared against current Android sources by a read-only agent.
+The Swift presentation now forwards UIKit safe-area insets, uses 280+topInset hero,
+34/17/22 typography hierarchy, outlined contact pills, 72-point bordered shop rows,
+centered loading/error and a nonblocking existing native toast. Photos exposure is
+absent when there are no photos; shops exposure measures its heading, as Android.
+Callbacks, KMP state/domain data, account guards and event names are preserved.
+No new metrics/sections absent from Android are added.
+
+Public and own profiles reuse the same activity card/image port, equal-width tabs,
+check-in card, connection sheet header and person row. Public activity retains its
+existing week data and open-check-ins action; unavailable month/expand actions
+are omitted rather than invented. Localized strings retain their existing fallback.
+A second read-only agent review found no actionable callback/layout/type regression.
+
+Verification plan: frozen-source full native build/sign, existing profile/roaster/
+discovery unit contracts, Android assembly/DEX, tooling and source-manifest checks.
+Use colocated fake populated light/dark/large-type/loading/error previews; no
+production DI, network writes or automated UI/screenshot tests. Manual gates:
+return from profiles, menu icons, full-row city/schedule hits, calendar boundary
+week, long text, roaster insets/cards/contacts and both themes. New code introduces
+no Task, DispatchQueue, unchecked Sendable or nonisolated escape. Full application
+Swift language-mode limitations remain as previously recorded.
+
+
+The first 3227 build was deliberately cancelled at framework linking after the user
+requested a new shared Android/iOS header and real following counts. No intermediate
+3227 package was signed or installed. The temporary linkage manifest was restored.
+The final artifact must come from a new frozen source build including the profile
+bridge, seven contract regressions and aligned RU/BE resources; its manifest now
+also records changed XML/native localization inputs. See feature/profile/
+IOS_OWN_PROFILE.md for the shared header/count behavior and remaining device gates.
+
+
+Final 3227 native compilation passed: Swift packages 21.9s, Kotlin 1m02s,
+ComposeApp.framework 10m42s, Swift Runner 2m25s, assembly 1.6s. All 99 changed
+source/resource hashes match the signed manifest, including packaged RU/BE native
+profile tables. Temporary SwiftPM scanner manifest was restored. All 40 Python
+tooling checks passed (3.354s); the photo-model contract executes actual Swift 6
+complete-strict source against fake ports, not a UI harness.
+
+Profile impl 88 tests/9 suites (seven new) and profile data 44/7 executed with no
+failures/errors/skips. Discovery 187/22 was UP-TO-DATE; roaster 29/4 FROM-CACHE;
+profile domain has no test sources. Android directDebug assembly/DEX passed after
+the resume-count fix; no Android device launch/install was performed.
+Android artifact: com.coffeepeek.debug, 1.2.0.3221-debug (3221), base dce8989e58b1
+plus working changes. APK SHA-256: 482266388033e2118e791bef215622c3bb7dc10c5d2de8f62424dfa9321a0f76.
+
+Signed iOS com.coffeepeek.xcross 1.2.2 (3227): 55,974,728-byte development IPA.
+IPA SHA-256: dd9497086d49f0126d259a3145bbf9f677c34db5f1738f7b8bb72256267262d6.
+Executable SHA-256: 8919a4e4d67753169fbb033f46da76d4ff683aa4ca338b18609b58b138e601eb.
+Manifest SHA-256: 22247c715cd23603f43bc58d2f26d778978fc09260beefea1a1e1bbffe77dfc7.
+Runtime signing/Keychain group, availability flag and ZIP checks passed. Older
+signed artifacts remain intact; no Release build or remote publication occurred.
+
+InstallationProxy verified in-place 3227 installation on the agreed iPhone15,4 /
+iOS 27.2.1 at 2026-11-25T03:42:23.231677+00:00. Main app version was unchanged. The developer
+transport disconnected before the 12-second startup check completed. A separate
+read-only retry found no USB device; no second installation was attempted. Startup
+and new visual gates remain unverified pending the user's reconnection. This
+transport failure is not classified as an application crash.

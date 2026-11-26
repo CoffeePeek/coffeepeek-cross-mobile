@@ -37,3 +37,18 @@ UIKit controllers retain the Swift observable model; SwiftUI graph rebuilds do n
 - All business/private/evidence artwork uses CoffeePeekCardImage(symbol: nil) and the shared CFPK light/dark placeholder; no new placeholder implementation was introduced.
 - macOS run `44274620776` at `e6c282c55`: Xcode app/framework build and the complete Kotlin/Native test job passed. Ownership XML reports 46 executed tests (including three new native contracts), zero failures/errors/skips. Compiler log was inspected for changed native files; the new NSData conversion now declares the required BetaInteropApi opt-in. Older shared Compose preview deprecation/safe-call warnings are outside this UI checkpoint.
 - Prepared integration `1d75fd56b`: complete native registrations retained in both Swift roots; full OpenStep/unique object/reference validation passed (337 objects, the same inherited Firebase reference). Function-body gate passed with 131 existing records and zero new/grown violations. No baseline extension. The next macOS run verifies this prepared base and annotation batch; source-qualified earlier successful results are preserved above.
+
+## Native toolbar claim lifetime — 2026-11-25
+
+Shop/roaster toolbar claims now construct a plain feature-owned native session
+and return the SwiftUI controller directly. The toolbar no longer creates a
+Compose root or invokes IosOwnershipClaimContent. The obsolete forwarding
+composable was removed. Shared model validation, private media, generation guards,
+Back/dirty/busy policy and writes remain unchanged; Android keeps its claim UI.
+
+The application injects its existing catalogue media loader and a native photo
+launcher. Final sheet dismissal closes the session and picker. The platform-neutral
+session/snapshots and claim owner now live in commonMain. Four new contracts cover
+exactly-once completion, disposal, account replacement, cancelled Photos input and
+late photo completion. The ownership JVM suite executed 25 tests in four suites,
+without failures. Real claims/saves, UIKit gestures and Photos remain device gates.

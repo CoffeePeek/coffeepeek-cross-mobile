@@ -3,8 +3,8 @@
 ## Purpose
 
 CoffeePeek evolves toward a feature-based Clean Architecture for Kotlin
-Multiplatform. Android uses Compose. iOS hosts shared Compose screens in UIKit
-and renders Theme Settings in SwiftUI. The goal is
+Multiplatform. Android uses Compose. iOS renders SwiftUI/UIKit screens and native
+navigation, consuming shared Kotlin feature sessions, data and business rules. The goal is
 predictable ownership, isolated changes, testable logic, and controlled Gradle
 dependencies — not the maximum number of modules or classes.
 

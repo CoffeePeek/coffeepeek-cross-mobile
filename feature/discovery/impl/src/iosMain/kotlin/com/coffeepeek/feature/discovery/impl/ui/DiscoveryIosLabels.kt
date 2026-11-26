@@ -1,13 +1,17 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
-import androidx.compose.runtime.Composable
 import com.coffeepeek.feature.discovery.impl.resources.*
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.getSystemResourceEnvironment
 
-@Composable
-internal fun discoveryIosLabels(picker: Boolean): Map<String, String> = (mainLabels(picker) + mapLabels() + feedbackLabels())
-    .mapValues { stringResource(it.value) }
+/** Copy needed by the native navigation owner before a picker session can be prepared. */
+@OptIn(org.jetbrains.compose.resources.ExperimentalResourceApi::class)
+suspend fun nativeDiscoveryPickerTitle(): String =
+    getString(getSystemResourceEnvironment(), Res.string.discovery_picker_title)
+
+internal suspend fun DiscoveryIosResources.discoveryIosLabels(picker: Boolean): Map<String, String> =
+    (mainLabels(picker) + mapLabels() + feedbackLabels()).mapValues { text(it.value) }
 
 private fun mainLabels(picker: Boolean): Map<String, StringResource> = mapOf(
     "title" to Res.string.discovery_picker_title,
@@ -42,4 +46,10 @@ private fun feedbackLabels(): Map<String, StringResource> = mapOf(
     "reset" to Res.string.discovery_reset_filters, "add-title" to Res.string.discovery_suggestion_title,
     "add-body" to Res.string.discovery_suggestion_description, "add" to Res.string.discovery_suggestion_action,
     "add-roaster" to Res.string.discovery_add_roaster,
+    "add-roaster-title" to Res.string.discovery_roaster_suggestion_title,
+    "add-roaster-body" to Res.string.discovery_roaster_suggestion_body,
+    "empty-title-Catalog" to Res.string.discovery_empty_catalog_title,
+    "empty-title-Query" to Res.string.discovery_empty_shops_title,
+    "empty-title-Filters" to Res.string.discovery_empty_filters_title,
+    "edit-query" to Res.string.discovery_edit_query,
 )

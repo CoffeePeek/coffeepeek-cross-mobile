@@ -6,6 +6,7 @@ struct DiscoveryMapLayoutTests {
         rejectsInvalidPreviewFrames()
         respectsPreviewMarginsAndFullScreenBounds()
         clipsPreviewToMeasuredResultsAndLeavesExpandedMapFullSize()
+        slidesHiddenPreviewAboveResultsWithoutResizing()
     }
 
     private static func rejectsInvalidPreviewFrames() {
@@ -41,5 +42,22 @@ struct DiscoveryMapLayoutTests {
         assert(discoveryMapClipFrame(viewport: viewport, results: .zero, expanded: false) == .zero)
         assert(discoveryMapClipFrame(viewport: viewport, results: .infinite, expanded: false) == .zero)
         assert(discoveryMapClipFrame(viewport: viewport, results: results, expanded: true) == CGRect(origin: .zero, size: viewport))
+    }
+
+    private static func slidesHiddenPreviewAboveResultsWithoutResizing() {
+        let viewport = CGSize(width: 393, height: 852)
+        let preview = CGRect(x: 0, y: 126, width: 393, height: 200)
+        let hidden = discoveryMapLayoutFrame(viewport: viewport, preview: preview, expanded: false,
+            previewVisible: false, resultsTop: 110)
+        assert(hidden == CGRect(x: 16, y: -106, width: 361, height: 200))
+        assert(hidden?.maxY == 94)
+        assert(preview.minY - (hidden?.minY ?? 0) == 232)
+        let offscreen = CGRect(x: 0, y: -400, width: 393, height: 200)
+        assert(discoveryMapLayoutFrame(viewport: viewport, preview: offscreen, expanded: false,
+            previewVisible: false, resultsTop: 110)?.minY == -400)
+        assert(discoveryMapLayoutFrame(viewport: viewport, preview: preview, expanded: false,
+            previewVisible: false, resultsTop: .nan) == nil)
+        assert(discoveryMapLayoutFrame(viewport: viewport, preview: preview, expanded: true,
+            previewVisible: false, resultsTop: .nan) == CGRect(origin: .zero, size: viewport))
     }
 }

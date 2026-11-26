@@ -1,69 +1,63 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose
 
-import androidx.compose.runtime.Composable
-import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import com.coffeepeek.feature.homecheckin.impl.ui.NativeHomeDetailResources
 import com.coffeepeek.feature.homecheckin.api.*
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.impl.resources.*
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.component.visibilityLabelResource
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.*
 
-@Composable
-internal fun nativeHomeDetailPresentation(state: HomeCheckInDetailState, formatDate: (String, String) -> String,
+internal suspend fun NativeHomeDetailResources.nativeHomeDetailPresentation(state: HomeCheckInDetailState, formatDate: (String, String) -> String,
     formatMethod: (String) -> String, notice: String?): HomeCheckInDetailPresentation {
     val active = !state.isClosed && !state.isAccessRevoked
     return HomeCheckInDetailPresentation(
         card = state.entry?.takeIf { active }?.let { nativeHomeDetailCard(it, formatDate, formatMethod) },
-        title = stringResource(Res.string.home_check_in_home), backLabel = stringResource(Res.string.home_check_in_close),
+        title = text(Res.string.home_check_in_home), backLabel = text(Res.string.home_check_in_close),
         active = active, dismissAllowed = !state.isDeleting,
-        loadingLabel = if (state.isLoading || state.isDeleting) stringResource(
+        loadingLabel = if (state.isLoading || state.isDeleting) text(
             if (state.isDeleting) Res.string.home_check_in_deleting else Res.string.home_check_in_loading) else null,
         errorText = (state.deleteIssue ?: state.loadIssue)?.let { homeDetailIssueText(it, state.deleteIssue != null) },
-        retryLabel = if (canRetryHomeDetail(state)) stringResource(Res.string.home_check_in_retry) else null,
-        notice = notice.takeIf { active }, editLabel = stringResource(Res.string.home_check_in_edit),
-        deleteLabel = stringResource(Res.string.home_check_in_delete), confirmation = homeDetailConfirmation(state),
-        menuLabel = stringResource(Res.string.home_check_in_actions),
+        retryLabel = if (canRetryHomeDetail(state)) text(Res.string.home_check_in_retry) else null,
+        notice = notice.takeIf { active }, editLabel = text(Res.string.home_check_in_edit),
+        deleteLabel = text(Res.string.home_check_in_delete), confirmation = homeDetailConfirmation(state),
+        menuLabel = text(Res.string.home_check_in_actions),
     )
 }
 
-@Composable
-private fun nativeHomeDetailCard(entry: HomePreparation, date: (String, String) -> String,
+private suspend fun NativeHomeDetailResources.nativeHomeDetailCard(entry: HomePreparation, date: (String, String) -> String,
     method: (String) -> String): HomeCheckInDetailCard {
-    return HomeCheckInDetailCard(entry.id, stringResource(Res.string.home_check_in_home),
+    return HomeCheckInDetailCard(entry.id, text(Res.string.home_check_in_home),
         date(entry.preparedOn, entry.preparedAtUtc), entry.text.orEmpty(),
-        entry.beanName?.takeIf(String::isNotBlank) ?: stringResource(Res.string.home_check_in_title_fallback),
+        entry.beanName?.takeIf(String::isNotBlank) ?: text(Res.string.home_check_in_title_fallback),
         entry.roasterName, entry.shelfBagPhoto?.let { it.thumbnailUrl ?: it.url }, nativeHomeRecipe(entry, method),
         entry.customDrinkName?.takeIf(String::isNotBlank) ?: entry.drinkName,
-        entry.visibilityLabelResource()?.let { stringResource(it) },
+        entry.visibilityLabelResource()?.let { text(it) },
         if (entry.moderation == HomePreparationModeration.Rejected) entry.rejectionReason?.takeIf(String::isNotBlank)
-            ?: stringResource(Res.string.home_check_in_rejection_fallback) else null,
+            ?: text(Res.string.home_check_in_rejection_fallback) else null,
         entry.photos.mapIndexed { index, photo -> nativeHomeDetailPhoto(photo,
-            stringResource(Res.string.home_check_in_photo_description, index + 1, entry.photos.size)) },
-        entry.tasteScore, entry.tasteScore?.let { stringResource(Res.string.home_check_in_rating_description, it) }.orEmpty(),
-        if (entry.moderation == HomePreparationModeration.Rejected) stringResource(Res.string.home_check_in_rejected) else null)
+            text(Res.string.home_check_in_photo_description, index + 1, entry.photos.size)) },
+        entry.tasteScore, entry.tasteScore?.let { text(Res.string.home_check_in_rating_description, it) }.orEmpty(),
+        if (entry.moderation == HomePreparationModeration.Rejected) text(Res.string.home_check_in_rejected) else null)
 }
 
-@Composable
-private fun nativeHomeRecipe(entry: HomePreparation, method: (String) -> String): String {
+private suspend fun NativeHomeDetailResources.nativeHomeRecipe(entry: HomePreparation, method: (String) -> String): String {
     val label = entry.brewMethodCode?.let(method)
     val methodLabel = if (entry.brewMethodCode == "other" && (label == null || label == entry.brewMethodCode))
-        stringResource(Res.string.home_check_in_method_other) else label ?: stringResource(Res.string.home_check_in_unspecified)
+        text(Res.string.home_check_in_method_other) else label ?: text(Res.string.home_check_in_unspecified)
     return listOfNotNull(methodLabel, entry.doseGrams?.let {
         val number = (if ('.' in it) it.trimEnd('0').trimEnd('.') else it).replace('.', ',')
-        stringResource(Res.string.home_check_in_grams, number)
-    }, entry.brewDurationSeconds?.let { stringResource(Res.string.home_check_in_seconds, it) }).joinToString(" · ")
+        text(Res.string.home_check_in_grams, number)
+    }, entry.brewDurationSeconds?.let { text(Res.string.home_check_in_seconds, it) }).joinToString(" · ")
 }
 
-@Composable
-private fun homeDetailConfirmation(state: HomeCheckInDetailState): HomeCheckInDetailConfirmation? {
+private suspend fun NativeHomeDetailResources.homeDetailConfirmation(state: HomeCheckInDetailState): HomeCheckInDetailConfirmation? {
     if (!state.showDeleteConfirmation || state.entry == null || state.isDeleting || state.isAccessRevoked) return null
-    return HomeCheckInDetailConfirmation(stringResource(Res.string.home_check_in_delete_question),
-        stringResource(Res.string.home_check_in_delete_warning), stringResource(Res.string.home_check_in_delete_confirm),
-        stringResource(Res.string.home_check_in_cancel))
+    return HomeCheckInDetailConfirmation(text(Res.string.home_check_in_delete_question),
+        text(Res.string.home_check_in_delete_warning), text(Res.string.home_check_in_delete_confirm),
+        text(Res.string.home_check_in_cancel))
 }
 
-@Composable
-internal fun homeDetailIssueText(issue: HomePreparationIssue, deleteFailed: Boolean): String = stringResource(when (issue) {
+internal suspend fun NativeHomeDetailResources.homeDetailIssueText(issue: HomePreparationIssue, deleteFailed: Boolean): String = text(when (issue) {
     HomePreparationIssue.Offline -> Res.string.home_check_in_offline
     HomePreparationIssue.Timeout -> Res.string.home_check_in_timeout
     HomePreparationIssue.Unauthorized -> Res.string.home_check_in_unauthorized

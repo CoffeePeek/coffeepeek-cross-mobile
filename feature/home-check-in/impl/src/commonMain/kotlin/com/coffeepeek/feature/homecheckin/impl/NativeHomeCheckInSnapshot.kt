@@ -3,6 +3,7 @@ package com.coffeepeek.feature.homecheckin.impl
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.HomeCheckInEditorState
 import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInEditorDates
+import com.coffeepeek.feature.homecheckin.impl.ui.data.matching
 
 internal fun HomeCheckInEditorState.nativeSnapshot(editing: Boolean, dates: HomeCheckInEditorDates,
     preparing: Boolean): NativeHomeCheckInState = NativeHomeCheckInState(
@@ -34,7 +35,7 @@ private fun HomeCheckInEditorState.nativeCatalog() = NativeHomeCheckInCatalog(
     beanPickerOpen = isBeanPickerOpen, beanQuery = beanQuery,
     methods = methods.map { NativeHomeCheckInOption(it.code, it.name, null, null) },
     beans = beans.map { NativeHomeCheckInOption(it.slug, it.name, it.roasterName, null) },
-    shelfBags = shelfBags.map { NativeHomeCheckInOption(it.id, it.name, it.roasterName, it.imageUrl) },
+    shelfBags = shelfBags.matching(beanQuery).map { NativeHomeCheckInOption(it.id, it.name, it.roasterName, it.imageUrl) },
     methodsLoading = methodsLoading, beansLoading = beansLoading,
     methodsIssueKey = nativeHomeIssueKey(methodsIssue), beansIssueKey = nativeHomeIssueKey(beansIssue),
 )

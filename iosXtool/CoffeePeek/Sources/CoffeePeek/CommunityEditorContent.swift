@@ -123,6 +123,7 @@ private struct CommunityEditorRatingCard: View {
     }
 }
 
+@MainActor
 private func communityEditorPreview() -> some View {
     let editor = CommunityEditorSnapshot(shopName: "CoffeePeek", keptText: "Фотографии и дата сохранятся",
         ratingsTitle: "Оценки", ratingsHint: "Выберите оценку", ratings: [

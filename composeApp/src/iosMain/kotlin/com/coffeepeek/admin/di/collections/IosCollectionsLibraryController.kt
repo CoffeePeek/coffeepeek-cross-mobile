@@ -25,10 +25,16 @@ internal fun iosCollectionsLibraryContent(): () -> UIViewController {
     val saved = koinInject<SavedCollectionsRepository>()
     val snapshots = koinInject<CollectionsRepository>()
     val account = koinInject<CollectionsAccount>()
+    return iosCollectionsLibraryContent(factory, { languageTag }, saved, snapshots, account)
+}
+
+internal fun iosCollectionsLibraryContent(factory: (IosCollectionsLibrary, String) -> UIViewController,
+    language: () -> String, saved: SavedCollectionsRepository, snapshots: CollectionsRepository, account: CollectionsAccount,
+): () -> UIViewController {
     return {
         val library = IosCollectionsLibrary(createCollectionsLibrarySession(saved, snapshots, account),
             Navigator::popBack, { Navigator.navigate(Navigator.Screen.Auth) },
             { Navigator.navigate(Navigator.Screen.CollectionEditor(it)) })
-        factory(library, languageTag)
+        factory(library, language())
     }
 }

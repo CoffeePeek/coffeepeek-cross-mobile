@@ -32,6 +32,7 @@ class IosShopCheckInListRow internal constructor(private val row: ShopCheckInLis
     val note = row.note
     val drink = row.drink
     val ratingLabel = row.ratingLabel
+    val ratingValue = row.ratingValue
     val coffeeRating = row.coffeeRating
     val serviceRating = row.serviceRating
     val placeRating = row.placeRating

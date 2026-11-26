@@ -28,6 +28,7 @@ struct CommunityReportContent: View {
     }
 }
 
+@MainActor
 private func communityReportPreview(busy: Bool = false) -> some View {
     CommunityReportContent(state: CommunitySheetSnapshot(active: true, title: "Пожаловаться", busy: busy,
         submitLabel: busy ? "Отправка…" : "Отправить", cancelLabel: "Отмена", error: busy ? nil : "Проверьте текст жалобы"),

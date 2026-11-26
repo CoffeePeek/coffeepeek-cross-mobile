@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 enum SettingsNativeStyle {
     static func heading(_ title: String, description: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -92,21 +93,8 @@ struct SettingsNativePage<Content: View>: View {
     }
 
     private var header: some View {
-        HStack(spacing: 8) {
-            Button(action: back) {
-                Image(systemName: "chevron.left").font(.system(size: 20, weight: .regular))
-                    .frame(width: 48, height: 48)
-                    .background(CoffeePeekNativeStyle.surface, in: Circle())
-                    .shadow(color: .black.opacity(0.04), radius: 3, y: 2)
-            }
-            .buttonStyle(.plain).accessibilityLabel(backLabel)
-            Text(title).font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
-                .frame(maxWidth: .infinity).multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
-            Color.clear.frame(width: title.count > 20 ? 0 : 48, height: 1).accessibilityHidden(true)
-        }
-        .padding(.horizontal, 16).padding(.vertical, 8)
-        .background(CoffeePeekNativeStyle.background)
+        CoffeePeekNativeNavigationHeader(title: title,
+            backLabel: backLabel, back: back)
     }
 }
 
@@ -142,7 +130,7 @@ struct SettingsNativeRow: View {
                         .fixedSize(horizontal: true, vertical: false)
                 }
                 if busy {
-                    ProgressView().accessibilityHidden(true)
+                    CoffeePeekNativeLoader(size: 24).accessibilityHidden(true)
                 } else if navigates {
                     Image(systemName: "chevron.forward")
                         .font(.system(size: 17, weight: .regular))

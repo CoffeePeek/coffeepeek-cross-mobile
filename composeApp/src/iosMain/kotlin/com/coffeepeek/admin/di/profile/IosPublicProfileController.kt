@@ -6,6 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
 import com.coffeepeek.admin.di.shelf.iosShelfFactory
+import com.coffeepeek.admin.di.shelf.IosShelfFactory
 import com.coffeepeek.admin.di.shelf.nativeShelfController
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.core.media.ImageUrlFetcher
@@ -38,6 +39,14 @@ internal fun iosPublicProfileContent(): (String, String?, String?, Boolean) -> U
     val imageFetcher = koinInject<ImageUrlFetcher>()
     val collections = iosCollectionsWorkspaceContent()
     val media = remember(imageFetcher) { IosCatalogueMedia(imageFetcher, Constants.BASE_URL) }
+    return iosPublicProfileContent(factory, shelf, accounts, data, checkIns, visibility, blocks, snapshots, language, media, collections)
+}
+
+internal fun iosPublicProfileContent(factory: (IosPublicProfile) -> UIViewController, shelf: IosShelfFactory,
+    accounts: ProfileAccountPort, data: PublicProfileData, checkIns: PublicCheckInsPort, visibility: AuthorVisibility,
+    blocks: AuthorBlockActions, snapshots: ProfileSnapshotStore, language: LanguagePort, media: IosCatalogueMedia,
+    collections: (String, String?, String?) -> UIViewController,
+): (String, String?, String?, Boolean) -> UIViewController {
     return { slug, nickname, avatarUrl, checkInsOnly ->
         val profile = createIosPublicProfileSession(slug, data, checkIns, accounts, AppProfileAuthorVisibility(visibility), snapshots)
         factory(IosPublicProfile(profile, AppProfileAuthorActions(blocks), language, media,

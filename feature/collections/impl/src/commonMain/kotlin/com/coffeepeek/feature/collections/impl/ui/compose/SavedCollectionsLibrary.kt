@@ -39,7 +39,7 @@ internal fun SavedCollectionsLibrary(state: SavedCollectionsState, action: (Save
                 horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 item(span = { GridItemSpan(maxLineSpan) }) { SavedCollectionsSearch(state, action) }
                 SavedCollectionVisibility.entries.reversed().forEach { visibility ->
-                    val lists = state.lists.filter { it.visibility == visibility && it.title.contains(state.query, true) }
+                    val lists = state.lists.filter { it.visibility == visibility && matchesCollectionQuery(it.title, state.query) }
                     if (lists.isNotEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { SavedCollectionSectionTitle(visibility) }
                     items(lists, key = { it.id }) { value ->
                         SavedCollectionCard(value, { action(SavedCollectionsAction.OpenEditor(value.id)) }) { image(value, it) }
@@ -48,7 +48,7 @@ internal fun SavedCollectionsLibrary(state: SavedCollectionsState, action: (Save
                 if (!state.loading && state.signedIn && state.failure != SavedCollectionsFailure.Load && state.lists.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(stringResource(Res.string.collections_library_empty))
                 }
-                if (state.lists.isNotEmpty() && state.lists.none { it.title.contains(state.query, true) })
+                if (state.lists.isNotEmpty() && state.lists.none { matchesCollectionQuery(it.title, state.query) })
                     item(span = { GridItemSpan(maxLineSpan) }) { Text(stringResource(Res.string.collections_no_matches)) }
             }
         }

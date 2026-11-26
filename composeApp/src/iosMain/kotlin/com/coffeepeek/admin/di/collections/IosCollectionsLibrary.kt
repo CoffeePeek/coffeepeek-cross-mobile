@@ -5,6 +5,8 @@ package com.coffeepeek.admin.di.collections
 import com.coffeepeek.feature.collections.api.CollectionsLibrarySession
 import com.coffeepeek.feature.collections.api.CollectionsLibraryObservation
 import com.coffeepeek.feature.collections.api.CollectionsLibraryEvent
+import com.coffeepeek.feature.collections.api.CollectionsLibraryItem
+import com.coffeepeek.feature.collections.api.CollectionsLibrarySnapshot
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
@@ -17,20 +19,7 @@ class IosCollectionsLibrary internal constructor(
     private val onSignIn: () -> Unit,
     private val onEditor: (String?) -> Unit,
 ) {
-    fun current(): IosCollectionsLibraryState = session.current().let { state ->
-        IosCollectionsLibraryState(
-            accountVersion = state.accountVersion,
-            signedIn = state.signedIn,
-            loading = state.loading,
-            refreshing = state.refreshing,
-            failed = state.failed,
-            query = state.query,
-            items = state.items.map {
-                IosCollectionsLibraryItem(id = it.id, title = it.title, isPublic = it.isPublic,
-                    count = it.count, imageKey = it.imageKey)
-            },
-        )
-    }
+    fun current(): IosCollectionsLibraryState = session.current().iosState()
 
     fun observe(onState: (IosCollectionsLibraryState) -> Unit): IosCollectionsLibraryObservation =
         IosCollectionsLibraryObservation(session.observe({ onState(current()) }) { event ->
@@ -70,7 +59,15 @@ data class IosCollectionsLibraryState(
     val failed: Boolean,
     val query: String,
     val items: List<IosCollectionsLibraryItem>,
+    val matchingItems: List<IosCollectionsLibraryItem> = items,
 )
+
+private fun CollectionsLibrarySnapshot.iosState() = IosCollectionsLibraryState(
+    accountVersion, signedIn, loading, refreshing, failed, query,
+    items.map { it.iosItem() }, matchingItems.map { it.iosItem() },
+)
+
+private fun CollectionsLibraryItem.iosItem() = IosCollectionsLibraryItem(id, title, isPublic, count, imageKey)
 
 data class IosCollectionsLibraryItem(
     val id: String,

@@ -2,10 +2,7 @@ package com.coffeepeek.admin.di.notifications
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer
-import com.coffeepeek.admin.notifications.NotificationOpens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.core.session.SessionReader
@@ -16,6 +13,8 @@ import com.coffeepeek.feature.notifications.impl.createNotificationsEntry
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.notifications_open_error
 import org.jetbrains.compose.resources.getString
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /** Android and iOS compose the migrated bell and sheet; signing in is the application's navigation. */
 internal class FeatureNotificationsRenderer(
@@ -24,8 +23,11 @@ internal class FeatureNotificationsRenderer(
     private val navigation: NotificationNavigation,
     private val currentUserId: () -> String?,
 ) : NotificationsRenderer {
+    private val pending = PendingNotificationOpens(feature.state, currentUserId,
+        { request, generation -> navigation.open(request.id, request.accountId, generation) })
     override suspend fun open(id: String, accountId: String, generation: Long): Boolean =
         navigation.open(id, accountId, generation)
+    override suspend fun observePendingOpen(loggedIn: Flow<Boolean>) = pending.observe(loggedIn)
 
     @Composable
     override fun Bell() = entry.Bell()
@@ -35,19 +37,7 @@ internal class FeatureNotificationsRenderer(
 
     @Composable
     override fun HandlePendingOpen(isLoggedIn: Boolean) {
-        val request by NotificationOpens.pending.collectAsStateWithLifecycle()
-        val state by feature.state.collectAsStateWithLifecycle()
-        LaunchedEffect(request, isLoggedIn, state.accountId, state.generation) {
-            val pending = request ?: return@LaunchedEffect
-            if (isLoggedIn && (state.accountId == null || state.accountId != currentUserId())) return@LaunchedEffect
-            try {
-                if (isLoggedIn && state.accountId == pending.accountId) {
-                    navigation.open(pending.id, pending.accountId, state.generation)
-                }
-            } finally {
-                NotificationOpens.consume(pending)
-            }
-        }
+        LaunchedEffect(isLoggedIn) { observePendingOpen(flowOf(isLoggedIn)) }
     }
 }
 

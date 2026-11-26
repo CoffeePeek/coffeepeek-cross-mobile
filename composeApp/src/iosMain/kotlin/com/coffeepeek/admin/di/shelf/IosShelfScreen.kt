@@ -2,9 +2,10 @@
 
 package com.coffeepeek.admin.di.shelf
 
-import androidx.compose.ui.window.ComposeUIViewController
-import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
+import com.coffeepeek.admin.di.homecheckin.IosNativeHomeFlow
+import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.feature.settings.api.LanguagePort
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInBean
@@ -18,9 +19,10 @@ import platform.UIKit.UIViewController
 
 /** One owner generation. Swift subscriptions can pause without dropping the shared feature session. */
 class IosShelfScreen internal constructor(val kind: String, val languageTag: String,
-    feature: IosShelfFeature, profiles: ShelfProfileRepository, slug: String?, own: Boolean,
+    private val feature: IosShelfFeature, profiles: ShelfProfileRepository, slug: String?, own: Boolean,
     private val account: SessionShelfAccount, private val media: IosCatalogueMedia,
     private val checkIns: FeatureCheckInCreateFlowRenderer, private val allowed: () -> Boolean,
+    private val language: LanguagePort, private val accounts: SessionReader,
 ) {
     private val owner = account.visibilityScope
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -32,6 +34,8 @@ class IosShelfScreen internal constructor(val kind: String, val languageTag: Str
     private val preview = if (kind == "public" && slug != null) createIosShelfProfileSession(profiles, slug, own) else null
     private val visibility = if (kind == "shelf" && owner != null) createIosShelfVisibilitySession(profiles) else null
     private var camera: IosShelfNativeCamera? = null
+    private var brew: IosNativeHomeFlow? = null
+    private var archive: IosShelfArchive? = null
     private val picker = ShelfPickerDelegate({ photo -> if (isCurrent()) add?.photo(photo.bytes, photo.fromCamera) },
         { if (isCurrent()) add?.action("photoFailed") })
 
@@ -66,7 +70,7 @@ class IosShelfScreen internal constructor(val kind: String, val languageTag: Str
     private fun shelfAction(value: String, id: String?) {
         when (value) {
             "add" -> shelf?.add()
-            "archive" -> shelf?.archive()
+            "archivedBag" -> id?.let { navigate("bag", it) }
             "open" -> id?.let { shelf?.open(it) }
             "finish" -> id?.let { shelf?.startFinish(it) }
             "cancelFinish" -> shelf?.cancelFinish()
@@ -93,6 +97,16 @@ class IosShelfScreen internal constructor(val kind: String, val languageTag: Str
     fun messageExpired(key: String) { if (isCurrent()) shelf?.dismissMessage(key) }
     fun move(id: String, position: Int) { if (isCurrent()) shelf?.move(id, position) }
     fun setVisible(value: Boolean) { if (isCurrent()) visibility?.set(value) }
+    fun makeArchive(onBag: (String) -> Unit): IosShelfArchive? {
+        if (kind != "shelf" || !isCurrent()) return null
+        closeArchive()
+        return IosShelfArchive(feature::archive, account, media, {},
+            { id -> if (isCurrent()) onBag(id) }, ::isCurrent).also { archive = it }
+    }
+    fun closeArchive() {
+        archive?.close()
+        archive = null
+    }
     fun query(value: String) { if (isCurrent()) add?.query(value) }
     fun coffee(slug: String) { if (isCurrent()) add?.coffee(slug) }
     fun roaster(value: String) { if (isCurrent()) add?.roaster(value) }
@@ -127,18 +141,17 @@ class IosShelfScreen internal constructor(val kind: String, val languageTag: Str
     }
     fun stopCamera() { camera?.close(); camera = null }
 
-    /** The existing native Home editor remains hosted by its composition entry (including analytics and photo handoff). */
+    /** The existing flow owns save/analytics; the native presentation owns its editor and photos. */
     fun makeBrew(): UIViewController? {
         val coffee = bag?.brew()?.takeIf { isCurrent() } ?: return null
-        return ComposeUIViewController {
-            AppContent {
-                checkIns.Home(HomeCheckInBean(coffee.slug, coffee.name, coffee.shelfBagId),
-                    onDismiss = { bag?.brewed(false) }, onSaved = { bag?.brewed(true) })
-            }
-        }
+        releaseBrew()
+        return IosNativeHomeFlow(checkIns, HomeCheckInBean(coffee.slug, coffee.name, coffee.shelfBagId),
+            language, media, accounts, onDismiss = { if (isCurrent()) bag?.brewed(false) },
+            onSaved = { if (isCurrent()) bag?.brewed(true) }).also { brew = it }.controller
     }
 
-    fun closeBrew() { if (isCurrent()) bag?.brewed(false) }
+    fun closeBrew() { releaseBrew(); if (isCurrent()) bag?.brewed(false) }
+    fun releaseBrew() { brew?.close(); brew = null }
 
     fun close() {
         if (closed) return
@@ -149,7 +162,9 @@ class IosShelfScreen internal constructor(val kind: String, val languageTag: Str
     private fun revoke() {
         if (revoked) return
         revoked = true
+        releaseBrew()
         stopCamera()
+        closeArchive()
         shelf?.close()
         bag?.close()
         add?.close()

@@ -7,7 +7,8 @@ private let mapSelectionGold = UIColor(hex: "#FACC15")
 
 /// Native rendering only: shared Kotlin owns map content, selection and navigation.
 /// This file is used by both the Xcode and xtool application targets.
-final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDelegate, UIGestureRecognizerDelegate {
+@MainActor
+final class MapLibreMapProvider: NSObject, @MainActor IosNativeMapProvider, @MainActor MLNMapViewDelegate, UIGestureRecognizerDelegate {
     private static let lightStyle = URL(string: "https://tiles.openfreemap.org/styles/positron")!
     private static let darkStyle = URL(string: "https://tiles.openfreemap.org/styles/dark")!
     private static let zoneSource = "cp-zones"
@@ -67,7 +68,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
             syncZones(map, style: style, state: state)
         }
         if previous == nil {
-            DispatchQueue.main.async { [weak map] in map?.reportBounds() }
+            map.requestBoundsReport()
         }
     }
 
@@ -537,14 +538,21 @@ private final class CoffeeMapView: MLNMapView {
     var zoneImageNames: Set<String> = []
     var pendingCamera: CameraTarget?
     private var reportedSize: CGSize = .zero
+    private var needsBoundsReport = false
 
     override func layoutSubviews() {
         super.layoutSubviews()
         applyPendingCamera()
-        if reportedSize != bounds.size {
+        if reportedSize != bounds.size || needsBoundsReport {
             reportedSize = bounds.size
-            DispatchQueue.main.async { [weak self] in self?.reportBounds() }
+            needsBoundsReport = false
+            reportBounds()
         }
+    }
+
+    func requestBoundsReport() {
+        needsBoundsReport = true
+        setNeedsLayout()
     }
 
     func reportBounds() {
@@ -621,7 +629,7 @@ private final class CoffeePinView: MLNAnnotationView {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    deinit { NotificationCenter.default.removeObserver(self) }
+    isolated deinit { NotificationCenter.default.removeObserver(self) }
 
     override func prepareForReuse() {
         super.prepareForReuse()

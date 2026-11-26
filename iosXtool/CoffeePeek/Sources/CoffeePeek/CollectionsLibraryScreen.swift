@@ -18,12 +18,10 @@ private final class CollectionsLibraryHostingController: UIHostingController<Col
     }
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Use init(library:strings:)") }
-    deinit {
-        let library = library
-        DispatchQueue.main.async { library.close() }
-    }
+    isolated deinit { library.close() }
 }
 
+@MainActor
 private final class CollectionsLibraryModel: ObservableObject {
     let library: IosCollectionsLibrary
     @Published var state: IosCollectionsLibraryState
@@ -37,7 +35,9 @@ private final class CollectionsLibraryModel: ObservableObject {
     func appear() {
         guard observation == nil else { return }
         state = library.current()
-        observation = library.observe { [weak self] state in self?.state = state }
+        observation = library.observe { [weak self] state in
+            self?.state = state
+        }
         library.reload()
     }
 
@@ -46,7 +46,7 @@ private final class CollectionsLibraryModel: ObservableObject {
         observation = nil
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
     }
 }
@@ -86,7 +86,6 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
     let onSignIn: () -> Void
     let onEditor: (String?) -> Void
     @ViewBuilder let cover: (IosCollectionsLibraryItem) -> Cover
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         ScrollView {
@@ -102,30 +101,27 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
             .padding(16)
         }
         .safeAreaInset(edge: .top, spacing: 0) { header }
-        .background(Color(uiColor: .systemGroupedBackground))
+        .font(CoffeePeekNativeStyle.font(16)).foregroundStyle(CoffeePeekNativeStyle.foreground)
+        .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
     }
 
     private var header: some View {
-        HStack(spacing: 8) {
-            Button(action: onBack) {
-                Label(strings.text("library.back"), systemImage: "chevron.backward")
-                    .labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44)
-            }
-            Text(strings.text("library.title")).font(.headline).accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 0)
+        CoffeePeekNativeNavigationHeader(title: strings.text("library.title"),
+            backLabel: strings.text("library.back"), back: onBack)
+        .overlay(alignment: .trailing) {
             Button { onEditor(nil) } label: {
                 Label(strings.text("library.new"), systemImage: "plus")
-                    .labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44)
+                    .labelStyle(.iconOnly).frame(width: 44, height: 44)
             }
+            .buttonStyle(.plain).shopDetailGlassCircle()
             .disabled(!state.signedIn)
+            .padding(.trailing, 12)
         }
-        .padding(.horizontal, 12)
-        .background(.bar)
     }
 
     @ViewBuilder private var status: some View {
         if state.loading || state.refreshing {
-            ProgressView(strings.text("library.loading")).frame(maxWidth: .infinity)
+            CoffeePeekNativeLoader(label: strings.text("library.loading"), size: 32, showsLabel: true).frame(maxWidth: .infinity)
         }
         if !state.signedIn {
             Text(strings.text("library.signInHint"))
@@ -140,7 +136,7 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
     private var search: some View {
         HStack {
             Image(systemName: "magnifyingglass").accessibilityHidden(true)
-            TextField(strings.text("library.search"), text: Binding(get: { state.query }, set: onQuery))
+            TextField(strings.text("library.search"), text: Binding(get: { state.query }, set: { onQuery($0) }))
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
             if !state.query.isEmpty {
@@ -168,11 +164,11 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
     }
 
     private var columns: [GridItem] {
-        [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 280 : 150), spacing: 16)]
+        Array(repeating: GridItem(.flexible(minimum: 0), spacing: 16, alignment: .top), count: 2)
     }
 
     private var filteredItems: [IosCollectionsLibraryItem] {
-        state.items.filter { state.query.isEmpty || $0.title.localizedCaseInsensitiveContains(state.query) }
+        state.matchingItems
     }
 
     @ViewBuilder private var emptyState: some View {
@@ -184,17 +180,7 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
     }
 
     private func card(_ item: IosCollectionsLibraryItem) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            cover(item).frame(height: dynamicTypeSize.isAccessibilitySize ? 160 : 128).clipped()
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.title).font(.headline).foregroundStyle(.primary)
-                Text(strings.count(item.count)).font(.subheadline).foregroundStyle(.secondary)
-            }
-            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .accessibilityElement(children: .combine)
+        CollectionSummaryCard(title: item.title, countText: strings.count(item.count)) { cover(item) }
     }
 }
 
@@ -252,21 +238,20 @@ private struct CollectionsLibraryStrings {
 }
 
 private var libraryPreviewState: IosCollectionsLibraryState {
-    IosCollectionsLibraryState(
+    let items = [
+        IosCollectionsLibraryItem(id: "one", title: "Кофейни выходного дня", isPublic: true, count: 7, imageKey: "one"),
+        IosCollectionsLibraryItem(id: "three", title: "Эспрессо и завтраки", isPublic: true, count: 4, imageKey: "three"),
+        IosCollectionsLibraryItem(id: "four", title: "Новые кофейни у парка", isPublic: true, count: 2, imageKey: "four"),
+        IosCollectionsLibraryItem(id: "two", title: "Избранное", isPublic: false, count: 3, imageKey: "two")
+    ]
+    return IosCollectionsLibraryState(
         accountVersion: 0,
         signedIn: true,
         loading: false,
         refreshing: false,
         failed: false,
         query: "",
-        items: [
-            IosCollectionsLibraryItem(
-                id: "one", title: "Кофейни выходного дня", isPublic: true, count: 7, imageKey: "one"
-            ),
-            IosCollectionsLibraryItem(
-                id: "two", title: "Избранное", isPublic: false, count: 3, imageKey: "two"
-            )
-        ]
+        items: items, matchingItems: items
     )
 }
 

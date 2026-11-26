@@ -1,55 +1,23 @@
 package com.coffeepeek.feature.community.impl.ui
 
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
-import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
-import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.community.api.*
-import com.coffeepeek.feature.community.domain.model.CommunityPost
-import com.coffeepeek.feature.community.impl.resources.*
 import com.coffeepeek.feature.community.impl.timeline.*
 
-@Composable
-internal fun NativeCommunityFeed(state: CommunityState, posts: List<CommunityPost>, onAction: (CommunityAction) -> Unit,
-    host: CommunityHost, block: AuthorBlockActions, callbacks: CommunityCallbacks, cardCallbacks: CommunityFeedCardCallbacks,
-    snackbar: SnackbarHostState, bottomClearance: Dp, onRefreshed: () -> Unit,
-    headerAction: @Composable () -> Unit, interactive: Boolean) {
-    val sharer = postSharer(host)
-    val cardActions = linkedMapOf<String, CommunityCardActions>()
-    val cards = posts.mapIndexed { index, post ->
-        val teaser = state.isLoggedIn == false && index > 0
-        val actions = if (teaser) PostCardActions(null, null, null, null, { callbacks.onSignIn() })
-            else postActions(post, state, onAction, callbacks, block, sharer, cardCallbacks.onHomeEditorOpened, cardCallbacks.onPhoto)
-        val card = nativePostPresentation(post, state.owns(post), state.timeline == CommunityTimeline.Public,
-            state.timeline == CommunityTimeline.Public || post.helpfulCount > 0, !state.isMutating && !teaser,
-            state.changingVisibilityId == post.id, actions, host, 16.0)
-        cardActions[card.key] = nativePostActions(actions, !state.isMutating && !teaser, state.changingVisibilityId == post.id)
-        card
-    }
-    host.nativeFeed?.invoke(nativeFeedPresentation(state, cards, bottomClearance, interactive),
-        CommunityFeedActions(nativeFeedCommands(state, interactive, onAction, callbacks.onSignIn, callbacks.onOpenPost, onRefreshed),
-            nativeFeedCardActions(cardActions, interactive)),
-        Modifier.fillMaxSize(), headerAction,
-        { host.snackbar(snackbar, bottomClearance) })
-}
+internal data class NativeCommunityFeedTexts(
+    val title: String, val loading: String, val errorTitle: String, val errorBody: String,
+    val restart: String, val retry: String, val empty: String, val signIn: String,
+    val refresh: String, val savedTitle: String, val savedBody: String, val savedOpen: String,
+)
 
-@Composable
-private fun nativeFeedPresentation(state: CommunityState, cards: List<CommunityCardPresentation>,
-    bottomClearance: Dp, interactive: Boolean): CommunityFeedPresentation {
-    return CommunityFeedPresentation(state.sessionGeneration, stringResource(Res.string.community_title), cards,
+internal fun nativeFeedPresentation(state: CommunityState, cards: List<CommunityCardPresentation>,
+    bottomClearance: Double, interactive: Boolean, texts: NativeCommunityFeedTexts): CommunityFeedPresentation {
+    return CommunityFeedPresentation(state.sessionGeneration, texts.title, cards,
         cards.getOrNull(1)?.key.takeIf { state.isLoggedIn == false }, state.visibleConfirmedSaves,
         nativeFeedLoading(state), state.isLoading, state.isLoadingMore, nativeFeedCanLoadMore(state, interactive),
-        state.isLoggedIn == false, interactive, stringResource(Res.string.community_loading),
-        stringResource(Res.string.community_error_title).takeIf { state.error != null },
-        stringResource(Res.string.community_error_body).takeIf { state.error != null },
-        stringResource(if (state.restartPagination) Res.string.community_restart else Res.string.community_retry),
-        stringResource(Res.string.community_empty), stringResource(Res.string.community_sign_in_to_read),
-        stringResource(Res.string.community_refresh), stringResource(Res.string.community_saved_title),
-        stringResource(Res.string.community_saved_body), stringResource(Res.string.community_saved_open),
-        bottomClearance.value.toDouble(), state.accountEpoch)
+        state.isLoggedIn == false, interactive, texts.loading,
+        texts.errorTitle.takeIf { state.error != null }, texts.errorBody.takeIf { state.error != null },
+        if (state.restartPagination) texts.restart else texts.retry, texts.empty, texts.signIn,
+        texts.refresh, texts.savedTitle, texts.savedBody, texts.savedOpen, bottomClearance, state.accountEpoch)
 }
 
 internal fun nativeFeedLoading(state: CommunityState): Boolean =

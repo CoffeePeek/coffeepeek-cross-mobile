@@ -4,6 +4,8 @@ import UIKit
 
 struct RoasterDetailNativeHost: View {
     let source: IosRoasterDetail
+    var topInset: CGFloat = 0
+    var bottomInset: CGFloat = 0
     @StateObject private var model: RoasterDetailNativeModel
 
     init(source: IosRoasterDetail) {
@@ -12,12 +14,13 @@ struct RoasterDetailNativeHost: View {
     }
     var body: some View {
         RoasterDetailNativeScreen(state: model.state, strings: model.strings, source: source,
-            ownership: model.ownership, loader: model.loader)
+            ownership: model.ownership, loader: model.loader, topInset: topInset, bottomInset: bottomInset)
             .coffeePeekPhotoViewer(model.viewer, languageTag: model.strings.languageTag, onDismiss: source.closePhoto)
             .onAppear(perform: model.start).onDisappear(perform: model.stop)
     }
 }
 
+@MainActor
 private final class RoasterDetailNativeModel: ObservableObject {
     @Published var state: IosRoasterDetailState
     @Published var strings: OwnProfileStrings
@@ -55,7 +58,7 @@ private final class RoasterDetailNativeModel: ObservableObject {
         if !next.active { viewer = nil; ownership = nil }
         state = next
     }
-    deinit { observations.forEach { $0.cancel() } }
+    isolated deinit { observations.forEach { $0.cancel() } }
 }
 
 struct RoasterDetailNativeScreen: View {
@@ -64,25 +67,38 @@ struct RoasterDetailNativeScreen: View {
     let source: IosRoasterDetail?
     let ownership: UIViewController?
     let loader: CoffeePeekCardImageLoader
+    var topInset: CGFloat = 0
+    var bottomInset: CGFloat = 0
     @State private var selectedPhoto = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                if !state.active { Color.clear }
-                else if let name = state.name { content(name) }
-                else if state.loading { CoffeePeekNativeLoader(label: strings["roaster_loading"]).frame(maxWidth: .infinity, minHeight: 180) }
-                else { failure }
-            }.padding(.bottom, 24)
+        ZStack {
+            if state.active {
+                if let name = state.name {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) { content(name) }
+                            .padding(.bottom, bottomInset + 24)
+                            .coffeePeekRefreshable(isRefreshing: state.loading, label: strings["roaster_loading"]) { source?.retry() }
+                    }.transition(.opacity)
+                } else if state.loading {
+                    CoffeePeekNativeLoader(label: strings["roaster_loading"]).transition(.opacity)
+                } else { failure.transition(.opacity) }
+            }
         }
-        .refreshable { source?.retry() }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay(alignment: .top) { if state.name == nil { toolbar } }
-        .font(CoffeePeekNativeStyle.font(16)).foregroundStyle(CoffeePeekNativeStyle.foreground)
-        .background(CoffeePeekNativeStyle.background.ignoresSafeArea()).tint(CoffeePeekNativeStyle.accent)
-        .onChange(of: state.photos) { _, next in selectedPhoto = min(selectedPhoto, max(0, next.count - 1)) }
-        .alert(state.message ?? state.messageKey.map { strings[$0] } ?? "", isPresented: messagePresented) {
-            Button(strings["roaster_message_dismiss"]) { source?.dismissMessage() }
+        .overlay(alignment: .bottom) {
+            if let message = notice {
+                ShopDetailToastView(message: message, dismissLabel: strings["roaster_message_dismiss"], dismiss: { source?.dismissMessage() })
+                    .padding(.bottom, bottomInset + 12)
+            }
         }
+        .font(CoffeePeekNativeStyle.font(17)).foregroundStyle(CoffeePeekNativeStyle.foreground)
+        .background(CoffeePeekNativeStyle.background.ignoresSafeArea()).tint(CoffeePeekNativeStyle.accent)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: state.name != nil)
+        .onChange(of: state.photos) { _, next in selectedPhoto = min(selectedPhoto, max(0, next.count - 1)) }
     }
 
     private var toolbar: some View {
@@ -101,21 +117,28 @@ struct RoasterDetailNativeScreen: View {
                 Button { source?.share() } label: { Image(systemName: "square.and.arrow.up").frame(width: 48, height: 48) }
                     .shopDetailGlassCircle()
                     .accessibilityLabel(strings["roaster_share"])
-                if let ownership { OwnProfileEmbedded(controller: ownership).frame(width: 48, height: 48) }
+                if let ownership { OwnProfileEmbedded(controller: ownership, drawsBackground: false).frame(width: 48, height: 48) }
             }
-        }.font(.system(size: 20)).buttonStyle(.plain).padding(.horizontal, 12).padding(.top, 8)
+        }.font(.system(size: 20)).buttonStyle(.plain).padding(.horizontal, 12).padding(.top, topInset + 12)
     }
 
     @ViewBuilder private func content(_ name: String) -> some View {
         photos(name)
-        Text(name).font(CoffeePeekNativeStyle.font(28, weight: "Bold", relativeTo: .title))
+        Text(name).font(CoffeePeekNativeStyle.font(34, weight: "Bold", relativeTo: .largeTitle))
             .accessibilityAddTraits(.isHeader).padding(.horizontal, 16)
         if state.failed { failure }
         if let about = state.about, !about.isEmpty {
-            section(strings["roaster_about_title"]) { Text(about).textSelection(.enabled) }
+            section(strings["roaster_about_title"]) {
+                Text(about).foregroundStyle(CoffeePeekNativeStyle.secondary).textSelection(.enabled)
+            }
         }
         if let address = state.address, !address.isEmpty {
-            section(strings["roaster_address_title"]) { Text(address).textSelection(.enabled) }
+            section(strings["roaster_address_title"]) {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "mappin.and.ellipse").foregroundStyle(CoffeePeekNativeStyle.accent).accessibilityHidden(true)
+                    Text(address).textSelection(.enabled)
+                }
+            }
         }
         if state.instagram != nil || state.website != nil { contacts }
         shops
@@ -124,7 +147,7 @@ struct RoasterDetailNativeScreen: View {
     private func photos(_ name: String) -> some View {
         Group {
             if state.photos.isEmpty {
-                CoffeePeekPhotoPlaceholder().frame(height: 280)
+                CoffeePeekPhotoPlaceholder().frame(height: 280 + topInset)
                     .accessibilityLabel(String(format: strings["roaster_photos_missing"], name))
             } else {
                 TabView(selection: $selectedPhoto) {
@@ -133,50 +156,65 @@ struct RoasterDetailNativeScreen: View {
                             CoffeePeekCardImage(url: url, symbol: nil, loadImage: loader)
                         }
                         .buttonStyle(.plain).tag(index)
-                        .accessibilityLabel(String(format: strings["roaster_photo_position"], index + 1, state.photos.count))
+                        .accessibilityLabel(name + ", " + String(format: strings["roaster_photo_position"], index + 1, state.photos.count))
                     }
-                }.tabViewStyle(.page(indexDisplayMode: .never)).frame(height: 280)
+                }.tabViewStyle(.page(indexDisplayMode: .never)).frame(height: 280 + topInset)
                     .overlay(alignment: .bottomTrailing) {
                         if state.photos.count > 1 {
                             Text(String(format: strings["roaster_photo_position"], selectedPhoto + 1, state.photos.count))
-                                .font(.caption).foregroundStyle(.white).padding(8)
+                                .font(CoffeePeekNativeStyle.font(15, weight: "Medium", relativeTo: .subheadline))
+                                .foregroundStyle(.white).padding(.horizontal, 12).padding(.vertical, 4)
                                 .background(.black.opacity(0.55), in: Capsule()).padding(12)
                         }
                     }
             }
-        }.overlay(alignment: .top) { toolbar }.roasterExposure("photos", source: source)
+        }.clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 16, bottomTrailingRadius: 16))
+            .overlay(alignment: .top) { toolbar }.roasterExposure("photos", source: state.photos.isEmpty ? nil : source)
     }
 
     private var contacts: some View {
         section(strings["roaster_links_title"]) {
-            if let instagram = state.instagram {
-                Button { source?.instagram() } label: { Label(instagram, systemImage: "camera").frame(minHeight: 44) }
-            }
-            if let website = state.website {
-                Button { source?.website() } label: { Label(website, systemImage: "globe").frame(minHeight: 44) }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) { contactItems }
+                VStack(alignment: .leading, spacing: 12) { contactItems }
             }
         }.roasterExposure("contacts", source: source)
     }
 
+    @ViewBuilder private var contactItems: some View {
+        if let instagram = state.instagram {
+            CoffeePeekNativeContactButton(title: instagram, kind: "instagram") { source?.instagram() }
+        }
+        if let website = state.website {
+            CoffeePeekNativeContactButton(title: website, kind: "website") { source?.website() }
+        }
+    }
+
     private var shops: some View {
-        section(strings["roaster_shops_title"]) {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(strings["roaster_shops_title"]).font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
+                .accessibilityAddTraits(.isHeader).roasterExposure("shops", source: source)
             if state.shops.isEmpty { Text(strings["roaster_shops_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary) }
             ForEach(state.shops, id: \.slug) { shop in
                 Button { source?.shop(slug: shop.slug) } label: {
                     HStack(spacing: 12) {
                         CoffeePeekCardImage(url: shop.photo, symbol: nil, loadImage: loader)
-                            .frame(width: 64, height: 64).clipShape(RoundedRectangle(cornerRadius: 12))
+                            .frame(width: 72, height: 72).clipShape(RoundedRectangle(cornerRadius: 12))
                         Text(shop.name).frame(maxWidth: .infinity, alignment: .leading)
-                        Image(systemName: "chevron.right").accessibilityHidden(true)
-                    }.padding(12).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+                            .font(CoffeePeekNativeStyle.font(17, weight: "SemiBold", relativeTo: .headline))
+                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                        Image(systemName: "chevron.right").foregroundStyle(CoffeePeekNativeStyle.secondary).accessibilityHidden(true)
+                    }.padding(8).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+                        .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(CoffeePeekNativeStyle.border).allowsHitTesting(false) }
+                        .contentShape(RoundedRectangle(cornerRadius: 16))
                 }.buttonStyle(.plain).accessibilityLabel(String(format: strings["roaster_open_shop"], shop.name))
             }
-        }.roasterExposure("shops", source: source)
+        }.padding(.horizontal, 16)
     }
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title).font(CoffeePeekNativeStyle.font(20, weight: "Semibold", relativeTo: .headline)).accessibilityAddTraits(.isHeader)
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title).font(CoffeePeekNativeStyle.font(17, weight: "Semibold", relativeTo: .headline)).accessibilityAddTraits(.isHeader)
             content()
         }.padding(.horizontal, 16)
     }
@@ -184,21 +222,31 @@ struct RoasterDetailNativeScreen: View {
     private var failure: some View {
         VStack(spacing: 12) {
             Text(strings["roaster_detail_load_failed"])
-            Button(strings["roaster_detail_retry"]) { source?.retry() }.frame(minHeight: 44)
+            CoffeePeekNativeActionButton(title: strings["roaster_detail_retry"]) { source?.retry() }
+            CoffeePeekNativeActionButton(title: strings["roaster_detail_back"], primary: false) { source?.back() }
         }.frame(maxWidth: .infinity).padding()
     }
-    private var messagePresented: Binding<Bool> {
-        Binding(get: { state.active && (state.message != nil || state.messageKey != nil) }, set: { if !$0 { source?.dismissMessage() } })
+
+    private var notice: String? {
+        guard state.active else { return nil }
+        return state.message ?? state.messageKey.map { strings[$0] }
     }
 }
 
-private func roasterDetailPreview(_ language: String) -> some View {
-    RoasterDetailNativeScreen(state: IosRoasterDetailState(active: true, loading: false, failed: false, id: "fixture",
-        name: "CoffeePeek", about: "Кофе каждый день", address: nil, instagram: nil, website: nil, photos: [],
-        shops: [], favorite: true, photo: nil, messageKey: nil, message: nil),
+@MainActor
+private func roasterDetailPreview(_ language: String, stage: String = "content") -> some View {
+    RoasterDetailNativeScreen(state: IosRoasterDetailState(active: true, loading: stage == "loading", failed: stage == "failed", id: "fixture",
+        name: stage == "content" ? "CoffeePeek Roasters" : nil, about: "Обжариваем кофе каждый день. Эфиопия, Колумбия и сезонные лоты.",
+        address: "Sandbox street, 1", instagram: "@coffeepeek", website: "coffeepeek.by", photos: ["preview-1", "preview-2"],
+        shops: [IosRoasterShop(slug: "preview", name: "Кофейня с длинным названием у парка", photo: nil)],
+        favorite: true, photo: nil, messageKey: nil, message: nil),
         strings: OwnProfileStrings(languageTag: language, table: "NativeRoaster"), source: nil, ownership: nil,
         loader: { _, receive in receive(nil); return nil })
 }
+#Preview("Roaster loading light") { roasterDetailPreview("ru", stage: "loading").preferredColorScheme(.light) }
+#Preview("Roaster loading dark") { roasterDetailPreview("be", stage: "loading").preferredColorScheme(.dark) }
+#Preview("Roaster error light") { roasterDetailPreview("ru", stage: "failed").preferredColorScheme(.light) }
+#Preview("Roaster error dark") { roasterDetailPreview("be", stage: "failed").preferredColorScheme(.dark) }
 #Preview("Roaster detail light") { roasterDetailPreview("ru").preferredColorScheme(.light) }
 #Preview("Roaster detail dark") { roasterDetailPreview("be").preferredColorScheme(.dark) }
 

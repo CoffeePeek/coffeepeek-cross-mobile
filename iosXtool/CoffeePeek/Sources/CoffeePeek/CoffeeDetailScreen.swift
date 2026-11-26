@@ -58,6 +58,7 @@ private struct CoffeeDetailHost: View {
     }
 }
 
+@MainActor
 private final class CoffeeDetailModel: ObservableObject {
     @Published private(set) var state: IosCoffeeDetailState
     @Published private(set) var viewer: IosPhotoViewer?
@@ -69,7 +70,7 @@ private final class CoffeeDetailModel: ObservableObject {
         state = detail.currentState()
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
         detail.close()
     }
@@ -126,7 +127,7 @@ private struct CoffeeDetailScreen: View {
     var body: some View {
         Group {
             if state.isLoading {
-                ProgressView(strings.text("coffee_loading"))
+                CoffeePeekNativeLoader(label: strings.text("coffee_loading"), size: 32, showsLabel: true)
             } else if state.loadFailed {
                 loadError
             } else if let product = state.product {
@@ -155,7 +156,7 @@ private struct CoffeeDetailScreen: View {
                 .labelStyle(.iconOnly)
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())
-        }
+        }.buttonStyle(.plain).shopDetailGlassCircle()
     }
 
     private var loadError: some View {
@@ -296,7 +297,7 @@ private struct CoffeeDetailScreen: View {
             VStack(alignment: .leading, spacing: 12) {
                 sectionTitle("coffee_similar").coffeeDetailSection(.similarCoffees)
                 if state.similarLoading {
-                    ProgressView(strings.text("coffee_loading"))
+                    CoffeePeekNativeLoader(label: strings.text("coffee_loading"), size: 32, showsLabel: true)
                 } else if state.similarFailed {
                     Button(strings.text("coffee_retry_similar")) { onAction(.retrySimilar) }
                 } else {
@@ -321,6 +322,7 @@ private struct CoffeeDetailScreen: View {
     }
 }
 
+@MainActor
 private func coffeeDetailPreview(languageTag: String, failed: Bool) -> some View {
     let product = IosCoffeeProduct(
         name: "Эфиопия", photo: nil, countries: "Эфиопия", productKind: "roasted_beans",

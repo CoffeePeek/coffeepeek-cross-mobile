@@ -7,11 +7,13 @@ import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.feature.shelf.impl.IosShelfArchiveSession
 import com.coffeepeek.feature.shelf.impl.ShelfArchiveRowSnapshot
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import platform.UIKit.UIImage
@@ -23,6 +25,7 @@ class IosShelfArchive internal constructor(
     private val media: IosCatalogueMedia,
     private val onBack: () -> Unit,
     private val onBag: (String) -> Unit,
+    private val allowed: () -> Boolean = { true },
 ) {
     private val owner = account.visibilityScope
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -70,8 +73,14 @@ class IosShelfArchive internal constructor(
         IosShelfArchiveObservation(covers.launch {
             val url = if (isCurrent()) session?.photo(id) else null
             if (url == null) return@launch
-            val image = media.loadImage(url)
-            if (isCurrent() && session?.photo(id) == url) receive(image)
+            try {
+                media.observeImage(url) { isCurrent() && session?.photo(id) == url }.collect {
+                    receive(it.takeIf { isCurrent() && session?.photo(id) == url })
+                }
+            } catch (cancelled: CancellationException) {
+                receive(null)
+                throw cancelled
+            } catch (_: Exception) { receive(null) }
         })
 
     fun close() {
@@ -86,7 +95,7 @@ class IosShelfArchive internal constructor(
         covers.cancel()
     }
 
-    private fun isCurrent() = !revoked.value && owner != null && account.visibilityScope == owner
+    private fun isCurrent() = !revoked.value && owner != null && account.visibilityScope == owner && allowed()
 }
 
 class IosShelfArchiveObservation internal constructor(private vararg val jobs: Job?) {

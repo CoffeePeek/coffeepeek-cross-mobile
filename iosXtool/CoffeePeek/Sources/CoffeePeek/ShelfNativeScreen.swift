@@ -15,14 +15,17 @@ private final class ShelfNativeHostingController: UIHostingController<ShelfNativ
         super.init(rootView: ShelfNativeHost(model: model))
     }
     @MainActor required dynamic init?(coder: NSCoder) { return nil }
-    deinit { model.screen.close() }
+    isolated deinit { model.screen.close() }
 }
 
+@MainActor
 final class ShelfNativeModel: ObservableObject {
     let screen: IosShelfScreen
     let strings: ShelfNativeStrings
     @Published var state: IosShelfState
     private var observation: IosShelfObservation?
+    private var visible = false
+    private var presentingSettings = false
 
     init(_ screen: IosShelfScreen) {
         self.screen = screen
@@ -30,15 +33,24 @@ final class ShelfNativeModel: ObservableObject {
         state = screen.current()
     }
     func appear() {
+        visible = true
         guard observation == nil else { return }
         state = screen.current()
         observation = screen.observe { [weak self] in self?.state = $0 }
         if screen.kind == "shelf" || screen.kind == "public" { action("refresh") }
     }
     func disappear() {
+        visible = false
         screen.stopCamera()
-        // A full-screen native Home form completes through the bag model; keep that close/saved state observed.
-        guard !state.brewing else { return }
+        pauseWhenHidden()
+    }
+    func settingsVisibility(_ showing: Bool) {
+        presentingSettings = showing
+        pauseWhenHidden()
+    }
+    private func pauseWhenHidden() {
+        // Full-screen brewing and shelf settings retain their account observation until dismissal.
+        guard !visible && !state.brewing && !presentingSettings else { return }
         observation?.cancel()
         observation = nil
     }
@@ -56,7 +68,7 @@ final class ShelfNativeModel: ObservableObject {
         case .save(let later): screen.save(later: later)
         }
     }
-    deinit { observation?.cancel() }
+    isolated deinit { observation?.cancel() }
 }
 
 private struct ShelfNativeHost: View {
@@ -123,8 +135,10 @@ struct ShelfNativeStrings {
 struct ShelfNativeCover: View {
     let screen: IosShelfScreen
     let item: IosShelfItem
+    var sitsOnShelf = false
     var body: some View {
-        CoffeePeekCardImage(url: item.hasPhoto ? item.id : nil, symbol: nil, fits: true, loadImage: { id, receive in
+        CoffeePeekCardImage(url: item.hasPhoto ? item.id : nil, symbol: nil, fits: true,
+                           imageAlignment: sitsOnShelf ? .bottom : .center, loadImage: { id, receive in
             let request = screen.loadCover(id: id, receive: receive)
             return CoffeePeekCardImageRequest { request.cancel() }
         })
@@ -137,15 +151,15 @@ struct ShelfNativeHeader: View {
     let back: String
     let onBack: () -> Void
     var body: some View {
-        HStack {
-            Button(action: onBack) { Label(back, systemImage: "chevron.backward").labelStyle(.iconOnly).frame(width: 44, height: 44) }
-            Text(title).font(.headline).accessibilityAddTraits(.isHeader)
-            Spacer()
-        }
-        .foregroundStyle(CoffeePeekNativeStyle.foreground)
-        .padding(.horizontal, 8)
-        .background(CoffeePeekNativeStyle.background)
+        CoffeePeekNativeNavigationHeader(title: title, backLabel: back, back: onBack)
     }
+}
+
+#Preview("Shelf header light") {
+    ShelfNativeHeader(title: "Полка", back: "Назад", onBack: {}).preferredColorScheme(.light)
+}
+#Preview("Shelf header dark") {
+    ShelfNativeHeader(title: "Полка", back: "Назад", onBack: {}).preferredColorScheme(.dark)
 }
 
 struct ShelfNativeStatus: View {
@@ -164,15 +178,15 @@ enum ShelfNativeAddIntent {
     case command(String), query(String), coffee(String), roaster(String), weight(Int?), grind(String?), purpose(String?), date(String?), save(Bool)
 }
 
-func shelfNativePreviewItem() -> IosShelfItem {
-    IosShelfItem(id: "preview", title: "Santa Rosa", roaster: "Coffee Roaster", grams: KotlinInt(int: 250),
+func shelfNativePreviewItem(id: String = "preview") -> IosShelfItem {
+    IosShelfItem(id: id, title: "Santa Rosa", roaster: "Coffee Roaster", grams: KotlinInt(int: 250),
         grind: "Beans", purpose: "Filter", roastedOn: nil, addedOn: nil, finishedOn: nil, days: nil, roastDays: nil,
         rating: nil, buyAgain: nil, hasPhoto: false, hasCoffee: false)
 }
 
-func shelfNativePreviewState() -> IosShelfState {
+func shelfNativePreviewState(items: [IosShelfItem]? = nil) -> IosShelfState {
     let item = shelfNativePreviewItem()
-    return IosShelfState(active: true, items: [item], loading: false, failed: false, visible: true,
+    return IosShelfState(active: true, items: items ?? [item], loading: false, failed: false, visible: true,
         finishingId: nil, arrivingId: nil, grams: KotlinInt(int: 250), roasters: 1, undo: false, failure: nil,
         item: item, missing: false, archived: false, deleting: false, busy: false, brewing: false,
         brewsLoading: false, brewsFailed: false, leftGrams: nil, brews: [], visibility: false,

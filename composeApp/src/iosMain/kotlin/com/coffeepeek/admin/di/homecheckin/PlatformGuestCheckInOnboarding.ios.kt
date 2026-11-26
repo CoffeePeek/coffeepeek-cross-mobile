@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.admin.di.system.IosRootModal
 import com.coffeepeek.admin.di.system.IosRootModalObservation
 import com.coffeepeek.admin.di.system.NativeRootModal
@@ -32,7 +33,7 @@ internal actual fun PlatformGuestCheckInOnboarding(onFinish: (Navigator.Screen?)
         nativeGuestOnboardingVisible.value = true
         onDispose { nativeGuestOnboardingVisible.value = false }
     }
-    NativeRootModal(model)
+    AnalyticsOverlay { NativeRootModal(model) }
     return true
 }
 

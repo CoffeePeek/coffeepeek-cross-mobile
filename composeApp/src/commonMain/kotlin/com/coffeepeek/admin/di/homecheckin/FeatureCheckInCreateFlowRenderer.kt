@@ -36,6 +36,7 @@ internal class FeatureCheckInCreateFlowRenderer(
     private val onCreated: () -> Unit = {},
     private val createEditor: (CheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : CheckInCreateFlowRenderer {
+    internal fun nativeFlow(bean: HomeCheckInBean?) = GlobalCheckInFlow(sessions, onCreated, bean, createEditor)
     @Composable
     override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit) = Flow("global-check-in-flow-store", null, onDismiss, onShop, onHomeSaved)
 

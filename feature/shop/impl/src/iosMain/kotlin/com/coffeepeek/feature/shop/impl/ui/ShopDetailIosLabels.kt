@@ -1,12 +1,9 @@
 package com.coffeepeek.feature.shop.impl.ui
 
-import androidx.compose.runtime.Composable
-import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.feature.shop.impl.resources.*
 import org.jetbrains.compose.resources.StringResource
 
-@Composable
-internal fun shopDetailIosLabels(): Map<String, String> = (detailLabels() + sectionLabels() + priceLabels()).mapValues { stringResource(it.value) }
+internal suspend fun ShopDetailIosResources.shopDetailIosLabels(): Map<String, String> = (detailLabels() + sectionLabels() + priceLabels()).mapValues { text(it.value) }
 
 private fun detailLabels(): Map<String, StringResource> = mapOf(
     "back" to Res.string.shop_detail_back, "dismiss" to Res.string.shop_detail_dismiss, "retry" to Res.string.shop_detail_retry,

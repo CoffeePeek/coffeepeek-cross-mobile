@@ -7,8 +7,8 @@ import com.coffeepeek.admin.di.shop.LocalIosShopCheckInEditorController
 import platform.UIKit.UIViewController
 
 /** Application configuration only: sessions and controllers remain owned by their destinations. */
-private lateinit var homeEditorFactory: (IosHomeCheckInEditor) -> UIViewController
-private lateinit var shopEditorFactory: (IosShopCheckInEditor) -> UIViewController
+internal lateinit var homeEditorFactory: (IosHomeCheckInEditor) -> UIViewController
+internal lateinit var shopEditorFactory: (IosShopCheckInEditor) -> UIViewController
 
 internal fun configureNativeCheckInEditors(home: (IosHomeCheckInEditor) -> UIViewController,
     shop: (IosShopCheckInEditor) -> UIViewController) {
