@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.coffeepeek.admin.ui.NavMetrics
+import com.coffeepeek.core.designsystem.component.CoffeePeekLargeContentViewer
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
 import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
@@ -165,15 +166,18 @@ private fun FloatingNavBarItem(item: FloatingNavItem, selection: State<Float>, m
     val colors = MaterialTheme.colorScheme
     val highlight by animateColorAsState(if (pressed) colors.onSurface.copy(alpha = 0.12f) else Color.Transparent,
         tween(reducedMotionDuration(160)), label = "glass-tab-press")
-    // No large-content magnifier on long press (#70): a hold must not grow the tab.
-    Box(modifier.then(item.modifier).fillMaxSize()
-        .background(highlight, RoundedCornerShape(50))
-        .then(if (item.isAction) Modifier.clickable(interactions, indication = null,
-            role = Role.Button, onClick = item.onClick)
-            else Modifier.selectable(item.selected, interactions, indication = null,
-                role = Role.Tab, onClick = item.onClick))
-        .semantics { text = AnnotatedString(item.title) }) {
-        FloatingNavBarCaption(item, selection)
+    Box(modifier.then(item.modifier)) {
+        CoffeePeekLargeContentViewer(item.title, item.icon, Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize()
+                .background(highlight, RoundedCornerShape(50))
+                .then(if (item.isAction) Modifier.clickable(interactions, indication = null,
+                    role = Role.Button, onClick = item.onClick)
+                    else Modifier.selectable(item.selected, interactions, indication = null,
+                        role = Role.Tab, onClick = item.onClick))
+                .semantics { text = AnnotatedString(item.title) }) {
+                FloatingNavBarCaption(item, selection)
+            }
+        }
     }
 }
 
