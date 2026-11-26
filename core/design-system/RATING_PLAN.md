@@ -207,3 +207,15 @@ No UI/instrumented/screenshot tests, device launch or live-account write are par
 of this plan. Previews are fake and remain unrendered here; manual compact/narrow
 layout, larger text and screen-reader review remain device gates. Native shared
 compilation is a CI gate, not claimed from a host-skipped Windows task.
+
+
+Caption contract review: an editable rating may also provide `valueText`. Its
+scrolling star strip must not consume the row before the caption is measured.
+Only that combination now gives the stars `weight(1f, fill = false)`, so Row
+measures the caption first and the stars use their remaining viewport while
+retaining their natural packed width. The no-caption layout stays packed. This
+follows the [RowScope weight measurement contract](https://developer.android.com/reference/kotlin/androidx/compose/foundation/layout/RowScope#weight(kotlin.Float,kotlin.Boolean)).
+Both light/dark previews include editable captions at normal and 96 dp widths.
+These previews are authored, not rendered acceptance; root compilation and the
+existing unit/contract checks remain the planned validation. No UI tests were
+added.
