@@ -202,6 +202,7 @@ jobs:
             --tests 'com.coffeepeek.admin.di.shop.ShopAuthorBlockBridgeTest' \
             --tests 'com.coffeepeek.admin.di.auth.IosCheckInAuthFlowTest' \
             --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
+            --tests 'com.coffeepeek.admin.di.collections.CollectionsMediaScopeTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
             --tests 'com.coffeepeek.admin.di.system.IosGlobalDialogTest' \
             --tests 'com.coffeepeek.admin.di.system.IosRootModalsTest' \
@@ -357,6 +358,7 @@ jobs:
             :feature:business-ownership:impl:iosSimulatorArm64Test \
             :feature:contributions:impl:iosSimulatorArm64Test \
             :feature:shop-report:impl:iosSimulatorArm64Test \
+            :feature:collections:data:iosSimulatorArm64Test \
             :feature:collections:impl:iosSimulatorArm64Test \
             > "$RUNNER_TEMP/ios-ownership-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-ownership-tests.log"
@@ -373,6 +375,7 @@ jobs:
             ${{ runner.temp }}/ios-ownership-tests.log
             feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
             feature/contributions/impl/build/test-results/iosSimulatorArm64Test/
+            feature/collections/data/build/test-results/iosSimulatorArm64Test/
             feature/collections/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-shelf-archive-tests.log
             feature/shelf/impl/build/test-results/iosSimulatorArm64Test/

@@ -673,3 +673,31 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   scrolled/rapid catalog transitions. No UI automation or real account writes.
   After verification, send a replacement TestFlight build and observe its exact
   Apple processing result.
+- Implementation checkpoint c84a1904f keeps section controls above the actual
+  native tab safe area, removes visible shelf captions/counts and retains their
+  accessibility names. The existing collection-library action moves to the same
+  location without restoring the retired profile preference.
+- Settings use one identifiable payload carrying a nonoptional archive, a fresh
+  medium detent with large expansion, top alignment and the native background.
+  A cross-review caught and fixed a repeated request during dismissal; the
+  presentation lease now rejects it until onDismiss completes.
+- Kotlin retains copied collection image bytes in an 8 MiB / 24-entry LRU with
+  ten-minute expiry. Keys include account/login lifetime plus immutable cover ID
+  or a collection image revision and fallback URL. Unversioned generic photos
+  remain uncached; private cached reads retain the existing ownership gate.
+  The client-owned observation clears old scopes; late results are erased.
+  Swift keeps same-key thumbnails across temporary disappearance.
+- Catalog transitions now dispose outgoing content immediately, keep the stable
+  map/preview anchors and animate insertion within the existing 0.5-second mode
+  transaction. Extra header re-animation and animated scroll resets are removed.
+  Lazy rows and the single map-slot displacement remain intact.
+- Nine new non-UI contracts cover cache ownership/copies, revision and URL
+  misses, retry, bounds/expiry, same-user login replacement, late completions
+  and actual session-scope/token rotation. JVM execution is pending. macOS
+  verification now also runs collection-data native tests and the composition
+  media-scope contract.
+- The first Swift typecheck rejected two preview-only assignments to the
+  read-only accessibilityReduceMotion environment value. Those unsupported
+  overrides were removed; ordinary paired interactive previews remain. The
+  repeated full Swift 6 complete-strict typecheck passed. Actual system Reduce
+  Motion remains a manual device gate.

@@ -855,12 +855,6 @@ private func discoveryScreenPreview(picker: Bool = false, expanded: Bool = false
 #Preview("Check-in shop picker dark") { discoveryScreenPreview(picker: true).preferredColorScheme(.dark) }
 #Preview("Discovery transitions light") { DiscoveryInteractionPreview(picker: false).preferredColorScheme(.light) }
 #Preview("Discovery transitions dark") { DiscoveryInteractionPreview(picker: false).preferredColorScheme(.dark) }
-#Preview("Discovery transitions reduced motion light") {
-    DiscoveryInteractionPreview(picker: false).preferredColorScheme(.light).environment(\.accessibilityReduceMotion, true)
-}
-#Preview("Discovery transitions reduced motion dark") {
-    DiscoveryInteractionPreview(picker: false).preferredColorScheme(.dark).environment(\.accessibilityReduceMotion, true)
-}
 #Preview("Picker transitions light") { DiscoveryInteractionPreview().preferredColorScheme(.light) }
 #Preview("Picker transitions dark") { DiscoveryInteractionPreview().preferredColorScheme(.dark) }
 #Preview("Picker large text") {

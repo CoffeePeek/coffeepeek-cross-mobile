@@ -135,6 +135,24 @@ class CollectionsRepositoryTest {
         } finally { cancelled.close(); deleted.close() }
     }
 
+    @Test fun derivedCoversReuseOnlyTheMatchingCollectionRevisionAndPhotoUrl() = runTest {
+        var requests = 0
+        val client = client {
+            requests++
+            respond(byteArrayOf(requests.toByte()), headers = headersOf(HttpHeaders.ContentType, "image/jpeg"))
+        }
+        try {
+            val repository = createCollectionsRepository(client, client, "https://fixture.invalid", Account())
+            val url = "https://fixture.invalid/photo.jpg"
+            assertContentEquals(byteArrayOf(1), repository.photo(url, "collection:revision-1"))
+            assertContentEquals(byteArrayOf(1), repository.photo(url, "collection:revision-1"))
+            assertContentEquals(byteArrayOf(2), repository.photo(url, "collection:revision-2"))
+            assertContentEquals(byteArrayOf(3), repository.photo("$url?size=other", "collection:revision-2"))
+            assertContentEquals(byteArrayOf(4), repository.photo(url))
+            assertEquals(4, requests)
+        } finally { client.close() }
+    }
+
     private fun client(handler: suspend MockRequestHandleScope.(io.ktor.client.request.HttpRequestData) -> io.ktor.client.request.HttpResponseData) =
         HttpClient(MockEngine { request -> handler(request) }) { install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) } }
 

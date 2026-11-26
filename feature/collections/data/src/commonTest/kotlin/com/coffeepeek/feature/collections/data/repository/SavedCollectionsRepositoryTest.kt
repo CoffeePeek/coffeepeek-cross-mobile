@@ -484,6 +484,25 @@ class SavedCollectionsRepositoryTest {
         } finally { client.close() }
     }
 
+    @Test fun cachedPrivateCoverStillRequiresAnOwnerAndItsImmutableImageRevision() = runTest(dispatcher) {
+        var requests = 0
+        val client = client {
+            requests++
+            respond(byteArrayOf(requests.toByte()), headers = headersOf(HttpHeaders.ContentType, "image/jpeg"))
+        }
+        try {
+            val repository = repo(client, client)
+            val cover = SavedCollectionCover(coverId, true)
+            assertContentEquals(byteArrayOf(1), repository.cover(id, cover).getOrThrow())
+            assertContentEquals(byteArrayOf(1), repository.cover(id, cover).getOrThrow())
+            val changed = cover.copy(id = "32345678-1234-1234-1234-1234567890ab")
+            assertContentEquals(byteArrayOf(2), repository.cover(id, changed).getOrThrow())
+            account.owner.value = null
+            assertTrue(repository.cover(id, cover).isFailure)
+            assertEquals(2, requests)
+        } finally { client.close() }
+    }
+
     @Test fun staleRevisionMapsToConflictAndSendsExpectedRevision() = runTest(dispatcher) {
         val client = client { request ->
             assertEquals(7, payload(request).getValue("expectedRevision").jsonPrimitive.int)
