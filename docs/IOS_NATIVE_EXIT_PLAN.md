@@ -772,3 +772,29 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   processing contracts and 43 iOS tooling/configuration tests. The first tooling
   invocation had seven denied Swift/Bash process-start failures; repeating with
   access to the installed runtimes passed all 43 without source changes.
+
+### Completed TestFlight delivery (2026-11-26)
+
+- Version-only PR 435 reached codex/ios-native as
+  04233804fc0aea5d15eba56aba8467778ed69a26. Runtime Kotlin/Swift code remains
+  the same verified 7c1f39d612 checkpoint; differences are the 1.2.3 marketing
+  version and verification records.
+- Release run 45803159229 completed successfully for that exact native source:
+  signed Release archive, signature/configuration checks, App Store Connect
+  upload and Apple processing. Apple confirmed exactly 1.2.3 (3247) as VALID;
+  the observer also verified IOS platform and a nonexpired build. Temporary
+  signing cleanup succeeded. No duplicate release dispatch followed upload.
+- Automatic metadata-branch verification 45803059098 passed its full iOS build
+  and compatibility job. Its redundant Native test job reached the 45-minute
+  job limit during profile/calendar tests; later roaster/shelf/shared-data
+  stages were skipped. GitHub's failure annotation explicitly reports the
+  45-minute limit, with no failing test before cancellation. This cancellation
+  is retained, not presented as a successful repeated full suite. Original
+  full runtime verification 45788062433 (1130 retained Native cases / 156 suites)
+  and the 53 metadata/tool checks above remain the application evidence.
+- The owner retained manual device control after the in-place Debug 3240 check.
+  No further phone actions, account writes, logout, camera use or data clearing
+  were performed for release. There is no new agent visual acceptance claim.
+- Before a future archive, confirm App Store Connect's approved version/train
+  accepts the chosen marketing version, so a closed train is caught before the
+  long signing/archive step.
