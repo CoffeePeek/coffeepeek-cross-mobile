@@ -14,7 +14,7 @@ import com.coffeepeek.admin.di.favorites.RoasterFavorites
 import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
 import com.coffeepeek.admin.di.catalog.BrewMethodCatalogAdapter
 import com.coffeepeek.feature.profile.data.createPublicProfileData
-import com.coffeepeek.feature.notifications.api.NotificationFeature
+import com.coffeepeek.admin.di.notifications.registerNotifications
 import com.coffeepeek.admin.di.favorites.ServerRoasterFavorites
 import com.coffeepeek.core.media.ImageUrlFetcher
 import com.coffeepeek.core.network.ApiClients
@@ -160,12 +160,7 @@ private fun appModule(
     single<ShopCheckInFormRenderer> { shopCheckInRendererFactory() }
     single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
     single<ShopMenuGalleryScreenRenderer> { shopGalleryRendererFactory(get()) }
-    single<com.coffeepeek.feature.notifications.api.NotificationFeature> {
-        com.coffeepeek.feature.notifications.impl.createNotificationFeature(
-            com.coffeepeek.feature.notifications.data.createNotificationRepository(get<ApiClients>().client),
-            com.coffeepeek.admin.di.notifications.SessionNotificationAccount(get()), com.coffeepeek.admin.notifications.NativePushBridge,
-        )
-    }
+    registerNotifications()
     single<BrewMethodCatalog> { BrewMethodCatalogAdapter(get()) }
     single { com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature(get<ApiClients>().client, com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount(get())) }
     single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.impl.AuthorBlockingFeature>().visibility }

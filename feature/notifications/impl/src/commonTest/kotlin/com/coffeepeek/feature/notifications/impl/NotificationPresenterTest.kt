@@ -14,7 +14,7 @@ class NotificationPresenterTest {
         val repository = Repository()
         val release = CompletableDeferred<Unit>()
         repository.target = { release.await(); NotificationTarget("Shop", "alice-cafe") }
-        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"
         runCurrent()
         val result = async { feature.destination("notice") }
@@ -30,7 +30,7 @@ class NotificationPresenterTest {
         val repository = Repository()
         val read = mutableListOf<String>()
         repository.markReadHandler = { read += it }
-        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"
         runCurrent()
         feature.markRead("older-push")
@@ -52,7 +52,7 @@ class NotificationPresenterTest {
             if (id == "first") releaseFirst.await()
             read += id
         }
-        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         feature.markRead("first"); runCurrent()
         feature.markRead("second"); feature.markRead("third")
@@ -70,7 +70,7 @@ class NotificationPresenterTest {
             if (id == "first") releaseFirst.await()
             read += id
         }
-        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         feature.markRead("first"); runCurrent()
         feature.markRead("second")
@@ -84,7 +84,7 @@ class NotificationPresenterTest {
         val account = Account()
         val repository = Repository()
         repository.target = { throw CancellationException("cancelled") }
-        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"
         runCurrent()
         assertFailsWith<CancellationException> { feature.destination("notice") }
@@ -92,7 +92,7 @@ class NotificationPresenterTest {
 
     @Test fun onlyCurrentAccountTokenIsRegisteredAndLogoutClearsInbox() = runTest {
         val account = Account(); val platform = Platform(); val repository = Repository()
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         platform.mutable.update { it.copy(userId = "bob", token = "old-token") }; runCurrent()
         assertTrue(repository.registrations.isEmpty())
@@ -110,7 +110,7 @@ class NotificationPresenterTest {
 
     @Test fun aRefreshQueuedDuringAFailedMarkReadIsServedAndTheFailureStaysVisible() = runTest {
         val account = Account(); val platform = Platform(); val repository = Repository()
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         val release = CompletableDeferred<Unit>()
         repository.markReadHandler = { release.await(); error("offline") }
@@ -127,7 +127,7 @@ class NotificationPresenterTest {
 
     @Test fun aFailedMarkAllReadWithoutAQueuedRefreshDoesNotReloadTheInbox() = runTest {
         val account = Account(); val platform = Platform(); val repository = Repository()
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         repository.markAllReadHandler = { error("offline") }
         val before = repository.inboxCalls
@@ -138,7 +138,7 @@ class NotificationPresenterTest {
 
     @Test fun aRefreshQueuedForAnOldAccountIsNotServedAfterTheAccountChanged() = runTest {
         val account = Account(); val platform = Platform(); val repository = Repository()
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         val release = CompletableDeferred<Unit>()
         repository.markReadHandler = { release.await(); error("offline") }
@@ -153,7 +153,7 @@ class NotificationPresenterTest {
 
     @Test fun loginAndForegroundPreserveDisabledPushWithoutRequestingPermission() = runTest {
         val account = Account(); val repository = Repository().apply { enabled = false }; val platform = Platform()
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         feature.foreground(); runCurrent()
         assertFalse(feature.state.value.pushEnabled)
@@ -171,7 +171,7 @@ class NotificationPresenterTest {
         val repository = Repository().apply { enabled = false }
         val platform = Platform()
         platform.mutable.update { it.copy(permissionGranted = false) }
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"
         runCurrent()
         val unreadBefore = feature.state.value.unreadCount
@@ -189,7 +189,7 @@ class NotificationPresenterTest {
     @Test fun explicitToggleRequestsPermissionAndDenialDoesNotPretendPermissionWasGranted() = runTest {
         val account = Account(); val platform = Platform(); val repository = Repository()
         platform.mutable.update { it.copy(permissionGranted = false) }
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         feature.setPushEnabled(true); feature.setPushEnabled(true); runCurrent()
         assertEquals(listOf(true), repository.settingsWrites)
@@ -206,7 +206,7 @@ class NotificationPresenterTest {
 
     @Test fun settingsFailureCanBeRetriedAndFailedSaveKeepsPreviousValue() = runTest {
         val account = Account(); val repository = Repository().apply { failSettings = true }; val platform = Platform()
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         assertFalse(feature.state.value.settingsLoaded)
         assertEquals(NotificationSettingsError.LoadFailed, feature.state.value.settingsError)
@@ -226,7 +226,7 @@ class NotificationPresenterTest {
             if (before == null) NotificationPage(listOf(entry("first")), "first", 2)
             else NotificationPage(listOf(entry("first"), entry("second", "FutureType")), null, 2)
         }
-        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         feature.loadMore(); runCurrent()
         assertEquals(listOf("first", "second"), feature.state.value.items.map { it.id })
@@ -237,7 +237,7 @@ class NotificationPresenterTest {
     @Test fun accountSwitchDiscardsLateInboxResponseIncludingReturnToSameAccount() = runTest {
         val account = Account(); val repository = Repository(); val late = CompletableDeferred<NotificationPage>()
         repository.page = { withContext(NonCancellable) { late.await() } }
-        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         account.user.value = "bob"; runCurrent()
         account.user.value = "alice"; runCurrent()
@@ -251,7 +251,7 @@ class NotificationPresenterTest {
 
     @Test fun markAllUsesTheDisplayedSnapshotWithoutCollapsingLoadedPages() = runTest {
         val account = Account(); val repository = Repository()
-        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         val callsBefore = repository.inboxCalls
         feature.markAllRead(); runCurrent()
@@ -265,7 +265,7 @@ class NotificationPresenterTest {
 
     @Test fun permissionRevocationRemovesDeviceAndActivityIsThrottled() = runTest {
         val account = Account(); val platform = Platform(); val repository = Repository()
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         feature.foreground(); feature.foreground(); runCurrent()
         assertEquals(1, repository.activities)
@@ -282,7 +282,7 @@ class NotificationPresenterTest {
         val platform = Platform()
         val repository = Repository()
         platform.mutable.update { it.copy(permissionGranted = false) }
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"
         runCurrent()
         feature.onInboxOpened()
@@ -299,7 +299,7 @@ class NotificationPresenterTest {
     @Test fun aGuestCannotOfferInboxPermission() = runTest {
         val platform = Platform()
         platform.mutable.update { it.copy(permissionGranted = false) }
-        val feature = NotificationPresenter(Repository(), Account(), platform, backgroundScope)
+        val feature = NotificationPresenter(Repository(), Account(), platform, backgroundScope, NotificationCity { emptyFlow() })
         runCurrent()
         feature.onInboxOpened()
         assertEquals(0, platform.permissionRequests)
@@ -308,7 +308,7 @@ class NotificationPresenterTest {
     @Test fun anAlreadyAuthorizedUserIsNotPromptedWhenOpeningTheInbox() = runTest {
         val account = Account()
         val platform = Platform()
-        val feature = NotificationPresenter(Repository(), account, platform, backgroundScope)
+        val feature = NotificationPresenter(Repository(), account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"
         runCurrent()
         feature.onInboxOpened()
@@ -320,7 +320,7 @@ class NotificationPresenterTest {
         val repository = Repository().apply { failSettings = true }
         val platform = Platform()
         platform.mutable.update { it.copy(permissionGranted = false) }
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"
         runCurrent()
         feature.onInboxOpened()
@@ -337,7 +337,7 @@ class NotificationPresenterTest {
         val account = Account()
         val platform = Platform()
         platform.mutable.update { it.copy(available = false, permissionGranted = false) }
-        val feature = NotificationPresenter(Repository(), account, platform, backgroundScope)
+        val feature = NotificationPresenter(Repository(), account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"
         runCurrent()
         feature.onInboxOpened()
@@ -348,7 +348,7 @@ class NotificationPresenterTest {
         val account = Account()
         val platform = Platform()
         platform.mutable.update { it.copy(permissionGranted = false) }
-        val feature = NotificationPresenter(Repository(), account, platform, backgroundScope)
+        val feature = NotificationPresenter(Repository(), account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"
         runCurrent()
         account.user.value = "bob"
@@ -358,7 +358,7 @@ class NotificationPresenterTest {
 
     @Test fun foregroundPushUpdatesInboxWithoutClosingThePanel() = runTest {
         val account = Account(); val platform = Platform(); val repository = Repository()
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         repository.page = { NotificationPage(listOf(entry("arrived")), null, 1) }
         platform.mutable.update { it.copy(notificationRevision = it.notificationRevision + 1) }; runCurrent()
@@ -367,7 +367,7 @@ class NotificationPresenterTest {
 
     @Test fun pushArrivingDuringAnInboxLoadQueuesAnotherRefresh() = runTest {
         val account = Account(); val platform = Platform(); val repository = Repository()
-        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope, NotificationCity { emptyFlow() })
         account.user.value = "alice"; runCurrent()
         val loading = CompletableDeferred<NotificationPage>()
         repository.page = { loading.await() }
@@ -413,6 +413,7 @@ private class Repository : NotificationRepository {
     override suspend fun inbox(before: String?): NotificationPage { inboxCalls++; return page(before) }
     override suspend fun pushEnabled(): Boolean { if (failSettings) error("offline"); return enabled }
     override suspend fun setPushEnabled(enabled: Boolean) { if (failSave) error("offline"); settingsWrites += enabled; this.enabled = enabled }
+    override suspend fun setCity(citySlug: String?) = Unit
     var inboxCalls = 0
     var markReadHandler: suspend (String) -> Unit = {}
     var markAllReadHandler: suspend (String) -> Unit = {}
