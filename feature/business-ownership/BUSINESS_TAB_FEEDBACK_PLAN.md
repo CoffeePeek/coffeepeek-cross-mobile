@@ -89,3 +89,19 @@ authored here and await root-run verification; source inspection is not executio
 evidence. The account contract exposes identity strings, not opaque session
 lifetimes; this change does not claim unobserved/conflated same-identity ABA
 protection without an account contract that exposes the session lifetime.
+
+Root verification, 2026-11-27 (Windows/JDK 17), source f655badb5:
+Ownership impl executed 34 JVM cases/6 suites and Direct Debug application unit
+contracts executed 753 cases/169 suites: 787 total, zero failures/errors/skips,
+including all six new contracts. Direct Sandbox assembly, packaged runtime
+classes and isolation passed (com.coffeepeek.sandbox, 1.2.2.3415-sandbox / 3415).
+Function limits passed before and after baseline regeneration: 125 recorded,
+zero new; regeneration produced no baseline diff. Native bootstrap guard remains
+byte-identical to develop. Independent read-only ASVS V3/V4/V11 review of this
+exact head found no new actionable blocker; this is not a full security audit.
+
+Ownership lint has no errors and one existing ComposableNaming warning at
+PlatformOwnershipContent.android.kt:9 (unchanged platform wrapper). Existing
+Preview/expect-actual/experimental-coroutine warnings remain outside this fix.
+No device, rendered preview, real account, UI/instrumentation or native execution
+ran locally. macOS/native compilation and contract execution are remote gates.
