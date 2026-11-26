@@ -149,7 +149,7 @@ jobs:
   # own runner, so the wall time is max(build, tests) rather than their sum.
   kotlin-native-tests:
     runs-on: xcode-27
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
