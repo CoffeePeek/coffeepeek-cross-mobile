@@ -606,3 +606,43 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   Read-only 3236 diagnostics contained 6,720 app-scoped records, no checked fatal /
   UIKit containment / constraint / state-publishing marker and two settled root
   samples with visible tabs. These samples do not certify animation acceptance.
+
+### Verification of the final 3237 implementation (2026-11-26)
+
+- Verified code revision: 7e7398ddfd655915d4d691e4e6650239d71fbe9c.
+  The following documentation-only checkpoint records this evidence without
+  changing implementation. Its parent native tip remained
+  5c0a92e986c7c7b8fe7fe81d2dba709e77edf1bb.
+- The fresh Kotlin framework (bridge revision 3d2193de4) and full 121-source
+  Swift 6 complete-strict ARM64 compile/link passed. Unsigned executable SHA-256:
+  8b16eedd9ebfbed81a695c7b39d24fc2e7c4e1781a0012b4da0fe151643150ef.
+  Packaging/signature checks passed for Debug 1.2.2 (3237).
+- Android directDebug assembly and packaged DEX checks passed. Shelf unit tests
+  executed 89 cases / 11 suites without failures or skips; collections retained
+  89 successful up-to-date cases / 6 suites, not new executions. Function limits
+  remained 125 recorded violations with zero new violations.
+- macOS run 45731484054 passed both jobs: all selected Kotlin Native unit /
+  contract stages and the iOS Simulator Kotlin/Swift build. The actual Apple
+  CoreGraphics geometry executable and both native controller bootstrap checks
+  passed. No UI, screenshot or instrumented test suite was added or run.
+- Read-only source review checked archive row membership, account generation /
+  parent access guards, protected cover cancellation, modal clearing and
+  dismissal-before-navigation. No additional actionable issue was found in this
+  slice. Backend access-control enforcement and live account replacement were
+  not exercised by that source review.
+- The signed update was installed in place over 3236 on the same iPhone15,4 /
+  iOS 27.2.1. InstallationProxy confirmed 3237 and the existing main app version
+  stayed unchanged. The app remained alive through the three-second startup
+  check; a light Search screenshot showed its map, preview margin and bottom
+  tabs. The app-only stream retained 539 records without the checked fatal,
+  containment, constraint or state-publishing markers.
+- The developer transport disconnected before the first catalog tap could be
+  checked. A direct reconnect and a sixty-second USB discovery retry failed;
+  the connection request remains pending. No completed current-build review of
+  glass shelf rows, archive gestures, refresh motion, both themes, accessibility
+  sizes or keyboard interactions is claimed. This preserves the original
+  transport failure and outstanding device gates.
+- No account writes, consent changes, real camera use, logout, data clearing,
+  uninstall or downgrade were used for this verification. Local diagnostics
+  remain outside tracked sources. TestFlight upload and Apple processing are
+  the next delivery steps; no upload is claimed in this checkpoint.
