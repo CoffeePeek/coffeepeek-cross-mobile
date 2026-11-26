@@ -189,7 +189,6 @@ private struct CollectionsLibraryCover: View {
     let item: IosCollectionsLibraryItem
     let accountVersion: Int32
     @State private var image: UIImage?
-    @State private var photoURL: URL?
     @State private var observation: IosCollectionsLibraryObservation?
 
     var body: some View {
@@ -197,10 +196,6 @@ private struct CollectionsLibraryCover: View {
             CoffeePeekPhotoPlaceholder()
             if let image {
                 Image(uiImage: image).resizable().scaledToFill()
-            } else if let photoURL {
-                AsyncImage(url: photoURL) { result in
-                    if let image = result.image { image.resizable().scaledToFill() }
-                }
             }
         }
         .accessibilityHidden(true)
@@ -208,16 +203,19 @@ private struct CollectionsLibraryCover: View {
         .onDisappear {
             observation?.cancel()
             observation = nil
-            image = nil
-            photoURL = nil
         }
     }
 
     private func load() {
         guard observation == nil else { return }
-        observation = library.loadCover(id: item.id, accountVersion: accountVersion) { data, url in
-            image = data.flatMap { UIImage(data: $0 as Data) }
-            photoURL = url.flatMap(URL.init(string:))
+        let state = library.current()
+        guard state.accountVersion == accountVersion,
+              state.items.contains(where: { $0.id == item.id && $0.imageKey == item.imageKey }) else {
+            image = nil
+            return
+        }
+        observation = library.loadCover(id: item.id, accountVersion: accountVersion) { data, _ in
+            image = data.flatMap { coffeePeekNativeThumbnail($0 as Data) }
         }
     }
 }

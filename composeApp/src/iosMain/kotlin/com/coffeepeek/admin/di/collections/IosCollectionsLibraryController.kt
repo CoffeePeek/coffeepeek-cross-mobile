@@ -34,7 +34,7 @@ internal fun iosCollectionsLibraryContent(factory: (IosCollectionsLibrary, Strin
     return {
         val library = IosCollectionsLibrary(createCollectionsLibrarySession(saved, snapshots, account),
             Navigator::popBack, { Navigator.navigate(Navigator.Screen.Auth) },
-            { Navigator.navigate(Navigator.Screen.CollectionEditor(it)) })
+            { Navigator.navigate(Navigator.Screen.CollectionEditor(it)) }, snapshots)
         factory(library, language())
     }
 }

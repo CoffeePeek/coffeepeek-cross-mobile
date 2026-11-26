@@ -7,10 +7,13 @@ import com.coffeepeek.feature.collections.api.CollectionsLibraryObservation
 import com.coffeepeek.feature.collections.api.CollectionsLibraryEvent
 import com.coffeepeek.feature.collections.api.CollectionsLibraryItem
 import com.coffeepeek.feature.collections.api.CollectionsLibrarySnapshot
-import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.usePinned
+import com.coffeepeek.feature.collections.domain.repository.CollectionsRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import platform.Foundation.NSData
-import platform.Foundation.create
 
 /** Swift sees presentation values only; account access and media authorization stay in Kotlin. */
 class IosCollectionsLibrary internal constructor(
@@ -18,7 +21,10 @@ class IosCollectionsLibrary internal constructor(
     private val onBack: () -> Unit,
     private val onSignIn: () -> Unit,
     private val onEditor: (String?) -> Unit,
+    photos: CollectionsRepository,
 ) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val images = IosCollectionCoverImages(photos, scope)
     fun current(): IosCollectionsLibraryState = session.current().iosState()
 
     fun observe(onState: (IosCollectionsLibraryState) -> Unit): IosCollectionsLibraryObservation =
@@ -35,16 +41,20 @@ class IosCollectionsLibrary internal constructor(
     fun openEditor(id: String?) = session.openEditor(id)
     fun signIn() = session.signIn()
     fun back() = session.back()
-    fun close() = session.close()
+    fun close() { scope.cancel(); session.close() }
 
     fun loadCover(id: String, accountVersion: Int,
-        onCover: (NSData?, String?) -> Unit): IosCollectionsLibraryObservation =
-        IosCollectionsLibraryObservation(session.loadCover(id, accountVersion) { bytes, url ->
-            val data = bytes?.takeIf { it.isNotEmpty() }?.usePinned {
-                NSData.create(bytes = it.addressOf(0), length = bytes.size.toULong())
-            }
-            onCover(data, url)
-        })
+        onCover: (NSData?, String?) -> Unit): IosCollectionsLibraryObservation {
+        val key = coverKey(id, accountVersion)
+        var image: Job? = null
+        val request = session.loadCover(id, accountVersion) { bytes, url ->
+            image = images.deliver(bytes, url, key, { key != null && key == coverKey(id, accountVersion) }, onCover)
+        }
+        return IosCollectionsLibraryObservation(CollectionsLibraryObservation { request.cancel(); image?.cancel() })
+    }
+
+    private fun coverKey(id: String, version: Int): String? = current()
+        .takeIf { it.signedIn && it.accountVersion == version }?.items?.firstOrNull { it.id == id }?.imageKey
 }
 
 class IosCollectionsLibraryObservation internal constructor(private val observation: CollectionsLibraryObservation) {

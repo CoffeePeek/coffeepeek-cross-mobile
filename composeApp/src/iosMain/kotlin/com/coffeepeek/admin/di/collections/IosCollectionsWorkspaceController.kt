@@ -30,13 +30,13 @@ internal fun iosCollectionsWorkspaceContent(factory: (IosCollectionsWorkspace, S
     return { mode, id, slug ->
         val session = if (mode == "Snapshot") IosCollectionsWorkspace(null, PublicCollectionSession(
             checkNotNull(id), snapshots, account, Navigator::popBack, ::openSavedList,
-            ::openCollectionShop, ::openCollectionRoaster, ShareHelper::shareText))
+            ::openCollectionShop, ::openCollectionRoaster, ShareHelper::shareText), snapshots)
         else IosCollectionsWorkspace(CollectionsWorkspaceSession(saved, snapshots, account,
             CollectionsWorkspaceMode.valueOf(mode), id, slug, null, Navigator::popBack,
             { Navigator.navigate(Navigator.Screen.Auth) },
             { Navigator.navigate(Navigator.Screen.CollectionEditor(it)) },
             { Navigator.navigate(Navigator.Screen.SavedPublicCollection(it)) },
-            ::openCollectionShop, ::openCollectionRoaster, ShareHelper::shareText))
+            ::openCollectionShop, ::openCollectionRoaster, ShareHelper::shareText), photos = snapshots)
         factory(session, language())
     }
 }

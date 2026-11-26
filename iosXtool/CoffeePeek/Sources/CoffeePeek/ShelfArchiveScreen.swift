@@ -86,10 +86,12 @@ private struct ShelfArchiveScreen<Cover: View>: View {
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .safeAreaInset(edge: .top, spacing: 0) { if settings == nil { header } }
         .scrollDismissesKeyboard(.interactively)
-        .background(CoffeePeekNativeStyle.background)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
     }
 
@@ -257,17 +259,30 @@ private struct ShelfArchiveStrings {
 }
 
 @MainActor
-private func shelfArchivePreview() -> some View {
+private func shelfArchivePreview(settings: Bool = false, loading: Bool = false) -> some View {
     let row = IosShelfArchiveRow(id: "sample", title: "Santa Rosa", roaster: "Sample Roaster",
         days: nil, daysKey: nil, rating: nil, hasPhoto: false)
     let section = IosShelfArchiveSection(id: "sample-month", month: 10, earlierYear: nil, items: [row])
-    let state = IosShelfArchiveState(signedIn: true, query: "", loading: false, loadingMore: false,
-        loadFailed: false, loadMoreFailed: false, hasMore: false, sections: [section])
+    let state = IosShelfArchiveState(signedIn: true, query: "", loading: loading, loadingMore: false,
+        loadFailed: false, loadMoreFailed: false, hasMore: false, sections: loading ? [] : [section])
     return ShelfArchiveScreen(state: state, strings: ShelfArchiveStrings("ru"),
-        onQuery: { _ in }, onBack: {}, onRetry: {}, onMore: {}, onBag: { _ in }) { _ in
+        onQuery: { _ in }, onBack: {}, onRetry: {}, onMore: {}, onBag: { _ in },
+        settings: settings ? AnyView(Text(ShelfNativeStrings("ru")["shelf_settings"]).font(.headline).padding(.vertical, 16)) : nil) { _ in
         RoundedRectangle(cornerRadius: 8).fill(CoffeePeekNativeStyle.surface)
     }
 }
 
 #Preview("Archive light") { shelfArchivePreview().preferredColorScheme(.light) }
 #Preview("Archive dark") { shelfArchivePreview().preferredColorScheme(.dark) }
+#Preview("Settings archive loading light") {
+    shelfArchivePreview(settings: true, loading: true).frame(height: 420, alignment: .top).preferredColorScheme(.light)
+}
+#Preview("Settings archive loading dark") {
+    shelfArchivePreview(settings: true, loading: true).frame(height: 420, alignment: .top).preferredColorScheme(.dark)
+}
+#Preview("Settings archive content light") {
+    shelfArchivePreview(settings: true).frame(height: 420, alignment: .top).preferredColorScheme(.light)
+}
+#Preview("Settings archive content dark") {
+    shelfArchivePreview(settings: true).frame(height: 420, alignment: .top).preferredColorScheme(.dark)
+}

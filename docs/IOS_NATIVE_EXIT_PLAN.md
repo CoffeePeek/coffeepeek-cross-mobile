@@ -646,3 +646,58 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   uninstall or downgrade were used for this verification. Local diagnostics
   remain outside tracked sources. TestFlight upload and Apple processing are
   the next delivery steps; no upload is claimed in this checkpoint.
+
+### Device feedback follow-up after 3237 (2026-11-26)
+
+- The owner supplied new device evidence: shelf captions/counts and toolbar
+  settings were unwanted, the first settings presentation was incomplete and
+  oversized, collection covers refetched across navigation, and outgoing catalog
+  content overlapped the landing screen during mode changes.
+- TestFlight run 45778699553 for 1.2.2 (3239) was cancelled while archiving.
+  Upload to App Store Connect was skipped and temporary signing cleanup passed;
+  no Apple upload or processing success is claimed for that run.
+- A new child checkpoint, codex/migration-ios-native-ui-polish, starts from
+  native tip 2cb9757df0759db77d0e62581831e3b3ae9992b7. The four requests are
+  implemented in separate delegated tasks, with shared-file handoffs for shelf
+  layout and settings presentation.
+- Preserve Kotlin business/data ownership, account/revision-scoped cover access,
+  the archive handoff and dismissal guard, stable map ownership, lazy lists,
+  accessibility names and Reduce Motion. UI remains Swift 6 with complete strict
+  concurrency; no timer, GCD, unchecked Sendable or nonisolated workaround is
+  permitted for these fixes.
+- Verification plan: non-UI cache contracts for hits, revisions, account
+  lifetimes and stale completions; affected Kotlin tests and Android directDebug
+  assembly/DEX/function limits; fresh Kotlin framework and full Swift 6 ARM64
+  compile/link; macOS verification and read-only same-device review of first
+  sheet open/reopen, controls above the real tab safe area, cover returns and
+  scrolled/rapid catalog transitions. No UI automation or real account writes.
+  After verification, send a replacement TestFlight build and observe its exact
+  Apple processing result.
+- Implementation checkpoint c84a1904f keeps section controls above the actual
+  native tab safe area, removes visible shelf captions/counts and retains their
+  accessibility names. The existing collection-library action moves to the same
+  location without restoring the retired profile preference.
+- Settings use one identifiable payload carrying a nonoptional archive, a fresh
+  medium detent with large expansion, top alignment and the native background.
+  A cross-review caught and fixed a repeated request during dismissal; the
+  presentation lease now rejects it until onDismiss completes.
+- Kotlin retains copied collection image bytes in an 8 MiB / 24-entry LRU with
+  ten-minute expiry. Keys include account/login lifetime plus immutable cover ID
+  or a collection image revision and fallback URL. Unversioned generic photos
+  remain uncached; private cached reads retain the existing ownership gate.
+  The client-owned observation clears old scopes; late results are erased.
+  Swift keeps same-key thumbnails across temporary disappearance.
+- Catalog transitions now dispose outgoing content immediately, keep the stable
+  map/preview anchors and animate insertion within the existing 0.5-second mode
+  transaction. Extra header re-animation and animated scroll resets are removed.
+  Lazy rows and the single map-slot displacement remain intact.
+- Nine new non-UI contracts cover cache ownership/copies, revision and URL
+  misses, retry, bounds/expiry, same-user login replacement, late completions
+  and actual session-scope/token rotation. JVM execution is pending. macOS
+  verification now also runs collection-data native tests and the composition
+  media-scope contract.
+- The first Swift typecheck rejected two preview-only assignments to the
+  read-only accessibilityReduceMotion environment value. Those unsupported
+  overrides were removed; ordinary paired interactive previews remain. The
+  repeated full Swift 6 complete-strict typecheck passed. Actual system Reduce
+  Motion remains a manual device gate.

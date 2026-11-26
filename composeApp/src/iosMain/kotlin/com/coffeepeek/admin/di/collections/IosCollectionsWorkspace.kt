@@ -4,6 +4,7 @@ package com.coffeepeek.admin.di.collections
 
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.feature.collections.api.CollectionsLibraryObservation
+import com.coffeepeek.feature.collections.domain.repository.CollectionsRepository
 import com.coffeepeek.feature.collections.impl.*
 import kotlinx.cinterop.*
 import kotlinx.coroutines.*
@@ -14,8 +15,10 @@ import platform.Foundation.create
 class IosCollectionsWorkspace internal constructor(
     private val session: CollectionsWorkspaceSession?,
     private val snapshot: PublicCollectionSession? = null,
+    photos: CollectionsRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val images = IosCollectionCoverImages(photos, scope)
     fun current(): IosCollectionsWorkspaceState = (session?.current() ?: checkNotNull(snapshot).current()).iosState()
     fun poster(): IosCollectionsPoster? = (session?.poster() ?: snapshot?.poster())?.iosPoster()
 
@@ -63,9 +66,18 @@ class IosCollectionsWorkspace internal constructor(
     }
 
     fun loadCover(id: String, version: Int, receive: (NSData?, String?) -> Unit): IosCollectionsWorkspaceObservation {
-        val job = session?.loadCover(id, version) { bytes, url -> receive(bytes?.iosData(), url) }
+        val key = coverKey(id, version)
+        var image: Job? = null
+        val job = session?.loadCover(id, version) { bytes, url ->
+            image = images.deliver(bytes, url, key, { key != null && key == coverKey(id, version) }, receive)
+        }
             ?: CollectionsLibraryObservation { }
-        return IosCollectionsWorkspaceObservation(job)
+        return IosCollectionsWorkspaceObservation(CollectionsLibraryObservation { job.cancel(); image?.cancel() })
+    }
+
+    private fun coverKey(id: String, version: Int): String? {
+        val state = current().takeIf { it.accountVersion == version } ?: return null
+        return if (state.id == id || id == "draft") state.coverKey else state.lists.firstOrNull { it.id == id }?.imageKey
     }
 
     fun loadPhoto(url: String, receive: (NSData?) -> Unit): IosCollectionsWorkspaceObservation {

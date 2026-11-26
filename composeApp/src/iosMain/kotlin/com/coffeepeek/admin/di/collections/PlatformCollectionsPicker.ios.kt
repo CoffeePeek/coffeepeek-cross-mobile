@@ -27,7 +27,7 @@ internal actual fun PlatformCollectionsPicker(target: CollectionTarget, onDismis
     val workspace = remember(target, saved, snapshots, account) {
         val kind = if (target.kind == CollectionTargetKind.CoffeeShop) CollectionPlaceKind.CoffeeShop else CollectionPlaceKind.Roaster
         IosCollectionsWorkspace(CollectionsWorkspaceSession(saved, snapshots, account, CollectionsWorkspaceMode.Picker,
-            null, null, SavedCollectionTarget(kind, target.slug), { dismiss() }, { signIn() }, {}, {}, {}, {}, {}))
+            null, null, SavedCollectionTarget(kind, target.slug), { dismiss() }, { signIn() }, {}, {}, {}, {}, {}), photos = snapshots)
     }
     val language = LocalCoffeePeekLanguageTag.current
     val factory = LocalIosCollectionsWorkspaceController.current

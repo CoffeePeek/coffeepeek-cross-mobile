@@ -7,7 +7,12 @@ func makeShelfController(screen: IosShelfScreen) -> UIViewController {
     ShelfNativeHostingController(screen: screen)
 }
 
-private final class ShelfNativeHostingController: UIHostingController<ShelfNativeHost> {
+@MainActor
+protocol CoffeePeekNativeShelfSettingsPresenting: AnyObject {
+    func showShelfSettings()
+}
+
+private final class ShelfNativeHostingController: UIHostingController<ShelfNativeHost>, CoffeePeekNativeShelfSettingsPresenting {
     private let model: ShelfNativeModel
     init(screen: IosShelfScreen) {
         let model = ShelfNativeModel(screen)
@@ -15,6 +20,7 @@ private final class ShelfNativeHostingController: UIHostingController<ShelfNativ
         super.init(rootView: ShelfNativeHost(model: model))
     }
     @MainActor required dynamic init?(coder: NSCoder) { return nil }
+    func showShelfSettings() { model.requestSettings() }
     isolated deinit { model.screen.close() }
 }
 
@@ -23,6 +29,7 @@ final class ShelfNativeModel: ObservableObject {
     let screen: IosShelfScreen
     let strings: ShelfNativeStrings
     @Published var state: IosShelfState
+    @Published private(set) var settingsRequest: UUID?
     private var observation: IosShelfObservation?
     private var visible = false
     private var presentingSettings = false
@@ -47,6 +54,10 @@ final class ShelfNativeModel: ObservableObject {
     func settingsVisibility(_ showing: Bool) {
         presentingSettings = showing
         pauseWhenHidden()
+    }
+    func requestSettings() {
+        guard screen.kind == "shelf" && state.active && !presentingSettings else { return }
+        settingsRequest = UUID()
     }
     private func pauseWhenHidden() {
         // Full-screen brewing and shelf settings retain their account observation until dismissal.
