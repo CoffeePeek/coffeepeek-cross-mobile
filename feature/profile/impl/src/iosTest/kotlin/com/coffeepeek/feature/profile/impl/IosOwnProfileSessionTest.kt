@@ -3,7 +3,12 @@ package com.coffeepeek.feature.profile.impl
 import com.coffeepeek.feature.profile.api.OwnProfile
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
+import com.coffeepeek.feature.profile.domain.ProfileAddress
+import com.coffeepeek.feature.profile.domain.PublicProfile
+import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
+import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileState
+import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -28,17 +33,29 @@ class IosOwnProfileSessionTest {
     @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
     @AfterTest fun tearDown() { Dispatchers.resetMain() }
 
+    @Test fun onlyTheActiveOwnersDisplayNameReachesTheNativeSnapshot() {
+        val profile = OwnProfile("Anna Coffee", "private@example.invalid", null, null, 0, 0, 0, 0,
+            ProfileAddress("anna-coffee", "/users/anna-coffee", 1, false))
+        val own = OwnProfileState(isLoggedIn = true, profile = profile, isLoading = false)
+        val public = PublicProfileState(profile = PublicProfile("anna-coffee", "Previous nickname", null, null,
+            PublicProfileStats(0, 0, 0, 0), emptyList(), null))
+        assertEquals("Anna Coffee", OwnProfileSnapshot(own, public, active = true).displayName)
+        assertNull(OwnProfileSnapshot(own, public, active = false).displayName)
+        assertNull(OwnProfileSnapshot(own.copy(profile = null), public, active = true).displayName)
+    }
+
     @Test fun anOldNativeTabNeverReceivesTheReplacementSessionsProfile() = runTest(dispatcher) {
         val accounts = Accounts()
         val session = nativeSession(accounts)
         val names = mutableListOf<String?>()
-        val observation = session.observe { names += it.identity?.userName }
+        val observation = session.observe { names += it.displayName }
         try {
             runCurrent()
             assertEquals("First", names.last())
             accounts.replace()
             assertFalse(session.isCurrent())
             assertNull(session.current().identity)
+            assertNull(session.current().displayName)
             runCurrent()
             assertEquals(listOf("First", null), names.distinct())
             assertFalse(session.current().active)
@@ -59,6 +76,7 @@ class IosOwnProfileSessionTest {
         assertTrue(accounts.readCancelled)
         assertTrue(observation.isCancelled)
         assertNull(session.current().identity)
+        assertNull(session.current().displayName)
     }
 
     private fun nativeSession(accounts: Accounts, lifecycle: (String) -> Unit = {}): IosOwnProfileSession =
@@ -76,7 +94,7 @@ class IosOwnProfileSessionTest {
         assertTrue(session.isCurrent())
         assertFalse(accounts.readCancelled)
         val names = mutableListOf<String?>()
-        val resumed = session.observe { names += it.identity?.userName }
+        val resumed = session.observe { names += it.displayName }
         runCurrent()
         assertEquals(listOf<String?>("First"), names)
         resumed.cancel()
