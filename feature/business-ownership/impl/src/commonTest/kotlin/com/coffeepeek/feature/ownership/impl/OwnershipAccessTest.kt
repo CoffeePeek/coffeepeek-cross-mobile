@@ -118,4 +118,39 @@ class OwnershipAccessTest {
         assertFalse(access.state.value.businessMode)
         assertTrue(access.owns(BusinessKind.CoffeeShop, "business"))
     }
+    @Test fun aModeSwitchQueuedForThePreviousAccountCannotEnableTheReplacement() = runTest {
+        val repo = Repository()
+        val account = Account()
+        val access = OwnershipAccess(repo, account)
+        val gate = RefreshGate()
+        repo.beforeResponse = gate::await
+        val refreshing = launch { access.refresh() }
+        gate.started.await()
+        val switching = launch { access.switchMode() }
+        runCurrent()
+        account.value.value = "replacement"
+        gate.release.complete(Unit)
+        joinAll(refreshing, switching)
+        assertFalse(access.state.value.businessMode)
+        assertTrue(access.state.value.ownedIdentities.isEmpty())
+    }
+    @Test fun aQueuedModeSwitchCannotSurviveAnObservedAccountRoundTrip() = runTest {
+        val repo = Repository()
+        val account = Account()
+        val access = OwnershipAccess(repo, account)
+        val gate = RefreshGate()
+        repo.beforeResponse = gate::await
+        val refreshing = launch { access.refresh() }
+        gate.started.await()
+        val switching = launch { access.switchMode() }
+        runCurrent()
+        account.value.value = "replacement"
+        access.reset()
+        account.value.value = "user"
+        access.reset()
+        gate.release.complete(Unit)
+        joinAll(refreshing, switching)
+        assertFalse(access.state.value.businessMode)
+        assertTrue(access.state.value.ownedIdentities.isEmpty())
+    }
 }

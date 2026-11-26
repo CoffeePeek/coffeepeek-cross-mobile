@@ -76,7 +76,16 @@ bootstrap guard and develop's function baseline are preserved verbatim.
 Review scope is Kotlin Compose/KMP and the existing Swift/UIKit routing boundary,
 with account/ownership inputs mapped to ASVS V3/V4/V11. No authentication, server
 permission, TLS, persistence, analytics or public entry contract is changed.
-Read-only review found no new security finding in this slice. Four new non-UI
-contracts cover queued/duplicate/cancelled mode switches and visible native-root
-policy across mode/guest changes. They are authored here and await root-run
-verification; source inspection is not execution evidence.
+Review identified a queued-intent correctness regression in the original mutex
+patch: after account A's refresh notices replacement B, A's queued switch could
+refresh B and enable B's mode. The switch now captures its requesting account
+and intended target before waiting and rejects account replacement inside the
+lock. A local reset epoch also rejects observed account round trips and discards
+read replies after reset; mode publication checks the account/epoch again after
+the read. Server permission checks are unaffected; this does not grant ownership.
+Six new non-UI contracts cover queued/duplicate/cancelled/replaced-account mode
+switches and visible native-root policy across mode/guest changes. They are
+authored here and await root-run verification; source inspection is not execution
+evidence. The account contract exposes identity strings, not opaque session
+lifetimes; this change does not claim unobserved/conflated same-identity ABA
+protection without an account contract that exposes the session lifetime.
