@@ -244,11 +244,12 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate {
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         guard current(run) else { return }
         let events = run.continuation
+        // Kotlin invokes these blocks from worker threads; only the stream consumer is main-actor isolated.
         NativePushBridge.shared.configure(installationId: installation, available: true,
             permissionGranted: permitted(settings.authorizationStatus),
-            requestPermission: { events.yield(.permission) },
-            changeAccount: { events.yield(.account($0)) },
-            requestPermissionFromSettings: { events.yield(.settingsPermission) })
+            requestPermission: { @Sendable in events.yield(.permission) },
+            changeAccount: { @Sendable user in events.yield(.account(user)) },
+            requestPermissionFromSettings: { @Sendable in events.yield(.settingsPermission) })
     }
 
     private func requestPermission(fromSettings: Bool, run: PushPlatformRun) async {

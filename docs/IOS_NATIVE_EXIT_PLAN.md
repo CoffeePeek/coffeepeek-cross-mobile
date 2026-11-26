@@ -798,3 +798,34 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
 - Before a future archive, confirm App Store Connect's approved version/train
   accepts the chosen marketing version, so a closed train is caught before the
   long signing/archive step.
+
+### Login-triggered push callback crash (2026-11-26)
+
+- Owner-supplied TestFlight feedback for 1.2.3 (3247), iPhone14,5 / iOS 27.2.1,
+  identifies `EXC_BREAKPOINT` in `_dispatch_assert_queue_fail` on a worker thread.
+  The first application frame is closure #2 in `PushAppDelegate.configure(_:run:)`,
+  called by `NativePushBridge.setAccount` from the notification account collector
+  on `Dispatchers.Default`. Raw feedback, email and crash data stay outside Git.
+- Swift inferred main-actor isolation for three escaping KMP blocks created in
+  the main-actor delegate. Explicit `@Sendable` blocks now only enqueue immutable
+  events through `AsyncStream.Continuation`; the existing main-actor stream
+  consumer still owns Firebase, permission UI and account/token updates. Both
+  Xcode and xtool application boundaries have the same change.
+- Verification plan: execute the production callback body with worker-thread
+  account/permission/settings events and actor race checks; retain run-lifetime
+  and native-controller registration contracts; compile the app with Xcode and
+  the Android Sandbox integration variant. No UI automation, phone interaction,
+  account mutation or notification-permission change is authorized by this check.
+- Swift 6.4.2 contract with actor checks reproduced the pre-fix process trap.
+  After the fix, the callback contract passed all five ordered events, including
+  initial/signed-out account values; two lifetime and two registration contracts
+  passed. An intervening restricted compiler launch failed with Windows access
+  error `0xc0000022`; the same tests passed with normal compiler access. This is
+  distinct from the reproduced callback trap, not a hidden passing retry.
+- Security review scope is the Swift/KMP callback boundary (Swift/Kotlin,
+  session user ID and platform permission events). Auth credentials, transport,
+  storage and server authorization are outside this patch. Existing account and
+  run-generation guards, token revocation and permission decisions are unchanged;
+  no new sensitive logging, network call or bypass is introduced.
+- Xcode build, Android Sandbox assembly and replacement TestFlight delivery are
+  pending. No new real-device or real-login acceptance is claimed.
