@@ -9,7 +9,9 @@ import io.ktor.http.*
 import io.ktor.http.content.OutgoingContent
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.*
 import kotlin.test.*
@@ -137,7 +139,7 @@ class CollectionsRepositoryTest {
 
     @Test fun derivedCoversReuseOnlyTheMatchingCollectionRevisionAndPhotoUrl() = runTest {
         var requests = 0
-        val client = client {
+        val client = client(StandardTestDispatcher(testScheduler)) {
             requests++
             respond(byteArrayOf(requests.toByte()), headers = headersOf(HttpHeaders.ContentType, "image/jpeg"))
         }
@@ -153,8 +155,16 @@ class CollectionsRepositoryTest {
         } finally { client.close() }
     }
 
-    private fun client(handler: suspend MockRequestHandleScope.(io.ktor.client.request.HttpRequestData) -> io.ktor.client.request.HttpResponseData) =
-        HttpClient(MockEngine { request -> handler(request) }) { install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) } }
+    private fun client(
+        requestDispatcher: CoroutineDispatcher? = null,
+        handler: suspend MockRequestHandleScope.(io.ktor.client.request.HttpRequestData) -> io.ktor.client.request.HttpResponseData,
+    ) = HttpClient(MockEngine) {
+        engine {
+            requestDispatcher?.let { this.dispatcher = it }
+            addHandler { request -> handler(request) }
+        }
+        install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+    }
 
     private fun MockRequestHandleScope.respond(body: String, status: HttpStatusCode = HttpStatusCode.OK) =
         respond(body, status, headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()))
