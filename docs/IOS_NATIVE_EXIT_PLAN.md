@@ -747,3 +747,28 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   codex/ios-native and releasing TestFlight. The next documentation-only commit
   records the verified implementation without changing its production tree.
   TestFlight upload/Apple processing remain the following delivery gates.
+
+### TestFlight version-train recovery (2026-11-26)
+
+- Implementation PR 433 reached native as a5fa7f84da32902fcc52d859cb4219649bf9e62b.
+  Verification-only PR 434 reached native as
+  0ac43dfbe5b947aed9f633093ba33f0fdc3049df; its complete tree matches the
+  documented checkpoint, and its production code matches verified 7c1f39d612.
+- Release run 45794959491 built and signature/configuration-verified the
+  Release archive for 1.2.2 (3245), but App Store Connect rejected upload:
+  the 1.2.2 pre-release train is closed because 1.2.2 is already approved.
+  Apple processing was skipped and temporary signing cleanup succeeded.
+  No successful TestFlight delivery is claimed for 3245.
+- Raise only iOS MARKETING_VERSION to 1.2.3 for the replacement release.
+  The integer build number remains derived from commit history. Android's
+  independent version-name format and shared build-number offset are unchanged.
+  No Kotlin, Swift, resources, dependencies or business behaviour change.
+- Verification for this metadata-only correction: release versioning/processing
+  contracts and existing iOS tool/configuration tests, followed by a fresh
+  signed release archive, upload and exact Apple processing result. The
+  successful 1130-case Native run and 152-case JVM checks remain evidence for
+  the unchanged application code. No further phone actions are needed.
+- Metadata recovery checks passed: four versioning contracts, six Apple
+  processing contracts and 43 iOS tooling/configuration tests. The first tooling
+  invocation had seven denied Swift/Bash process-start failures; repeating with
+  access to the installed runtimes passed all 43 without source changes.
