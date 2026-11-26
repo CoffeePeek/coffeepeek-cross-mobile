@@ -449,7 +449,7 @@ struct CoffeePeekPhotoPlaceholder: View {
 }
 
 #Preview("Own profile header light") {
-    OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: "Кофе и прогулки", avatar: nil,
+    OwnProfileHeader(identity: IosOwnProfileIdentity(name: "Anna Coffee", about: "Кофе и прогулки", avatar: nil,
         checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true, following: KotlinInt(int: 4)),
         strings: OwnProfileStrings(languageTag: "ru"), profile: nil, select: { _ in })
     .padding()
@@ -459,7 +459,7 @@ struct CoffeePeekPhotoPlaceholder: View {
 }
 
 #Preview("Own profile header dark") {
-    OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: "Кава і прагулкі", avatar: nil,
+    OwnProfileHeader(identity: IosOwnProfileIdentity(name: "Anna Coffee", about: "Кава і прагулкі", avatar: nil,
         checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true, following: KotlinInt(int: 4)),
         strings: OwnProfileStrings(languageTag: "be"), profile: nil, select: { _ in })
     .padding()

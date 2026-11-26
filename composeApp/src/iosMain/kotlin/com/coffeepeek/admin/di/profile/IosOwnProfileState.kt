@@ -73,8 +73,7 @@ internal fun OwnProfileSnapshot.iosState(): IosOwnProfileState {
 private fun OwnProfileSnapshot.iosIdentity(): IosOwnProfileIdentity? {
     val own = identity ?: return null
     val public = publicProfile
-    val name = own.address?.slug?.takeIf(String::isNotBlank)?.let { "@$it" } ?: public?.nickname ?: own.userName
-    return IosOwnProfileIdentity(name, public?.about ?: own.about,
+    return IosOwnProfileIdentity(displayName.orEmpty(), public?.about ?: own.about,
         public?.avatarUrl ?: own.avatarUrl, public?.stats?.checkIns ?: own.checkInCount,
         public?.stats?.coffeeShops ?: own.addedShopsCount, public?.stats?.roasters ?: own.addedRoastersCount,
         public?.stats?.followers ?: own.followersCount, public != null, followingCount)
