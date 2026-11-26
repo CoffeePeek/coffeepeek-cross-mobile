@@ -1,86 +1,135 @@
 package com.coffeepeek.feature.profile.impl
 
-import com.coffeepeek.feature.profile.api.ProfileAuthorVisibilityState
-import com.coffeepeek.feature.profile.domain.PublicProfile
-import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
-import com.coffeepeek.feature.profile.domain.PublicProfileConnection
-import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
-import com.coffeepeek.feature.profile.domain.PublicProfileStats
-import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
-import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import com.coffeepeek.feature.profile.api.*
+import com.coffeepeek.feature.profile.domain.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.*
+import kotlinx.coroutines.withContext
+import kotlin.test.*
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class IosPublicProfileSessionTest {
-    private val author = PublicProfile("author", "Anna", "Profile", "avatar", PublicProfileStats(1, 2, 3, 4),
-        emptyList(), null, authorId = "profile-id")
-    private val row = PublicProfileCheckIn("one", "coffee", "Coffee", "", null, null, "Note",
-        "2026-11-17T11:00:00Z", listOf("photo"))
-    private val open = PublicProfileState(isLoading = false, profile = author, checkIns = listOf(row),
-        connectionKind = PublicProfileConnectionKind.Followers,
-        connections = listOf(PublicProfileConnection("Follower", "avatar", "follower", null)))
+    private val dispatcher = StandardTestDispatcher()
 
-    @Test
-    fun hidesPreviouslyLoadedDataUntilVisibilityIsReadyAndAfterAccountReplacement() {
-        val loadingBlocks = snapshot(open, ProfileAuthorVisibilityState(ready = false))
-        val replacingAccount = snapshot(open, ProfileAuthorVisibilityState(), active = false)
-        for (state in listOf(loadingBlocks, replacingAccount)) {
-            assertNull(state.profile)
-            assertTrue(state.checkIns.isEmpty())
-            assertTrue(state.week.isEmpty())
-            assertNull(state.connectionKind)
-            assertTrue(state.connections.isEmpty())
-        }
-        assertTrue(loadingBlocks.loading)
-        assertFalse(replacingAccount.active)
+    @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
+    @AfterTest fun tearDown() { Dispatchers.resetMain() }
+
+    @Test fun aNativeLikeShowsTheServerConfirmedReaction() = runTest(dispatcher) {
+        val fixture = PublicProfileFixture()
+        try {
+            runCurrent()
+            fixture.data.like = { _, helpful ->
+                assertTrue(helpful)
+                Result.success(ProfileCheckInLike(true, 9))
+            }
+            fixture.session.toggleCheckInLike("post")
+            runCurrent()
+            assertEquals(9, fixture.session.current().checkIns.single().checkIn.helpfulCount)
+            assertTrue(fixture.session.current().checkIns.single().checkIn.isHelpfulByCurrentUser)
+            assertTrue(fixture.session.current().pendingLikeIds.isEmpty())
+            assertTrue(fixture.session.current().likeErrorIds.isEmpty())
+        } finally { fixture.session.close() }
     }
 
-    @Test
-    fun failedVisibilityLoadDisplaysRetryWithoutExposingContent() {
-        val visibility = ProfileAuthorVisibilityState(ready = false)
-        val failure = snapshot(open.copy(error = PublicProfileError.BlocksLoad), visibility)
-        assertFalse(failure.loading)
-        assertEquals(PublicProfileError.BlocksLoad.name, failure.loadError)
-        assertEquals("profile_blocks_load_failed", failure.errorKey)
-        assertNull(failure.profile)
-        assertTrue(failure.checkIns.isEmpty())
-        assertTrue(failure.week.isEmpty())
-        assertTrue(failure.connections.isEmpty())
-
-        val retry = snapshot(open.copy(isLoading = true), visibility)
-        assertTrue(retry.loading)
-        assertNull(retry.loadError)
-        assertNull(retry.profile)
-        assertTrue(retry.checkIns.isEmpty())
+    @Test fun pendingNativeVotesRejectDuplicatesAndFailureKeepsTheCount() = runTest(dispatcher) {
+        val fixture = PublicProfileFixture()
+        val reply = CompletableDeferred<Result<ProfileCheckInLike>>()
+        try {
+            fixture.data.like = { _, _ -> reply.await() }
+            runCurrent()
+            fixture.session.toggleCheckInLike("post")
+            runCurrent()
+            assertEquals(setOf("post"), fixture.session.current().pendingLikeIds)
+            fixture.session.toggleCheckInLike("post")
+            runCurrent()
+            assertEquals(1, fixture.data.votes)
+            reply.complete(Result.failure(IllegalStateException("offline")))
+            runCurrent()
+            assertEquals(4, fixture.session.current().checkIns.single().checkIn.helpfulCount)
+            assertEquals(setOf("post"), fixture.session.current().likeErrorIds)
+            assertTrue(fixture.session.current().pendingLikeIds.isEmpty())
+        } finally { fixture.session.close() }
     }
 
-    @Test
-    fun hidesStaleRowsWhenBlockChangesAndKeepsOnlyTheUnblockContext() {
-        val newBlocks = ProfileAuthorVisibilityState(revision = 1, blockedIds = setOf("profile-id"))
-        assertNull(snapshot(open, newBlocks).profile)
-        val resolved = snapshot(open.copy(profile = author.copy(isBlockedByViewer = true)), newBlocks)
-        assertEquals("Anna", resolved.profile?.nickname)
-        assertEquals(true, resolved.profile?.isBlockedByViewer)
-        assertTrue(resolved.checkIns.isEmpty())
-        assertTrue(resolved.week.isEmpty())
-        assertTrue(resolved.connections.isEmpty())
-        assertFalse(resolved.followEnabled)
+    @Test fun aReplacementOfTheSameAccountRevokesPendingNativeVotes() = runTest(dispatcher) {
+        val fixture = PublicProfileFixture()
+        val reply = CompletableDeferred<Result<ProfileCheckInLike>>()
+        try {
+            fixture.data.like = { _, _ -> withContext(NonCancellable) { reply.await() } }
+            runCurrent()
+            fixture.session.toggleCheckInLike("post")
+            runCurrent()
+            fixture.accounts.replaceSession()
+            assertFalse(fixture.session.isCurrent())
+            assertTrue(fixture.session.current().checkIns.isEmpty())
+            reply.complete(Result.success(ProfileCheckInLike(true, 99)))
+            runCurrent()
+            fixture.session.toggleCheckInLike("post")
+            runCurrent()
+            assertEquals(1, fixture.data.votes)
+            assertTrue(fixture.session.current().pendingLikeIds.isEmpty())
+            assertTrue(fixture.session.current().likeErrorIds.isEmpty())
+        } finally { reply.complete(Result.success(ProfileCheckInLike(true, 99))); fixture.session.close() }
     }
 
-    @Test
-    fun visibleProfileKeepsItsCheckInPhotoAndPublicWeekPreview() {
-        val visible = snapshot(open, ProfileAuthorVisibilityState())
-        assertEquals("one", visible.checkIns.single().checkIn.id)
-        assertTrue(visible.checkIns.single().canOpenPhoto(0))
-        assertEquals("photo", visible.week.single { it.today }.photo)
-        assertEquals(1, visible.week.single { it.today }.count)
-        assertEquals("follower", visible.connections.single().slug)
+    @Test fun returningToTheNativeProfileRefreshesExternalVotes() = runTest(dispatcher) {
+        val fixture = PublicProfileFixture()
+        try {
+            fixture.session.resume()
+            runCurrent()
+            fixture.data.count = 7
+            fixture.session.resume()
+            runCurrent()
+            assertEquals(7, fixture.session.current().checkIns.single().checkIn.helpfulCount)
+        } finally { fixture.session.close() }
     }
+}
 
-    private fun snapshot(
-        state: PublicProfileState, visibility: ProfileAuthorVisibilityState, active: Boolean = true,
-    ) = PublicProfileSnapshot(state, visibility, active, emptyMap(), "2026-11-17")
+private class PublicProfileFixture {
+    val accounts = PublicProfileAccounts()
+    val data = PublicProfileDataFixture()
+    val session = createIosPublicProfileSession("author", data, data, accounts, data,
+        ProfileAuthorVisibility.None, ProfileSnapshotStore.None)
+}
+
+private class PublicProfileAccounts : ProfileAccountPort {
+    private val account = MutableStateFlow<String?>("viewer")
+    private val scope = MutableStateFlow<String?>("first")
+    private val profile = MutableStateFlow<OwnProfile?>(OwnProfile("Viewer", "", null, null, 0, 0, 0, 0,
+        ProfileAddress("viewer", "/users/viewer", 1, false)))
+
+    fun replaceSession() { scope.value = "replacement" }
+    override fun activeAccount() = account.value
+    override fun cacheScope() = scope.value
+    override fun observeActiveAccount() = account
+    override fun observeCacheScope() = scope
+    override fun cachedOwnProfile() = profile.value
+    override fun observeOwnProfile() = profile
+    override suspend fun loadOwnProfile(forceRefresh: Boolean) = Result.success(requireNotNull(profile.value))
+}
+
+private class PublicProfileDataFixture : PublicProfileData, PublicCheckInsPort, ProfileCheckInLikes {
+    var count = 4
+    var votes = 0
+    var like: suspend (String, Boolean) -> Result<ProfileCheckInLike> = { _, _ -> error("Unexpected vote") }
+
+    override suspend fun getProfile(slug: String) = Result.success(PublicProfile("author", "Author", null, null,
+        PublicProfileStats(1, 0, 0, 0), emptyList(), null, authorId = "public-author"))
+    override suspend fun getFavorites(slug: String) = Result.success(emptyList<PublicProfileFavorite>())
+    override suspend fun getActivity(slug: String, year: Int, month: Int, timeZone: String) =
+        Result.success(PublicProfileActivity("$year-${month.toString().padStart(2, '0')}", emptySet()))
+    override suspend fun setFollowing(slug: String, isFollowing: Boolean) = Result.success(PublicProfileFollowState(isFollowing, 0))
+    override suspend fun getConnections(slug: String, kind: PublicProfileConnectionKind, page: Int, pageSize: Int) =
+        Result.success(PublicProfileConnectionsPage(emptyList(), 0, page, pageSize))
+    override suspend fun page(slug: String, cursor: String?) = Result.success(PublicProfileCheckInPage(listOf(
+        PublicProfileCheckIn("post", "shop", "Shop", "Coffee", null, null, "", "2026-11-26", emptyList(),
+            helpfulCount = count)), null))
+    override suspend fun setHelpful(id: String, helpful: Boolean): Result<ProfileCheckInLike> {
+        votes++
+        return like(id, helpful)
+    }
 }

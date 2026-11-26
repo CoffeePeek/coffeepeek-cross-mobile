@@ -8,6 +8,7 @@ import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.community.api.CommunityAccount
 import com.coffeepeek.feature.community.api.CommunityHost
 import com.coffeepeek.feature.community.api.CommunityPostEntry
+import com.coffeepeek.feature.community.api.CommunitySavedPosts
 import com.coffeepeek.feature.community.domain.repository.CommunityRepository
 import com.coffeepeek.feature.community.impl.post.PostViewModel
 import com.coffeepeek.feature.community.impl.ui.PostCallbacks
@@ -22,6 +23,7 @@ fun createCommunityPostEntry(
     host: CommunityHost,
     analytics: com.coffeepeek.feature.community.api.CommunityAnalytics,
     drinks: com.coffeepeek.feature.community.api.ConsumedDrinks,
+    saved: CommunitySavedPosts,
 ): CommunityPostEntry = object : CommunityPostEntry {
     @Composable
     override fun Content(
@@ -35,7 +37,7 @@ fun createCommunityPostEntry(
         modifier: Modifier,
     ) {
         PostScreen(
-            viewModel(key = "community-post:$postId") { PostViewModel(postId, repository, account, visibility, analytics, drinks) },
+            viewModel(key = "community-post:$postId") { PostViewModel(postId, repository, account, visibility, analytics, drinks, saved) },
             host, blockActions, PostCallbacks(onBack, onSignIn, onOpenAuthor, onOpenShop, onOpenCoffee, onEditHome), modifier,
         )
     }

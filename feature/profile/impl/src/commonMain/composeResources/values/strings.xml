@@ -35,7 +35,11 @@
 
     <string name="profile_check_ins_failed">Не удалось загрузить чекины</string>
     <string name="profile_check_ins_empty">Пока нет чекинов</string>
-    <string name="profile_check_in_likes">Лайки: %1$d</string>
+    <string name="profile_check_ins_open_history">Личная история чекинов</string>
+    <string name="profile_calendar_expanded">Календарь развёрнут</string>
+    <string name="profile_calendar_collapsed">Календарь свёрнут</string>
+    <string name="profile_check_in_shelf_bag">Пачка кофе</string>
+    <string name="profile_check_in_open_coffee">Открыть кофе</string>
     <string name="profile_check_in_rating">Кофе: %1$d, сервис: %2$d, атмосфера: %3$d. Средняя оценка: %4$s из 5</string>
     <string name="profile_check_in_photo">Фотография %1$d из %2$d</string>
     <string name="profile_check_in_actions">Действия с чекином</string>
@@ -61,7 +65,7 @@
     <string name="profile_activity_failed">Не удалось загрузить активность</string>
     <string name="profile_week_loading">Загрузка активности…</string>
     <string name="profile_week_error">Не удалось загрузить активность</string>
-    <string name="profile_week_open">Открыть чекины</string>
+    <string name="profile_week_open">Развернуть календарь</string>
     <string name="profile_week_day">%1$s: %2$s</string>
     <plurals name="profile_week_count">
         <item quantity="one">%1$d чекин</item>
@@ -188,4 +192,7 @@
     <string name="profile_connections_following_one">%1$d подписка</string>
     <string name="profile_connections_following_few">%1$d подписки</string>
     <string name="profile_connections_following_many">%1$d подписок</string>
+    <string name="profile_check_in_like">Поставить лайк. Лайков: %1$d</string>
+    <string name="profile_check_in_unlike">Убрать лайк. Лайков: %1$d</string>
+    <string name="profile_check_in_like_failed">Не удалось обновить лайк</string>
 </resources>

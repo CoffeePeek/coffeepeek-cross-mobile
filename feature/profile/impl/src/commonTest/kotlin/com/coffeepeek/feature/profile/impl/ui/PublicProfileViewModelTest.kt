@@ -4,6 +4,8 @@ import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.profile.api.OwnProfile
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.ProfileCheckInLike
+import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibility
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibilityState
 import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
@@ -25,17 +27,21 @@ import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.domain.PublicProfileUnavailable
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileEvent
+import com.coffeepeek.feature.profile.impl.ui.data.filteredCheckIns
 import com.coffeepeek.feature.profile.impl.createProfileSnapshotStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -65,7 +71,181 @@ class PublicProfileViewModelTest {
         accounts: FakeAccounts = FakeAccounts(),
         visibility: ProfileAuthorVisibility = ProfileAuthorVisibility.None,
         snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
-    ) = PublicProfileViewModel(slug, data, data, accounts, visibility, snapshots).also { store.put("profile-${nextKey++}", it) }
+    ) = PublicProfileViewModel(slug, data, data, accounts, data, visibility, snapshots).also { store.put("profile-${nextKey++}", it) }
+
+    @Test fun confirmedLikesUpdateTheCounterAndTheCachedRoute() = runTest(dispatcher) {
+        val snapshots = createProfileSnapshotStore()
+        val accounts = FakeAccounts("viewer")
+        val data = rows(checkIn("one").copy(helpfulCount = 4))
+        data.like = { id, helpful ->
+            assertEquals("one", id)
+            assertTrue(helpful)
+            Result.success(ProfileCheckInLike(true, 9))
+        }
+        val vm = model(data = data, accounts = accounts, snapshots = snapshots)
+        runCurrent()
+        assertEquals(4, vm.state.value.checkIns.single().helpfulCount)
+        toggleLike(vm)
+        assertEquals(9, vm.state.value.checkIns.single().helpfulCount)
+        assertTrue(vm.state.value.checkIns.single().isHelpfulByCurrentUser)
+        assertEquals(9, model(data = data, accounts = accounts, snapshots = snapshots).state.value.checkIns.single().helpfulCount)
+    }
+
+    @Test fun unlikingUsesTheCountConfirmedByTheServer() = runTest(dispatcher) {
+        val data = rows(checkIn("one").copy(helpfulCount = 4, isHelpfulByCurrentUser = true))
+        data.like = { _, helpful ->
+            assertFalse(helpful)
+            Result.success(ProfileCheckInLike(false, 2))
+        }
+        val vm = model(data = data, accounts = FakeAccounts("viewer"))
+        runCurrent()
+        toggleLike(vm)
+        assertEquals(2, vm.state.value.checkIns.single().helpfulCount)
+        assertFalse(vm.state.value.checkIns.single().isHelpfulByCurrentUser)
+        assertTrue(vm.state.value.pendingLikeIds.isEmpty())
+    }
+
+    @Test fun duplicateTapsSendOneVoteAndFailurePreservesThePreviousCount() = runTest(dispatcher) {
+        val reply = CompletableDeferred<Result<ProfileCheckInLike>>()
+        var calls = 0
+        val data = rows(checkIn("one").copy(helpfulCount = 4))
+        data.like = { _, _ ->
+            calls++
+            reply.await()
+        }
+        val vm = model(data = data, accounts = FakeAccounts("viewer"))
+        runCurrent()
+        toggleLike(vm)
+        assertEquals(setOf("one"), vm.state.value.pendingLikeIds)
+        toggleLike(vm)
+        assertEquals(1, calls)
+        reply.complete(Result.failure(IllegalStateException("offline")))
+        runCurrent()
+        assertEquals(4, vm.state.value.checkIns.single().helpfulCount)
+        assertFalse(vm.state.value.checkIns.single().isHelpfulByCurrentUser)
+        assertEquals(setOf("one"), vm.state.value.likeErrorIds)
+        assertTrue(vm.state.value.pendingLikeIds.isEmpty())
+    }
+
+    @Test fun guestsOpenSignInBeforeSendingALike() = runTest(dispatcher) {
+        val vm = model(data = rows(checkIn("one")))
+        runCurrent()
+        toggleLike(vm)
+        assertEquals(PublicProfileEvent.RequireLogin, vm.events.first())
+        assertTrue(vm.state.value.pendingLikeIds.isEmpty())
+    }
+
+    @Test fun aStalledVoteCanBeRetriedAfterItsTimeout() = runTest(dispatcher) {
+        val data = rows(checkIn("one").copy(helpfulCount = 4))
+        data.like = { _, _ -> awaitCancellation() }
+        val vm = model(data = data, accounts = FakeAccounts("viewer"))
+        runCurrent()
+        toggleLike(vm)
+        advanceTimeBy(15_001)
+        runCurrent()
+        assertEquals(setOf("one"), vm.state.value.likeErrorIds)
+        assertTrue(vm.state.value.pendingLikeIds.isEmpty())
+        data.like = { _, _ -> Result.success(ProfileCheckInLike(true, 5)) }
+        toggleLike(vm)
+        assertEquals(5, vm.state.value.checkIns.single().helpfulCount)
+        assertTrue(vm.state.value.likeErrorIds.isEmpty())
+    }
+
+    @Test fun aLateLikeCannotChangeAReplacementSession() = runTest(dispatcher) {
+        val reply = CompletableDeferred<Result<ProfileCheckInLike>>()
+        val accounts = FakeAccounts("viewer")
+        val data = rows(checkIn("one").copy(helpfulCount = 4))
+        data.like = { _, _ -> withContext(NonCancellable) { reply.await() } }
+        val vm = model(data = data, accounts = accounts)
+        runCurrent()
+        toggleLike(vm)
+        accounts.replaceSession()
+        runCurrent()
+        reply.complete(Result.success(ProfileCheckInLike(true, 99)))
+        runCurrent()
+        assertEquals(4, vm.state.value.checkIns.single().helpfulCount)
+        assertFalse(vm.state.value.checkIns.single().isHelpfulByCurrentUser)
+        assertTrue(vm.state.value.pendingLikeIds.isEmpty())
+    }
+
+    @Test fun aRefreshWaitsForTheVoteBeforeReadingItsUpdatedCount() = runTest(dispatcher) {
+        val reply = CompletableDeferred<Result<ProfileCheckInLike>>()
+        var count = 4
+        var reads = 0
+        val data = FakeData()
+        data.checkIns = { _, _ ->
+            reads++
+            Result.success(PublicProfileCheckInPage(listOf(checkIn("one").copy(helpfulCount = count)), null))
+        }
+        data.like = { _, _ -> reply.await().also { count = it.getOrThrow().helpfulCount } }
+        val vm = model(data = data, accounts = FakeAccounts("viewer"))
+        runCurrent()
+        toggleLike(vm)
+        vm.onAction(PublicProfileAction.Refresh)
+        runCurrent()
+        assertEquals(1, reads)
+        reply.complete(Result.success(ProfileCheckInLike(true, 5)))
+        runCurrent()
+        assertEquals(2, reads)
+        assertEquals(5, vm.state.value.checkIns.single().helpfulCount)
+    }
+
+    @Test fun returningToTheProfileReloadsLikesAfterTheInitialResume() = runTest(dispatcher) {
+        var count = 4
+        val data = FakeData().apply {
+            checkIns = { _, _ -> Result.success(PublicProfileCheckInPage(listOf(checkIn("one").copy(helpfulCount = count)), null)) }
+        }
+        val vm = model(data = data)
+        runCurrent()
+        vm.onAction(PublicProfileAction.Resume)
+        runCurrent()
+        count = 7
+        vm.onAction(PublicProfileAction.Resume)
+        runCurrent()
+        assertEquals(7, vm.state.value.checkIns.single().helpfulCount)
+    }
+
+    @Test
+    fun slowCheckInRequestStopsLoadingAndCanBeRetried() = runTest(dispatcher) {
+        val data = FakeData().apply { checkIns = { _, _ -> awaitCancellation() } }
+        val vm = model(data = data)
+        runCurrent()
+        assertTrue(vm.state.value.isLoadingCheckIns)
+        advanceTimeBy(15_000)
+        runCurrent()
+        assertFalse(vm.state.value.isLoadingCheckIns)
+        assertEquals(PublicProfileError.CheckIns, vm.state.value.checkInsError)
+        data.checkIns = { _, _ -> Result.success(PublicProfileCheckInPage(listOf(checkIn("after-retry")), null)) }
+        vm.onAction(PublicProfileAction.RetryCheckIns)
+        runCurrent()
+        assertEquals(listOf("after-retry"), vm.state.value.checkIns.map { it.id })
+        assertNull(vm.state.value.checkInsError)
+    }
+
+    @Test
+    fun dayFilterIncludesBothKindsAcrossPagesAndCanBeCleared() = runTest(dispatcher) {
+        val data = FakeData().apply {
+            checkIns = { _, cursor ->
+                val rows = if (cursor == null) listOf(
+                    checkIn("shop").copy(occurredAt = "2026-10-14T22:30:00Z"),
+                    checkIn("previous").copy(occurredAt = "2026-10-14", isHome = true),
+                ) else listOf(checkIn("home").copy(isHome = true))
+                Result.success(PublicProfileCheckInPage(rows, "next"))
+            }
+        }
+        val vm = model(data = data)
+        runCurrent()
+        vm.onAction(PublicProfileAction.SelectCheckInDate("2026-10-15"))
+        runCurrent()
+        assertEquals(listOf("shop"), vm.state.value.filteredCheckIns().map { it.id })
+        vm.onAction(PublicProfileAction.LoadMoreCheckIns)
+        runCurrent()
+        assertEquals(listOf("shop", "home"), vm.state.value.filteredCheckIns().map { it.id })
+        assertFalse(vm.state.value.hasMoreCheckIns)
+        vm.onAction(PublicProfileAction.SelectCheckInDate("2026-10-15"))
+        runCurrent()
+        assertEquals(listOf("shop", "previous", "home"), vm.state.value.filteredCheckIns().map { it.id })
+    }
 
     @Test fun ownHistoryHeaderDoesNotFetchThePublicFeed() = runTest(dispatcher) {
         var requests = 0
@@ -73,7 +253,7 @@ class PublicProfileViewModelTest {
             requests++
             Result.success(PublicProfileCheckInPage(emptyList(), null))
         } }
-        val model = PublicProfileViewModel("canonical", data, data, FakeAccounts(), includeCheckIns = false)
+        val model = PublicProfileViewModel("canonical", data, data, FakeAccounts(), data, includeCheckIns = false)
         store.put("own-header", model)
         runCurrent()
         assertNotNull(model.state.value.profile)
@@ -638,17 +818,26 @@ class PublicProfileViewModelTest {
     }
 
     private fun checkIn(id: String) = PublicProfileCheckIn(id, null, "Дома", "Кофе", null, null, "", "2026-10-15", emptyList())
+    private fun TestScope.toggleLike(vm: PublicProfileViewModel) {
+        vm.onAction(PublicProfileAction.ToggleCheckInLike("one"))
+        runCurrent()
+    }
+    private fun rows(vararg rows: PublicProfileCheckIn) = FakeData().apply {
+        checkIns = { _, _ -> Result.success(PublicProfileCheckInPage(rows.toList(), null)) }
+    }
     private fun person(slug: String) = PublicProfileConnection(slug, null, slug, "/users/$slug")
 }
 
 private fun ownProfile(slug: String, canonicalPath: String = "/users/$slug") =
     OwnProfile("nickname", "", null, null, 0, 0, 0, 0, ProfileAddress(slug, canonicalPath, 1, false))
 
-private class FakeData : PublicProfileData, PublicCheckInsPort {
+private class FakeData : PublicProfileData, PublicCheckInsPort, ProfileCheckInLikes {
     var profile: suspend (String) -> Result<PublicProfile> = { Result.success(PublicProfile("canonical", "nickname", null, null, PublicProfileStats(2, 1, 0, 17), emptyList(), null)) }
     var favorites: suspend (String) -> Result<List<PublicProfileFavorite>> = { Result.success(emptyList()) }
     var activity: suspend (Int, Int) -> Result<PublicProfileActivity> = { year, month -> Result.success(PublicProfileActivity("$year-${month.toString().padStart(2, '0')}", emptySet())) }
     var checkIns: suspend (String, String?) -> Result<PublicProfileCheckInPage> = { _, _ -> Result.success(PublicProfileCheckInPage(emptyList(), null)) }
+    var like: suspend (String, Boolean) -> Result<ProfileCheckInLike> = { _, _ -> error("Unexpected like") }
+    override suspend fun setHelpful(id: String, helpful: Boolean) = like(id, helpful)
     var follow: suspend (String, Boolean) -> Result<PublicProfileFollowState> = { _, _ -> error("Unexpected follow") }
     var connections: suspend (PublicProfileConnectionKind, Int) -> Result<PublicProfileConnectionsPage> = { _, page -> Result.success(PublicProfileConnectionsPage(emptyList(), 0, page, 20)) }
     var connectionsRequest: suspend (String, PublicProfileConnectionKind, Int, Int) -> Result<PublicProfileConnectionsPage> =

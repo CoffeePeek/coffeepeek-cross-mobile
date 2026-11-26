@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,7 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton
-import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -31,11 +31,9 @@ import com.coffeepeek.feature.profile.domain.PublicProfile
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
+import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileCheckInCalendar
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileLoadingSkeleton
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
-import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
-import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityPreview
-import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileCheckInCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
@@ -51,7 +49,6 @@ internal fun PublicProfileBody(state: PublicProfileState, visibilityPending: Boo
         else -> PublicProfileLoadedContent(state, profile, viewingOwn, authorActions, slots, callbacks, own)
     }
 }
-
 @Composable
 private fun PublicProfileUnavailable(state: PublicProfileState, visibilityPending: Boolean, onRetry: () -> Unit) {
     if (state.isLoading || visibilityPending) {
@@ -89,18 +86,27 @@ internal fun PublicProfileBlocked(profile: PublicProfile, authorActions: Profile
 @Composable
 private fun PublicProfileLoadedContent(state: PublicProfileState, profile: PublicProfile, viewingOwn: Boolean,
     authorActions: ProfileAuthorActions, slots: ProfileSlots, callbacks: PublicProfileCallbacks, own: OwnProfileExtras?) {
+    val checkInList = rememberLazyListState()
     ProfileContentTabs(
         profile.slug,
-        checkIns = { PublicProfileCheckInPreview(state, profile, viewingOwn, authorActions, slots, callbacks) },
+        checkIns = {},
+        checkInsList = { modifier, header ->
+            PublicProfileCheckInsTab(state, viewingOwn, authorActions, slots, callbacks,
+                checkInList, modifier, own?.bottomContentPadding ?: 20.dp, header)
+        },
         collections = { PublicProfileCollections(profile, viewingOwn, slots, own) },
         shelf = { slots.shelfPreview(profile.slug, viewingOwn) },
         modifier = Modifier.fillMaxSize().then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
         ownerShelf = own?.shelf, ownerHistory = own?.history, bottomPadding = own?.bottomContentPadding ?: 20.dp,
-    ) {
+    ) { selectCheckIns ->
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Spacer(Modifier.height(2.dp))
             PublicProfileIdentity(state, profile, viewingOwn, slots, callbacks, own)
-            PublicProfileWeek(state, profile, slots, callbacks, own)
+            if (own != null) own.history.calendar()
+            else ProfileCheckInCalendar(state, profile, slots.image, callbacks.onAction) { date ->
+                callbacks.onAction(PublicProfileAction.SelectCheckInDate(date))
+                if (date != null) selectCheckIns()
+            }
             PublicProfileRefreshErrors(state, viewingOwn, callbacks.onAction)
         }
     }
@@ -120,19 +126,6 @@ private fun PublicProfileIdentity(state: PublicProfileState, profile: PublicProf
         followingCount = state.followingCount,
         onFollowingClick = { callbacks.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Following)) },
         onAvatarClick = { profile.avatarUrl?.let { callbacks.onPhotoClick(listOf(it), listOf(it), 0) } })
-}
-
-@Composable
-private fun PublicProfileWeek(state: PublicProfileState, profile: PublicProfile, slots: ProfileSlots,
-    callbacks: PublicProfileCallbacks, own: OwnProfileExtras?) {
-    if (own != null) own.history.calendar()
-    else PublicProfileActivityPreview(profile.slug, profile.activity, state.checkIns,
-        (state.isLoadingActivity && profile.activity == null) || (state.isLoadingCheckIns && state.checkIns.isEmpty()),
-        state.activityError != null || state.checkInsError != null, slots.image,
-        {
-            callbacks.onAction(PublicProfileAction.RetryActivity)
-            callbacks.onAction(PublicProfileAction.RetryCheckIns)
-        }, callbacks.onOpenCheckIns)
 }
 
 @Composable
@@ -156,34 +149,5 @@ private fun PublicProfileCollections(profile: PublicProfile, viewingOwn: Boolean
             slots.ownerCollection()
         }
         else -> slots.featuredCollection(profile.slug)
-    }
-}
-
-@Composable
-private fun PublicProfileCheckInPreview(state: PublicProfileState, profile: PublicProfile, viewingOwn: Boolean,
-    authorActions: ProfileAuthorActions, slots: ProfileSlots, callbacks: PublicProfileCallbacks) {
-    val author = ProfileAuthor(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        if (state.checkInsError != null && state.checkIns.isNotEmpty()) {
-            InlineProfileError(stringResource(Res.string.profile_check_ins_failed)) { callbacks.onAction(PublicProfileAction.RetryCheckIns) }
-        }
-        when {
-            state.isLoadingCheckIns && state.checkIns.isEmpty() -> ProfileSectionLoader(100.dp)
-            state.checkInsError != null && state.checkIns.isEmpty() ->
-                InlineProfileError(stringResource(Res.string.profile_check_ins_failed)) { callbacks.onAction(PublicProfileAction.RetryCheckIns) }
-            state.checkIns.isEmpty() -> Text(stringResource(Res.string.profile_check_ins_empty),
-                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            else -> state.checkIns.take(2).forEach { checkIn ->
-                val allowActions = state.isSignedIn && !viewingOwn
-                PublicProfileCheckInCard(checkIn, author, slots,
-                    checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { callbacks.onOpenShop(shop) } },
-                    callbacks.onPhotoClick,
-                    onBlock = if (allowActions) ({ authorActions.requestBlock(author) }) else null,
-                    onReport = if (allowActions) ({ slots.reportCheckIn(checkIn.id) }) else null)
-            }
-        }
-        CoffeePeekTextButton(onClick = callbacks.onOpenCheckIns, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            Text(stringResource(Res.string.profile_section_all_description, stringResource(Res.string.profile_section_check_ins)))
-        }
     }
 }

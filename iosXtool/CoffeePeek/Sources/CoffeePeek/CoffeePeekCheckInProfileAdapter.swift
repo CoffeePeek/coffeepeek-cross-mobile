@@ -14,6 +14,8 @@ struct OwnProfileCheckInCard: View {
     var openMenu: (() -> Void)?
     var report: (() -> Void)?
     var ratingDescription: String?
+    var onLike: (() -> Void)?
+    var likeEnabled = true
 
     var body: some View {
         CoffeePeekCheckInCard(data: presentation, loadImage: loadImage, perform: perform, openPhoto: openPhoto)
@@ -40,7 +42,8 @@ struct OwnProfileCheckInCard: View {
         data.ratingLabel = ratingDescription ?? String(format: strings["profile_native_rating"], checkIn.score ?? "")
         data.likes = Int(checkIn.helpfulCount)
         data.liked = checkIn.liked
-        data.likesLabel = strings.count("profile_check_in_likes", Int(checkIn.helpfulCount))
+        data.likesLabel = strings.count(onLike == nil ? "profile_check_in_likes" :
+            checkIn.liked ? "profile_check_in_unlike" : "profile_check_in_like", Int(checkIn.helpfulCount))
         data.drink = checkIn.drink
         data.photos = checkIn.photos.enumerated().map { index, photo in
             CoffeePeekCheckInPhoto(id: "\(checkIn.id):\(index):\(photo.url ?? photo.fallbackUrl ?? "")", preview: photo.url, detail: photo.fallbackUrl,
@@ -63,6 +66,7 @@ struct OwnProfileCheckInCard: View {
     }
 
     private func appendActions(to data: inout CoffeePeekCheckInCardData) {
+        if onLike != nil && likeEnabled { data.actions.insert("like") }
         if openEntry != nil { data.actions.insert("open") }
         if let slug = checkIn.shopSlug, !slug.isEmpty { data.actions.insert("shop") }
         if let coffee = checkIn.brew?.coffee, !coffee.isEmpty, data.bag != nil { data.actions.insert("coffee") }
@@ -74,6 +78,7 @@ struct OwnProfileCheckInCard: View {
 
     private func perform(_ action: String) {
         switch action {
+        case "like": if likeEnabled { onLike?() }
         case "open": openEntry?()
         case "shop": if let slug = checkIn.shopSlug { openShop(slug) }
         case "coffee": if let slug = checkIn.brew?.coffee { openCoffee(slug) }

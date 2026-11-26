@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuBackdrop
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibility
 import com.coffeepeek.feature.profile.api.ProfileSlots
@@ -25,16 +26,18 @@ fun createPublicProfileEntry(
     data: PublicProfileData,
     checkIns: PublicCheckInsPort,
     accounts: ProfileAccountPort,
+    likes: ProfileCheckInLikes,
     visibility: ProfileAuthorVisibility = ProfileAuthorVisibility.None,
     authorActions: ProfileAuthorActions = ProfileAuthorActions.None,
     slots: ProfileSlots,
     snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
-): PublicProfileEntry = PublicProfileEntryImpl(data, checkIns, accounts, visibility, authorActions, slots, snapshots)
+): PublicProfileEntry = PublicProfileEntryImpl(data, checkIns, accounts, likes, visibility, authorActions, slots, snapshots)
 
 private class PublicProfileEntryImpl(
     private val data: PublicProfileData,
     private val checkIns: PublicCheckInsPort,
     private val accounts: ProfileAccountPort,
+    private val likes: ProfileCheckInLikes,
     private val visibility: ProfileAuthorVisibility,
     private val authorActions: ProfileAuthorActions,
     private val slots: ProfileSlots,
@@ -47,11 +50,11 @@ private class PublicProfileEntryImpl(
     override fun Content(
         slug: String, nickname: String?, avatarUrl: String?, onBack: () -> Unit, onOpenShop: (String) -> Unit,
         onOpenRoaster: (String) -> Unit, onLogin: () -> Unit, onOpenUser: (String, String, String?) -> Unit,
-        onShare: (String) -> Unit, onOpenCheckIns: () -> Unit, checkInsOnly: Boolean, modifier: Modifier,
+        onShare: (String) -> Unit, checkInsOnly: Boolean, modifier: Modifier,
     ) {
-        val model = viewModel(key = "public-profile:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots) }
+        val model = viewModel(key = "public-profile:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, likes, visibility, snapshots) }
         CoffeePeekMenuBackdrop(modifier) {
-            PublicProfileScreen(slug, nickname, avatarUrl, model, authorActions, slots, onBack, onOpenShop, onOpenRoaster, onLogin, onOpenUser, onShare, onOpenCheckIns, checkInsOnly = checkInsOnly)
+            PublicProfileScreen(slug, nickname, avatarUrl, model, authorActions, slots, onBack, onOpenShop, onOpenRoaster, onLogin, onOpenUser, onShare, checkInsOnly = checkInsOnly)
         }
     }
 }

@@ -39,14 +39,27 @@ struct PublicProfileRows: View {
 
     private func card(_ row: IosOwnProfileCheckIn) -> some View {
         let canModerate = model.state.signedIn && !model.state.own
-        return OwnProfileCheckInCard(checkIn: row, strings: model.strings, profile: nil,
+        return VStack(alignment: .leading, spacing: 8) {
+            checkInCard(row, canModerate: canModerate)
+            if model.state.checkIns.likeErrorIds.contains(row.id) {
+                OwnProfileRetry(message: model.strings["profile_check_in_like_failed"], strings: model.strings) {
+                    model.profile?.toggleCheckInLike(id: row.id)
+                }
+            }
+        }
+    }
+
+    private func checkInCard(_ row: IosOwnProfileCheckIn, canModerate: Bool) -> some View {
+        OwnProfileCheckInCard(checkIn: row, strings: model.strings, profile: nil,
             openShop: { model.profile?.openShop(slug: $0) },
             openCoffee: { model.profile?.openCoffee(slug: $0) },
             openPhoto: { model.openPhoto(id: row.id, index: $0) },
             imageLoader: model.loadImage,
             openMenu: canModerate ? { model.profile?.blockOrUnblock() } : nil,
             report: canModerate ? { model.profile?.reportCheckIn(id: row.id) } : nil,
-            ratingDescription: ratingDescription(row)).padding(.horizontal, -16)
+            ratingDescription: ratingDescription(row),
+            onLike: { model.profile?.toggleCheckInLike(id: row.id) },
+            likeEnabled: !model.state.checkIns.pendingLikeIds.contains(row.id)).padding(.horizontal, -16)
     }
 
     private func ratingDescription(_ row: IosOwnProfileCheckIn) -> String? {

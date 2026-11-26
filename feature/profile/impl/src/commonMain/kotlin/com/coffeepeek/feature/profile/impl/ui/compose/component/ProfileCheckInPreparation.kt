@@ -8,13 +8,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekPostShelfBagRow
+import com.coffeepeek.core.designsystem.component.CoffeePeekPostShelfBagTitle
 import com.coffeepeek.core.designsystem.component.coffeePeekPostShelfBagCardImage
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.api.ProfileSlots
@@ -48,7 +44,9 @@ private fun preparationDetails(preparation: PublicCheckInPreparation): String = 
 
 @Composable
 private fun ProfilePreparationBag(preparation: PublicCheckInPreparation, bag: String, details: String, slots: ProfileSlots) {
-    val onCoffee = preparation.coffeeProductSlug?.takeIf(String::isNotBlank)?.let { slug -> { slots.onOpenCoffee(slug) } }
+    val open = slots.onOpenCoffee
+    val slug = preparation.coffeeProductSlug?.takeIf(String::isNotBlank)
+    val onCoffee: (() -> Unit)? = if (open != null && slug != null) ({ open(slug) }) else null
     CoffeePeekPostShelfBagRow(
         title = { ProfilePreparationTitle(preparation.beanName, preparation.roasterName) },
         details = details.takeIf(String::isNotBlank),
@@ -63,18 +61,7 @@ private fun ProfilePreparationBag(preparation: PublicCheckInPreparation, bag: St
 private fun ProfilePreparationTitle(name: String?, roaster: String?) {
     val bean = name?.takeIf(String::isNotBlank) ?: stringResource(Res.string.profile_shelf_bag)
     val separator = stringResource(Res.string.profile_check_in_separator)
-    val quiet = SpanStyle(fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    val title = buildAnnotatedString {
-        append(bean)
-        roaster?.takeIf(String::isNotBlank)?.let {
-            withStyle(quiet) {
-                append(separator)
-                append(it)
-            }
-        }
-    }
-    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    CoffeePeekPostShelfBagTitle(bean, roaster, separator)
 }
 
 @Composable

@@ -61,6 +61,12 @@ class SessionStoreCredentialsTest {
         assertEquals(tokens, SessionCredentialsOf(store).load())
     }
 
+    @Test fun savingWithoutARefreshTokenStoresOnlyTheProvidedCredentials() = runTest {
+        val store = Store(Session("old", "stored-refresh", "owner"))
+        SessionCredentialsOf(store).save(SessionTokens("new", ""))
+        assertEquals(Session("new", null, "owner"), store.current)
+    }
+
     @Test fun savingNothingSignsTheSessionOut() = runTest {
         val store = Store(Session("old", "refresh", "owner"))
         SessionCredentialsOf(store).save(null)

@@ -2,6 +2,7 @@ package com.coffeepeek.feature.profile.impl
 
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibility
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
 import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
@@ -27,10 +28,10 @@ import kotlinx.coroutines.launch
 
 fun createIosOwnProfileSession(
     accounts: ProfileAccountPort, signOut: ProfileSignOutPort, data: PublicProfileData,
-    checkIns: PublicCheckInsPort, visibility: ProfileAuthorVisibility, snapshots: ProfileSnapshotStore,
+    checkIns: PublicCheckInsPort, likes: ProfileCheckInLikes, visibility: ProfileAuthorVisibility, snapshots: ProfileSnapshotStore,
     lifecycle: (String) -> Unit = {},
 ): IosOwnProfileSession = IosOwnProfileSession(accounts, OwnProfileViewModel(accounts, signOut), lifecycle) { slug ->
-    PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots, includeCheckIns = false)
+    PublicProfileViewModel(slug, data, checkIns, accounts, likes, visibility, snapshots, includeCheckIns = false)
 }
 
 class OwnProfileSnapshot internal constructor(own: OwnProfileState, public: PublicProfileState?, val active: Boolean) {

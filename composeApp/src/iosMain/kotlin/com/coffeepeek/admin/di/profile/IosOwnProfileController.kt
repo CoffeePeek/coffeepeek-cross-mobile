@@ -22,6 +22,7 @@ import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import com.coffeepeek.feature.checkinhistory.impl.createIosOwnProfileHistorySession
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.domain.PublicProfileData
@@ -44,6 +45,7 @@ internal fun iosOwnProfileContent(): () -> UIViewController {
     val drafts = koinInject<OldReviewDrafts>()
     val repository = koinInject<PublicProfileData>()
     val checkIns = koinInject<PublicCheckInsPort>()
+    val likes = koinInject<ProfileCheckInLikes>()
     val visibility = koinInject<AuthorVisibility>()
     val snapshots = koinInject<ProfileSnapshotStore>()
     val sessions = koinInject<SessionReader>()
@@ -54,20 +56,21 @@ internal fun iosOwnProfileContent(): () -> UIViewController {
     val imageFetcher = koinInject<ImageUrlFetcher>()
     val collections = iosCollectionsWorkspaceContent()
     val media = remember(imageFetcher) { IosCatalogueMedia(imageFetcher, Constants.BASE_URL) }
-    return iosOwnProfileContent(factory, shelf, accounts, notifications, auth, drafts, repository, checkIns, visibility,
+    return iosOwnProfileContent(factory, shelf, accounts, notifications, auth, drafts, repository, checkIns, likes, visibility,
         snapshots, sessions, shops, homes, calendar, language, media, collections)
 }
 
 internal fun iosOwnProfileContent(factory: (IosOwnProfile) -> UIViewController, shelf: IosShelfFactory,
     accounts: ProfileAccountPort, notifications: NotificationFeature, auth: AuthRepository, drafts: OldReviewDrafts,
-    repository: PublicProfileData, checkIns: PublicCheckInsPort, visibility: AuthorVisibility, snapshots: ProfileSnapshotStore,
+    repository: PublicProfileData, checkIns: PublicCheckInsPort, likes: ProfileCheckInLikes,
+    visibility: AuthorVisibility, snapshots: ProfileSnapshotStore,
     sessions: SessionReader, shops: CheckInHistoryRepository, homes: HomeHistoryReader, calendar: AppCheckInHistoryCalendar,
     language: LanguagePort, media: IosCatalogueMedia, collections: (String, String?, String?) -> UIViewController,
 ): () -> UIViewController {
     return {
         val lease = CheckInHistorySession(sessions)
         val profile = createIosOwnProfileSession(accounts, AppProfileSignOut(notifications, auth, drafts),
-            repository, checkIns, AppProfileAuthorVisibility(visibility), snapshots, ::profileLifecycleDiagnostic)
+            repository, checkIns, likes, AppProfileAuthorVisibility(visibility), snapshots, ::profileLifecycleDiagnostic)
         factory(IosOwnProfile(profile, lease,
             createIosOwnProfileHistorySession(lease.bind(shops), lease.bind(homes), calendar::snapshot), language, media,
             shelfController = { allowed -> nativeShelfController(shelf("shelf", null, true, allowed)) }, collections = collections))

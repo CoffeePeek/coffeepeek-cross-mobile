@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.community.impl.post
 
 import com.coffeepeek.feature.community.api.CommunityAnalytics
+import com.coffeepeek.feature.community.api.CommunitySavedPosts
 import com.coffeepeek.feature.community.api.ConsumedDrinks
 import com.coffeepeek.feature.community.api.EditField
 import com.coffeepeek.feature.community.impl.timeline.PostEditState
@@ -36,6 +37,7 @@ internal class PostViewModel(
     private val authors: AuthorVisibility = AuthorVisibility.None,
     private val analytics: CommunityAnalytics,
     private val drinks: ConsumedDrinks,
+    private val saved: CommunitySavedPosts = CommunitySavedPosts.None,
 ) : MviViewModel<PostState, PostAction, PostEvent>(PostState()) {
     private var accountKey: String? = null
     private var generation = 0L
@@ -257,6 +259,7 @@ internal class PostViewModel(
             result.onSuccess { updated ->
                 analytics.editSaved(updated.visibility, updated.photos.originals.isNotEmpty())
                 updateState { copy(post = updated, editing = null, isSaving = false) }
+                saved.updated(key)
                 sendEvent(PostEvent.Message(ActionMessage(MessageKind.EditSaved)))
             }.onFailure { error ->
                 analytics.editFailed(error)

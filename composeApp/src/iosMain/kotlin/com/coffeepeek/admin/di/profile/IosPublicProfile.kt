@@ -48,6 +48,8 @@ class IosPublicProfile internal constructor(
 
     fun back() = Navigator.popBack()
     fun refresh() = profile.refresh()
+    fun resume() = profile.resume()
+    fun toggleCheckInLike(id: String) = profile.toggleCheckInLike(id)
     fun toggleFollow() = profile.toggleFollow()
     fun retryActivity() {
         profile.retryActivity()

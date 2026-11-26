@@ -6,16 +6,25 @@ import com.coffeepeek.feature.profile.domain.PublicProfileActivity
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-import kotlin.time.Duration.Companion.hours
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlin.time.Instant
 
-internal data class PublicProfileWeekDay(val date: String, val count: Int, val photos: List<String>)
+internal data class PublicProfileWeekDay(val date: String, val count: Int, val photos: List<String>, val known: Boolean = true)
 
-/** The existing public activity contract uses Minsk civil days, including feed timestamps. */
-internal fun publicProfileDate(timestamp: String): String? =
-    runCatching { (Instant.parse(timestamp) + 3.hours).toString().take(10) }.getOrNull()
+internal val PublicProfileTimeZone = TimeZone.of("Europe/Minsk")
+
+internal fun currentPublicProfileDate(): String = Clock.System.now().toLocalDateTime(PublicProfileTimeZone).date.toString()
+
+/** Public pages use Minsk civil days. The owner's calendar uses the device's zone. */
+internal fun publicProfileDate(timestamp: String, zone: TimeZone = PublicProfileTimeZone): String? =
+    runCatching {
+        if (timestamp.length == 10) LocalDate.parse(timestamp).toString()
+        else Instant.parse(timestamp).toLocalDateTime(zone).date.toString()
+    }.getOrNull()
 
 internal fun publicProfileWeekDates(today: String): List<String> {
     val date = LocalDate.parse(today)
@@ -35,6 +44,7 @@ internal fun publicProfileWeek(
         val count = activity?.checkInCounts?.get(day) ?: if (day in activity?.activeDays.orEmpty()) 1 else 0
         val rows = grouped[date].orEmpty()
         PublicProfileWeekDay(date, maxOf(count, rows.size),
-            rows.flatMap { it.photoPreviewUrls }.filter(String::isNotBlank).distinct())
+            rows.flatMap { it.photoPreviewUrls }.filter(String::isNotBlank).distinct(),
+            known = activity != null || rows.isNotEmpty())
     }
 }

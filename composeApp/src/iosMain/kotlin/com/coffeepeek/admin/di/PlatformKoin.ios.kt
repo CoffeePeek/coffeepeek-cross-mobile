@@ -71,7 +71,7 @@ actual fun initPlatformKoin() {
         appUpdateRendererFactory = { IosAppUpdateRenderer(get(), get(), get()) },
         notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },
         authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
-        checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get(), get(), get(), get()) },
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get(), get()) },
         coffeeRendererFactory = {
             featureCoffeeScreenRenderer(get())
@@ -79,8 +79,8 @@ actual fun initPlatformKoin() {
         shelfRendererFactory = {
             iosShelfScreenRenderer()
         },
-        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
+        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) },
         contributionsRendererFactory = { featureContributionsScreenRenderer(get(), get(), get()) },
         accountRendererFactory = { featureAccountScreenRenderer(get(), get(), get()) },
         discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<ApiClients>().client, get(), get(), get(), get(), get(), get(), get(), getOrNull()) },

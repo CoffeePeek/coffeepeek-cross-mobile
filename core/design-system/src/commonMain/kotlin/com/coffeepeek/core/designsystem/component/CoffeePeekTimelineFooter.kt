@@ -13,13 +13,13 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 fun CoffeePeekTimelineFooter(
     count: Int?, selected: Boolean, likesDescription: String, drink: String?, modifier: Modifier = Modifier,
-    onLike: (() -> Unit)? = null,
+    onLike: (() -> Unit)? = null, likeEnabled: Boolean = true,
     actions: (@Composable () -> Unit)? = null,
 ) {
     if (count == null && drink == null && actions == null) return
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        if (count != null) CoffeePeekLikeCount(count, selected, likesDescription, onClick = onLike)
+        if (count != null) CoffeePeekLikeCount(count, selected, likesDescription, onClick = onLike, enabled = likeEnabled)
         Spacer(Modifier.weight(1f))
         actions?.invoke()
         drink?.let { CoffeePeekDrinkLabel(it, size = CoffeePeekDrinkLabelSize.Compact) }

@@ -4,6 +4,7 @@ package com.coffeepeek.feature.profile.impl
 
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibility
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibilityState
 import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
@@ -30,9 +31,9 @@ import kotlin.time.Clock
 
 fun createIosPublicProfileSession(
     slug: String, data: PublicProfileData, checkIns: PublicCheckInsPort, accounts: ProfileAccountPort,
-    visibility: ProfileAuthorVisibility, snapshots: ProfileSnapshotStore,
+    likes: ProfileCheckInLikes, visibility: ProfileAuthorVisibility, snapshots: ProfileSnapshotStore,
 ): IosPublicProfileSession {
-    return IosPublicProfileSession(accounts, PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots))
+    return IosPublicProfileSession(accounts, PublicProfileViewModel(slug, data, checkIns, accounts, likes, visibility, snapshots))
 }
 
 class PublicProfileSnapshot internal constructor(
@@ -57,6 +58,8 @@ class PublicProfileSnapshot internal constructor(
     val checkInsLoading = showsContent && (state.isLoadingCheckIns || state.isLoadingMoreCheckIns)
     val checkInsFailed = showsContent && state.checkInsError != null
     val hasMoreCheckIns = showsContent && state.hasMoreCheckIns
+    val pendingLikeIds = state.pendingLikeIds.takeIf { showsContent }.orEmpty()
+    val likeErrorIds = state.likeErrorIds.takeIf { showsContent }.orEmpty()
     val activityLoading = showsContent && activities.isEmpty() &&
         (state.isLoadingActivity || state.isLoadingCheckIns && checkIns.isEmpty())
     val activityFailed = showsContent && (state.activityError != null || state.checkInsError != null)
@@ -111,6 +114,11 @@ class IosPublicProfileSession internal constructor(
     }
 
     fun refresh() = send(PublicProfileAction.Refresh)
+    fun resume() {
+        send(PublicProfileAction.Resume)
+        if (current().own) send(PublicProfileAction.RefreshFollowingCount)
+    }
+    fun toggleCheckInLike(id: String) = contentAction(PublicProfileAction.ToggleCheckInLike(id))
     fun toggleFollow() = contentAction(PublicProfileAction.ToggleFollow)
     fun retryActivity() = contentAction(PublicProfileAction.RetryActivity)
     fun retryCheckIns() = contentAction(PublicProfileAction.RetryCheckIns)
