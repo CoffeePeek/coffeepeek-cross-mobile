@@ -71,10 +71,12 @@ fun CoffeePeekRating(
     } else Modifier.widthIn(max = coffeePeekRatingInputWidth(size.starSize, starSpacing))
     Row(modifier.then(behavior), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(valueSpacing)) {
+        // Reserve an editable caption before measuring the scrolling stars, without stretching them.
+        val starsModifier = if (onRatingChange != null && valueText != null) Modifier.weight(1f, fill = false) else Modifier
         if (display == CoffeePeekRatingDisplay.Compact) {
             CoffeePeekRatingStar(1f, size.starSize, activeColor, inactiveColor)
         } else CoffeePeekRatingStars(value, size.starSize, enabled, starSpacing, activeColor, inactiveColor,
-            onRatingChange, starDescription, Modifier)
+            onRatingChange, starDescription, starsModifier)
         if (valueText != null) Text(valueText, style = valueStyle, color = valueColor)
     }
 }
@@ -154,6 +156,9 @@ internal fun coffeePeekRatingText(rating: Double): String {
             CoffeePeekRating(4.0, size = CoffeePeekRatingSize.Large, onRatingChange = {})
             CoffeePeekRating(0.0, size = CoffeePeekRatingSize.Large, onRatingChange = {}, enabled = false)
             CoffeePeekRating(3.0, modifier = Modifier.width(96.dp), onRatingChange = {})
+            CoffeePeekRating(4.0, size = CoffeePeekRatingSize.Large, valueText = "4/5", onRatingChange = {})
+            CoffeePeekRating(4.0, modifier = Modifier.width(96.dp), size = CoffeePeekRatingSize.Large,
+                valueText = "4/5", onRatingChange = {})
         }
     }
 }
