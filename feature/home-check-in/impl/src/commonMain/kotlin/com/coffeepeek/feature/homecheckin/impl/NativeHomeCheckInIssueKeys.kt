@@ -1,0 +1,51 @@
+package com.coffeepeek.feature.homecheckin.impl
+
+import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationIssue
+
+private val nativeHomeIssueKeys = mapOf(
+    HomePreparationIssue.Offline to "home_check_in_offline",
+    HomePreparationIssue.Timeout to "home_check_in_timeout",
+    HomePreparationIssue.Unauthorized to "home_check_in_save_unauthorized",
+    HomePreparationIssue.Forbidden to "home_check_in_save_forbidden",
+    HomePreparationIssue.NotFound to "home_check_in_not_found",
+    HomePreparationIssue.RateLimited to "home_check_in_rate_limited",
+    HomePreparationIssue.Unavailable to "home_check_in_unavailable",
+    HomePreparationIssue.InvalidMethod to "home_check_in_error_method",
+    HomePreparationIssue.BeanNameTooLong to "home_check_in_error_bean_length",
+    HomePreparationIssue.InvalidBean to "home_check_in_error_bean",
+    HomePreparationIssue.BeanUnavailable to "home_check_in_error_bean",
+    HomePreparationIssue.ConflictingBeanSelection to "home_check_in_error_bean",
+    HomePreparationIssue.InvalidBeanName to "home_check_in_error_bean",
+    HomePreparationIssue.InvalidDose to "home_check_in_error_dose",
+    HomePreparationIssue.DoseTooSmall to "home_check_in_error_dose",
+    HomePreparationIssue.DoseTooLarge to "home_check_in_error_dose",
+    HomePreparationIssue.DosePrecision to "home_check_in_error_dose",
+    HomePreparationIssue.DurationTooSmall to "home_check_in_error_duration",
+    HomePreparationIssue.DurationTooLarge to "home_check_in_error_duration",
+    HomePreparationIssue.InvalidDuration to "home_check_in_error_duration",
+    HomePreparationIssue.InvalidRating to "home_check_in_error_rating",
+    HomePreparationIssue.NoteTooLong to "home_check_in_error_note",
+    HomePreparationIssue.InvalidDrink to "home_check_in_error_drink",
+    HomePreparationIssue.DrinkUnavailable to "home_check_in_error_drink",
+    HomePreparationIssue.InvalidDrinkName to "home_check_in_error_drink",
+    HomePreparationIssue.PhotoEditUnsupported to "home_check_in_error_photo_edit",
+    HomePreparationIssue.TooManyPhotos to "home_check_in_error_photos",
+    HomePreparationIssue.DuplicatePhotos to "home_check_in_error_photos",
+    HomePreparationIssue.InvalidPhotos to "home_check_in_error_photos",
+    HomePreparationIssue.PhotosNotClaimed to "home_check_in_error_photos",
+    HomePreparationIssue.PhotosAlreadyUsed to "home_check_in_error_photos",
+    HomePreparationIssue.MissingDateOffset to "home_check_in_error_date",
+    HomePreparationIssue.InvalidDate to "home_check_in_error_date",
+    HomePreparationIssue.InvalidTime to "home_check_in_error_date",
+    HomePreparationIssue.InvalidDateOffset to "home_check_in_error_date",
+    HomePreparationIssue.CivilDateMismatch to "home_check_in_error_date",
+    HomePreparationIssue.FutureDate to "home_check_in_error_future_date",
+    HomePreparationIssue.InvalidVisibility to "home_check_in_error_visibility",
+    HomePreparationIssue.InvalidInput to "home_check_in_error_input",
+    HomePreparationIssue.InvalidResponse to "home_check_in_save_failed",
+    HomePreparationIssue.Conflict to "home_check_in_save_failed",
+    HomePreparationIssue.RequestFailed to "home_check_in_save_failed",
+)
+
+internal fun nativeHomeIssueKey(issue: HomePreparationIssue?): String? =
+    issue?.let { nativeHomeIssueKeys.getValue(it) }

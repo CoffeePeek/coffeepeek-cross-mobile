@@ -22,13 +22,16 @@ fun createHomeCheckInDetailEntry(
     repository: HomePreparationRepository,
     canAccess: () -> Boolean,
     imageContent: @Composable (url: String, description: String, modifier: Modifier, isCutout: Boolean) -> Unit,
-): HomeCheckInDetailEntry = HomeCheckInApiImpl(repository, canAccess, imageContent)
+): HomeCheckInDetailEntry {
+    return HomeCheckInApiImpl(repository, canAccess, imageContent)
+}
 
 private class HomeCheckInApiImpl(
     private val repository: HomePreparationRepository,
     private val canAccess: () -> Boolean,
     private val imageContent: @Composable (String, String, Modifier, Boolean) -> Unit,
-) : HomeCheckInDetailEntry {
+) : HomeCheckInDetailEntry, NativeHomeDetailEntry {
+    override fun createNativeDetail(id: String, generation: Int) = NativeHomeDetailSession(repository, canAccess, id, generation)
     @Composable
     override fun Content(
         preparationId: String,

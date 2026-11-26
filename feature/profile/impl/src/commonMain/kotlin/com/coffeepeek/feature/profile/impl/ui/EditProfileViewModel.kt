@@ -18,6 +18,8 @@ internal class EditProfileViewModel(
     private val accounts: ProfileAccountPort,
     private val edit: ProfileEditPort,
 ) : MviViewModel<EditProfileState, EditProfileAction, EditProfileEvent>(EditProfileState()) {
+    private val ownerAccount = accounts.activeAccount()
+    private val ownerScope = accounts.cacheScope()
     init { load() }
 
     override suspend fun handleActionInternal(action: EditProfileAction) {
@@ -63,6 +65,7 @@ internal class EditProfileViewModel(
     }
 
     private suspend fun requestSave() {
+        if (!stillOwnedBy(ownerAccount)) return
         val form = currentState
         if (!form.canSave || form.usernameToConfirm != null) return
         if (form.username.trim() != form.originalUsername) {
@@ -71,6 +74,7 @@ internal class EditProfileViewModel(
     }
 
     private suspend fun confirmUsernameChange() {
+        if (!stillOwnedBy(ownerAccount)) return
         val form = currentState
         val confirmedUsername = form.usernameToConfirm ?: return
         if (!form.canSave || form.username.trim() != confirmedUsername) return
@@ -80,7 +84,7 @@ internal class EditProfileViewModel(
     private suspend fun save(form: EditProfileState) {
         updateState { copy(isSaving = true, error = null, usernameRetryAtUtc = null, usernameToConfirm = null) }
         // The three writes belong to the account that started the save: if another account becomes active between them, the rest is not sent.
-        val owner = accounts.activeAccount()
+        val owner = ownerAccount
         try {
             if (!saveAvatar(form.pendingAvatar) || !stillOwnedBy(owner)) return
             if (!saveUsername(form) || !stillOwnedBy(owner)) return
@@ -92,7 +96,7 @@ internal class EditProfileViewModel(
     }
 
     private fun stillOwnedBy(owner: String?): Boolean =
-        if (accounts.activeAccount() == owner && owner != null) true else fail(EditProfileError.SignInRequired)
+        if (accounts.activeAccount() == owner && owner != null && accounts.cacheScope() == ownerScope) true else fail(EditProfileError.SignInRequired)
 
     private suspend fun saveAvatar(avatar: ProfileAvatarImage?): Boolean {
         if (avatar == null) return true

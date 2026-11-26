@@ -11,4 +11,6 @@ interface CollectionsRepository {
     suspend fun mine(): Result<List<CollectionSummary>>
     suspend fun revoke(id: String): Result<Unit>
     suspend fun photo(url: String): ByteArray?
+    /** A collection revision makes its representative photo safe to reuse across native destinations. */
+    suspend fun photo(url: String, imageKey: String): ByteArray? = photo(url)
 }

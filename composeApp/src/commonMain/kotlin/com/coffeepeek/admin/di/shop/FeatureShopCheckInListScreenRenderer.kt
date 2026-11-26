@@ -6,7 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.admin.di.media.PlatformPhotoViewer
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.core.session.SessionReader
@@ -50,7 +50,7 @@ internal class FeatureShopCheckInListScreenRenderer(
                 onOpenPhoto = { urls, originals, index -> if (session.lease.isCurrent())
                     preview = com.coffeepeek.feature.shop.api.ShopDetailEffect.OpenPhoto(urls, index, originals) })
             preview?.let { photo ->
-                CoffeePeekPhotoViewer(images = com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages(photo.imageUrls, photo.originalUrls),
+                PlatformPhotoViewer(images = com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages(photo.imageUrls, photo.originalUrls),
                     initialIndex = photo.initialIndex, onDismiss = { preview = null })
             }
         }

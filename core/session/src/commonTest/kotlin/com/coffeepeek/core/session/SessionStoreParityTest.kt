@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.*
+import kotlin.time.Instant
 
 /** Behaviour contract of the session store, kept identical when it moves to core/session. */
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalEncodingApi::class)
@@ -162,5 +163,58 @@ class SessionStoreParityTest {
         runCurrent()
         job.cancel()
         assertEquals(listOf(1L, 3L), seen)
+    }
+
+    @Test fun legacyJsonWithoutExpiryFieldsStillDecodes() {
+        assertEquals(SessionCredentials("access", "refresh"),
+            SessionJson.decodeFromString<SessionCredentials>("""{"accessToken":"access","refreshToken":"refresh"}"""))
+        assertEquals(SessionCredentials("access"),
+            SessionJson.decodeFromString<SessionCredentials>("""{"accessToken":"access"}"""))
+    }
+
+    @Test fun secureJsonRoundTripKeepsBothExpiriesWithSubsecondPrecision() {
+        val credentials = SessionCredentials("access", "refresh",
+            Instant.parse("2026-11-25T12:00:00.123456789Z"), Instant.parse("2026-12-25T12:00:00.987654321Z"))
+        assertEquals(credentials, SessionJson.decodeFromString<SessionCredentials>(SessionJson.encodeToString(credentials)))
+        val explicitNulls = """{"accessToken":"access","accessTokenExpiresAt":null,"refreshTokenExpiresAt":null}"""
+        assertEquals(SessionCredentials("access"), SessionJson.decodeFromString<SessionCredentials>(explicitNulls))
+    }
+
+    @Test fun expiryPairSurvivesPersistenceAndReloadWithoutChangingAccountGeneration() = runTest {
+        val store = Store()
+        val repository = DefaultSessionStore(store, Rows())
+        val current = Session(jwt("owner"), "refresh", "owner",
+            Instant.parse("2026-11-25T12:00:00Z"), Instant.parse("2026-12-25T12:00:00Z"))
+        repository.saveSession(current)
+        val generation = repository.accountGeneration()
+        val renewed = current.copy(accessToken = jwt("owner") + "-renewed", refreshToken = "next",
+            accessTokenExpiresAt = Instant.parse("2026-11-26T12:00:00Z"),
+            refreshTokenExpiresAt = Instant.parse("2026-12-26T12:00:00Z"))
+        assertTrue(repository.replaceSession(current, renewed))
+        assertEquals(SessionCredentials(renewed.accessToken, "next", renewed.accessTokenExpiresAt,
+            renewed.refreshTokenExpiresAt), store.state.value)
+        assertEquals(renewed, DefaultSessionStore(store, Rows()).getSession())
+        assertEquals(generation, repository.accountGeneration())
+        assertFalse(repository.replaceSession(current, current.copy(refreshToken = "stale")))
+        assertEquals(renewed, repository.peekSession())
+    }
+
+    @Test fun loadingExpiredCredentialsDoesNotEraseThem() = runTest {
+        val credentials = SessionCredentials(jwt("offline"), "refresh",
+            Instant.parse("2000-01-01T00:00:00Z"), Instant.parse("2000-01-02T00:00:00Z"))
+        val store = Store(credentials)
+        val repository = DefaultSessionStore(store, Rows())
+        assertTrue(repository.isLoggedIn())
+        assertEquals(credentials.accessTokenExpiresAt, repository.getSession()?.accessTokenExpiresAt)
+        assertEquals(credentials.refreshTokenExpiresAt, repository.getSession()?.refreshTokenExpiresAt)
+        assertEquals(credentials, store.state.value)
+        assertEquals(0, store.writes)
+    }
+
+    @Test fun credentialDiagnosticStringsDoNotRevealSecrets() {
+        val session = Session("private-access", "private-refresh", "private-user")
+        val credentials = SessionCredentials("private-access", "private-refresh")
+        assertEquals("Session(<redacted>)", session.toString())
+        assertEquals("SessionCredentials(<redacted>)", credentials.toString())
     }
 }

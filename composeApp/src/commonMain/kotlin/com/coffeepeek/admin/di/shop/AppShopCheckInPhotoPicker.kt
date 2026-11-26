@@ -47,5 +47,5 @@ internal class AppShopCheckInPhotoPicker : ShopCheckInPhotoPicker {
 
 internal fun List<PickedImage>.toCheckInPhotos(remaining: Int): List<ShopCheckInPhoto> =
     take(remaining.coerceIn(0, MAX_SHOP_CHECK_IN_PHOTOS)).map {
-        ShopCheckInPhoto(bytes = it.bytes, fileName = it.fileName, contentType = it.contentType)
+        ShopCheckInPhoto(bytes = it.bytes.copyOf(), fileName = it.fileName, contentType = it.contentType)
     }

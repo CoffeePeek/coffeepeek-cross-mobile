@@ -1,75 +1,52 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
-
 package com.coffeepeek.admin.ui
 
 import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-import platform.UIKit.UIDevice
-import platform.UIKit.UINavigationController
-import platform.UIKit.UITabBarController
-import platform.UIKit.UIViewController
-import platform.UIKit.hidesBottomBarWhenPushed
+import kotlin.test.assertEquals
 
-/** Native state contracts only: no window, Compose, account or application services. */
+/** Confirmed stack inputs for Swift tab-bar layout. UIKit/map gestures require manual device review. */
 class NativeTabBarVisibilityTest {
-    private val discovery = UINavigationController(rootViewController = UIViewController())
-    private val profile = UINavigationController(rootViewController = UIViewController())
-    private val tabs = UITabBarController().apply { setViewControllers(listOf(discovery, profile), false) }
-    private val visibility = NativeTabBarVisibility(tabs, discovery)
-
-    @Test
-    fun expandingAndClosingMapHidesAndRestoresTabs() {
-        visibility.onMapExpandedChange(true)
-        assertTrue(tabBarHidden)
-        visibility.onMapExpandedChange(false)
-        assertFalse(tabBarHidden)
+    @Test fun planningAPushKeepsTheConfirmedRootUntilTheNativeTransitionFinishes() {
+        val model = NativeRootNavigationModel(true)
+        val root = model.actual
+        val next = model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.ShopDetail("shop")))
+        assertEquals(2, next.stacks[0].size)
+        assertEquals(root, model.actual)
+        model.confirm(next)
+        assertEquals(2, model.actual.stacks[0].size)
     }
 
-    @Test
-    fun retainedMapCannotHideAnotherTab() {
-        visibility.onMapExpandedChange(true)
-        tabs.selectedViewController = profile
-        visibility.sync()
-        assertFalse(tabBarHidden)
-        tabs.selectedViewController = discovery
-        visibility.sync()
-        assertTrue(tabBarHidden)
+    @Test fun cancelledNativePopRetainsTheDetailAndItsIdentity() {
+        val model = detailModel()
+        val shown = model.actual
+        model.plan(Navigator.NavEvent.PopBack)
+        model.confirm(shown)
+        assertEquals(shown, model.actual)
     }
 
-    @Test
-    fun mapCallbackCannotShowBarOverPushedDetail() {
-        discovery.pushViewController(UIViewController().apply { hidesBottomBarWhenPushed = true }, false)
-        visibility.onMapExpandedChange(false)
-        assertTrue(tabBarHidden)
-        discovery.popToRootViewControllerAnimated(false)
-        visibility.sync()
-        assertFalse(tabBarHidden)
+    @Test fun completedNativePopReturnsToTheOriginalRootIdentity() {
+        val model = detailModel()
+        val root = model.actual.stacks[0].first()
+        model.confirm(model.plan(Navigator.NavEvent.PopBack))
+        assertEquals(listOf(root), model.actual.stacks[0])
     }
 
-    @Test
-    fun returningFromDetailKeepsExpandedMapFullScreen() {
-        visibility.onMapExpandedChange(true)
-        discovery.pushViewController(UIViewController().apply { hidesBottomBarWhenPushed = true }, false)
-        visibility.sync()
-        assertTrue(tabBarHidden)
-        discovery.popToRootViewControllerAnimated(false)
-        visibility.sync()
-        assertTrue(tabBarHidden)
+    @Test fun aRetainedDiscoveryStackCannotReplaceAnotherSelectedTab() {
+        val model = detailModel()
+        val discovery = model.actual.stacks[0]
+        model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.ProfileTab)))
+        assertEquals(2, model.actual.selected)
+        assertEquals(discovery, model.actual.stacks[0])
+        assertEquals(Navigator.Screen.ProfileTab, model.actual.stacks[2].single().screen)
     }
 
-    @Test
-    fun disposedHostIgnoresLateMapCallbacks() {
-        visibility.dispose()
-        visibility.onMapExpandedChange(true)
-        visibility.sync()
-        assertFalse(tabBarHidden)
+    @Test fun backAtTheRootCannotRemoveTheTabRoot() {
+        val model = NativeRootNavigationModel(true)
+        val initial = model.actual
+        model.confirm(model.plan(Navigator.NavEvent.PopBack))
+        assertEquals(initial, model.actual)
     }
 
-    private val tabBarHidden: Boolean
-        get() = if ((UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 18) {
-            tabs.tabBarHidden
-        } else {
-            tabs.tabBar.hidden
-        }
+    private fun detailModel() = NativeRootNavigationModel(true).apply {
+        confirm(plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.ShopDetail("shop"))))
+    }
 }

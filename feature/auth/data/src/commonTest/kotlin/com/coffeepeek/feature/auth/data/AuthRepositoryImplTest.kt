@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
+import kotlin.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -34,7 +35,7 @@ import kotlin.test.assertTrue
 class AuthRepositoryImplTest {
     // JWT payloads {"sub":"user-a"} and {"sub":"user-b"}
     private val tokenA = "header.eyJzdWIiOiJ1c2VyLWEifQ.signature"
-    private fun success(token: String, refresh: String = "refresh") = """{"isSuccess":true,"data":{"accessToken":"$token","refreshToken":"$refresh"}}"""
+    private fun success(token: String, refresh: String = "refresh") = """{"isSuccess":true,"data":{"accessToken":"$token","refreshToken":"$refresh","accessTokenExpiresAt":"2030-01-02T03:04:05Z","refreshTokenExpiresAt":"2030-02-02T03:04:05Z"}}"""
 
     private class Recorded(val method: HttpMethod, val path: String, val query: String, val body: String, val cookie: String?)
 
@@ -65,9 +66,8 @@ class AuthRepositoryImplTest {
             }
         }
         val plain = client("plain")
-        val authenticated = client("auth")
-        val repository: com.coffeepeek.feature.auth.domain.AuthRepository = AuthRepositoryImpl(plain, authenticated, store, local)
-        fun close() { plain.close(); authenticated.close() }
+        val repository: com.coffeepeek.feature.auth.domain.AuthRepository = AuthRepositoryImpl(plain, store, local)
+        fun close() { plain.close() }
     }
 
     private fun ok(body: String, extra: Map<String, String> = emptyMap()) = Triple(HttpStatusCode.OK, body, extra)
@@ -76,10 +76,11 @@ class AuthRepositoryImplTest {
         val f = Fixture(Session("old", "r", "user-a")) { _, _ -> ok(success(tokenA)) }
         val account = f.repository.signIn(" Person@Example.COM ", "  secret1 ").getOrThrow()
         assertEquals("user-a", account.userId)
-        assertEquals(listOf("remote:plain:POST /api/Tokens", "save:user-a"), f.log, "Same user: nothing is cleared")
+        assertEquals(listOf("remote:plain:POST /api/tokens/native", "save:user-a"), f.log, "Same user: nothing is cleared")
         val request = f.requests.single()
         assertEquals("""{"email":"person@example.com","password":"  secret1 "}""", request.body)
-        assertEquals(Session(tokenA, "refresh", "user-a"), f.store.peekSession())
+        assertEquals(Session(tokenA, "refresh", "user-a", Instant.parse("2030-01-02T03:04:05Z"),
+            Instant.parse("2030-02-02T03:04:05Z")), f.store.peekSession())
         f.close()
     }
 
@@ -87,7 +88,7 @@ class AuthRepositoryImplTest {
         for (previous in listOf(Session("old", "r", "user-b"), null)) {
             val f = Fixture(previous) { _, _ -> ok(success(tokenA)) }
             f.repository.signIn("a@example.com", "secret1").getOrThrow()
-            assertEquals(listOf("remote:plain:POST /api/Tokens", "clear", "save:user-a"), f.log, "previous=${previous?.userId}")
+            assertEquals(listOf("remote:plain:POST /api/tokens/native", "clear", "save:user-a"), f.log, "previous=${previous?.userId}")
             f.close()
         }
     }
@@ -95,15 +96,16 @@ class AuthRepositoryImplTest {
     @Test fun googleSignInUsesItsEndpointAndPersistsTheSameWay() = runBlocking {
         val f = Fixture(Session("old", "r", "user-b")) { _, _ -> ok(success(tokenA)) }
         f.repository.signInWithGoogle("google-id-token").getOrThrow()
-        assertEquals(listOf("remote:plain:POST /api/Tokens/google/login", "clear", "save:user-a"), f.log)
+        assertEquals(listOf("remote:plain:POST /api/tokens/google/login", "clear", "save:user-a"), f.log)
         assertEquals("""{"idToken":"google-id-token"}""", f.requests.single().body)
         f.close()
     }
 
-    @Test fun theRefreshTokenCookieWinsOverTheBodyAndIsPercentDecoded() = runBlocking {
+    @Test fun nativePasswordLoginIgnoresCookiesAndUsesTheBodyToken() = runBlocking {
         val f = Fixture(null) { _, _ -> ok(success(tokenA, refresh = "from-body"), mapOf("Set-Cookie" to "refreshToken=from%2Dcookie; Path=/; HttpOnly")) }
         f.repository.signIn("a@example.com", "secret1").getOrThrow()
-        assertEquals("from-cookie", f.store.peekSession()?.refreshToken)
+        assertEquals("from-body", f.store.peekSession()?.refreshToken)
+        assertNull(f.requests.single().cookie)
         f.close()
     }
 
@@ -111,11 +113,81 @@ class AuthRepositoryImplTest {
         val f = Fixture(Session("old", "r", "user-b")) { _, _ -> ok("""{"isSuccess":false,"message":"Invalid credentials"}""") }
         val error = f.repository.signIn("a@example.com", "bad").exceptionOrNull()
         assertEquals("Invalid credentials", error?.message)
-        assertEquals(listOf("remote:plain:POST /api/Tokens"), f.log)
+        assertEquals(listOf("remote:plain:POST /api/tokens/native"), f.log)
         assertEquals("old", f.store.peekSession()?.accessToken)
         val blank = Fixture(null) { _, _ -> ok("""{"isSuccess":false}""") }
         assertEquals("Сервер вернул некорректный ответ", blank.repository.signIn("a@example.com", "bad").exceptionOrNull()?.message)
         f.close(); blank.close()
+    }
+
+    @Test fun incompleteNativeLoginNeverClearsOrReplacesThePreviousAccount() = runBlocking {
+        for (field in listOf("accessToken", "refreshToken", "accessTokenExpiresAt", "refreshTokenExpiresAt")) {
+            val missing = success(tokenA).replace(Regex("\"$field\":\"[^\"]*\",?"), "").replace(",}", "}")
+            assertInvalidNativeLogin(missing)
+            val blank = success(tokenA).replace(Regex("\"$field\":\"[^\"]*\""), "\"$field\":\"\"")
+            assertInvalidNativeLogin(blank)
+        }
+        assertInvalidNativeLogin(success(tokenA).replace("2030-02-02T03:04:05Z", "invalid"))
+    }
+
+    private suspend fun assertInvalidNativeLogin(body: String) {
+        val old = Session("old", "old-refresh", "previous")
+        val f = Fixture(old) { _, _ -> ok(body, mapOf("Set-Cookie" to "refreshToken=cookie-fallback")) }
+        try {
+            val failure = assertNotNull(f.repository.signIn("a@example.com", "secret1").exceptionOrNull())
+            assertFalse(failure.message.orEmpty().contains(tokenA))
+            assertEquals(old, f.store.peekSession())
+            assertTrue(f.log.none { it == "clear" || it.startsWith("save:") })
+        } finally { f.close() }
+    }
+
+    @Test fun nativeLoginTemporaryHttpFailureNeverPublishesSuccessfulLookingBody() = runBlocking {
+        for (status in listOf(HttpStatusCode.TooManyRequests, HttpStatusCode.ServiceUnavailable)) {
+            val f = Fixture(null) { _, _ -> Triple(status, success(tokenA), emptyMap()) }
+            try {
+                assertTrue(f.repository.signIn("a@example.com", "secret1").isFailure)
+                assertNull(f.store.peekSession())
+                assertTrue(f.log.none { it == "clear" || it.startsWith("save:") })
+            } finally { f.close() }
+        }
+    }
+
+    @Test fun googleBodyPairDoesNotRequireNativeExpiryFields() = runBlocking {
+        val body = """{"isSuccess":true,"data":{"accessToken":"$tokenA","refreshToken":"social-refresh"}}"""
+        val f = Fixture(null) { _, _ -> ok(body) }
+        try {
+            f.repository.signInWithGoogle("identity", analyticsEnabled = false).getOrThrow()
+            assertEquals(Session(tokenA, "social-refresh", "user-a"), f.store.peekSession())
+            assertEquals("""{"idToken":"identity","analyticsEnabled":false}""", f.requests.single().body)
+        } finally { f.close() }
+    }
+
+    @Test fun googleInitialExchangeReadsItsServerCookieThenLogsOutThroughNativeJson() = runBlocking {
+        val body = """{"isSuccess":true,"data":{"accessToken":"$tokenA","accessTokenExpiresAt":"2030-01-02T03:04:05Z"}}"""
+        val f = Fixture(null) { _, _ -> ok(body, mapOf("Set-Cookie" to "refreshToken=google%2Frefresh; Path=/api/tokens; HttpOnly")) }
+        try {
+            f.repository.signInWithGoogle("identity").getOrThrow()
+            assertEquals("google/refresh", f.store.peekSession()?.refreshToken)
+            assertEquals(Instant.parse("2030-01-02T03:04:05Z"), f.store.peekSession()?.accessTokenExpiresAt)
+            assertNull(f.store.peekSession()?.refreshTokenExpiresAt)
+            f.repository.signOut().getOrThrow()
+            val logout = f.requests.last()
+            assertEquals("/api/tokens/native", logout.path)
+            assertEquals(HttpMethod.Delete, logout.method)
+            assertEquals("""{"refreshToken":"google/refresh"}""", logout.body)
+            assertNull(logout.cookie)
+        } finally { f.close() }
+    }
+
+    @Test fun googleWithoutAnyRefreshCredentialDoesNotReplaceAnAccount() = runBlocking {
+        val old = Session("old", "refresh-old", "previous")
+        val body = """{"isSuccess":true,"data":{"accessToken":"$tokenA"}}"""
+        val f = Fixture(old) { _, _ -> ok(body) }
+        try {
+            assertTrue(f.repository.signInWithGoogle("identity").isFailure)
+            assertEquals(old, f.store.peekSession())
+            assertTrue(f.log.none { it == "clear" || it.startsWith("save:") })
+        } finally { f.close() }
     }
 
     @Test fun registrationNormalizesTheEmailAndReportsARejection() = runBlocking {
@@ -175,15 +247,16 @@ class AuthRepositoryImplTest {
     @Test fun signOutCleansLocalDataFirstThenSendsTheRefreshTokenAndSucceeds() = runBlocking {
         val f = Fixture(Session("old", "refresh-me", "user-a")) { _, _ -> ok("""{"isSuccess":true}""") }
         assertTrue(f.repository.signOut().isSuccess)
-        assertEquals(listOf("clear", "remote:auth:DELETE /api/Tokens"), f.log)
-        assertTrue(f.requests.single().cookie.orEmpty().contains("refreshToken=refresh-me"))
+        assertEquals(listOf("clear", "remote:plain:DELETE /api/tokens/native"), f.log)
+        assertEquals("""{"refreshToken":"refresh-me"}""", f.requests.single().body)
+        assertNull(f.requests.single().cookie)
         f.close()
     }
 
     @Test fun aFailedServerSignOutIsIgnoredBecauseLocalCleanupIsAuthoritative() = runBlocking {
         val f = Fixture(Session("old", "refresh-me", "user-a")) { _, _ -> Triple(HttpStatusCode.InternalServerError, "{}", emptyMap()) }
         assertTrue(f.repository.signOut().isSuccess)
-        assertTrue(f.log.contains("remote:auth:DELETE /api/Tokens"))
+        assertTrue(f.log.contains("remote:plain:DELETE /api/tokens/native"))
         f.close()
     }
 
@@ -192,14 +265,15 @@ class AuthRepositoryImplTest {
         val result = f.repository.signOut()
         assertFalse(result.isSuccess)
         assertEquals("cannot clear favorites", result.exceptionOrNull()?.message)
-        assertTrue(f.log.contains("remote:auth:DELETE /api/Tokens"))
+        assertTrue(f.log.contains("remote:plain:DELETE /api/tokens/native"))
         f.close()
     }
 
-    @Test fun signOutWithoutASessionSendsNoCookie() = runBlocking {
+    @Test fun signOutWithoutASessionOnlyCleansLocalData() = runBlocking {
         val f = Fixture(null) { _, _ -> ok("""{"isSuccess":true}""") }
         assertTrue(f.repository.signOut().isSuccess)
-        assertNull(f.requests.single().cookie)
+        assertTrue(f.requests.isEmpty())
+        assertEquals(listOf("clear"), f.log)
         f.close()
     }
 
@@ -209,17 +283,20 @@ class AuthRepositoryImplTest {
         assertEquals("challenge", challenge.challengeId)
         assertEquals("nonce-+=", challenge.nonce)
         assertEquals(HttpMethod.Post, f.requests.single().method)
-        assertEquals("/api/Tokens/apple/challenge", f.requests.single().path)
+        assertEquals("/api/tokens/apple/challenge", f.requests.single().path)
         assertTrue(f.log.none { it == "clear" || it.startsWith("save:") })
         f.close()
     }
 
     @Test fun appleExchangesTheChallengeThenUsesTheSameAccountCleanupAndSessionStore() = runBlocking {
-        val f = Fixture(Session("old", "old-refresh", "another")) { _, _ -> ok(success(tokenA)) }
+        val accessExpiry = "2030-01-02T03:04:05Z"
+        val f = Fixture(Session("old", "old-refresh", "another")) { _, _ ->
+            ok("""{"isSuccess":true,"data":{"accessToken":"$tokenA","refreshToken":"refresh","accessTokenExpiresAt":"$accessExpiry"}}""")
+        }
         assertEquals("user-a", f.repository.signInWithApple("challenge", "identity").getOrThrow().userId)
-        assertEquals(listOf("remote:plain:POST /api/Tokens/apple/login", "clear", "save:user-a"), f.log)
+        assertEquals(listOf("remote:plain:POST /api/tokens/apple/login", "clear", "save:user-a"), f.log)
         assertEquals("""{"challengeId":"challenge","idToken":"identity"}""", f.requests.single().body)
-        assertEquals(Session(tokenA, "refresh", "user-a"), f.store.peekSession())
+        assertEquals(Session(tokenA, "refresh", "user-a", accessTokenExpiresAt = Instant.parse(accessExpiry)), f.store.peekSession())
         f.close()
     }
 

@@ -2,6 +2,7 @@ package com.coffeepeek.feature.contributions.impl.ui.map
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekFullScreenDialog
 import com.coffeepeek.feature.contributions.api.ContributionLocation
 import com.coffeepeek.feature.contributions.api.ContributionMapCanvas
@@ -13,10 +14,11 @@ internal typealias ContributionMapPickerSlot = @Composable (GeoPoint?, (GeoPoint
 internal fun ContributionMapPicker(initial: GeoPoint?, location: ContributionLocation, canvas: ContributionMapCanvas,
     onConfirm: (GeoPoint, String) -> Unit, onDismiss: () -> Unit) {
     val selection = remember(initial) { ContributionMapPickerState(initial) }
+    val state by selection.states.collectAsStateWithLifecycle()
     val confirm by rememberUpdatedState(onConfirm)
-    LaunchedEffect(selection.state.point) { selection.resolve(location) }
+    LaunchedEffect(state.point) { selection.resolve(location) }
     CoffeePeekFullScreenDialog(onDismiss = onDismiss) {
-        ContributionMapPickerContent(selection.state, canvas, selection::move, selection::cameraApplied,
+        ContributionMapPickerContent(state, canvas, selection::move, selection::cameraApplied,
             selection::requestLocation, { selection.selection()?.let { confirm(it.first, it.second) } }, onDismiss)
     }
 }

@@ -5,13 +5,16 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.get
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
+import kotlin.test.assertNull
 
 /** The shared rotation that API and image clients use; the tokens are compared by value, as the application's store loads fresh copies. */
 class SessionRefreshCoordinatorTest {
@@ -64,12 +67,12 @@ class SessionRefreshCoordinatorTest {
         val started = CompletableDeferred<Unit>()
         val session = FakeSession(initial, { started.complete(Unit); finish.await(); SessionTokens("rotated-a", "rotated-refresh") })
         val coordinator = SessionRefreshCoordinator(session)
-        val inFlight = async { coordinator.refresh("a-refresh", "a-access") }
+        val rejected = coordinator.credentials()!!
+        val inFlight = async { coordinator.refresh(rejected) }
         started.await(); session.tokens = replacement; finish.complete(Unit)
-        assertFailsWith<CancellationException> { inFlight.await() }
+        assertNull(inFlight.await())
         assertEquals(replacement, session.tokens)
-        assertFailsWith<CancellationException> { coordinator.refresh("a-refresh", "a-access") }
-        Unit
+        assertNull(coordinator.refresh(rejected))
     }
 
     @Test fun delayedOld401UsesAlreadySavedRotationAndNeverRefreshesNewToken() = runBlocking {
@@ -109,9 +112,53 @@ class SessionRefreshCoordinatorTest {
         })
         val coordinator = SessionRefreshCoordinator(session)
 
-        assertFailsWith<CancellationException> { coordinator.refresh("a-refresh", "a-access") }
+        val rejected = coordinator.credentials()!!
+        assertNull(coordinator.refresh(rejected))
         assertEquals(replacement, session.tokens)
-        assertFailsWith<CancellationException> { coordinator.refresh("a-refresh", "a-access") }
-        Unit
+        assertNull(coordinator.refresh(rejected))
+    }
+
+    @Test fun parallelRejectionsShareAnOutageAndTheNextRequestCanRefresh() = runBlocking {
+        withTimeout(5_000) {
+            val original = SessionTokens("old", "refresh")
+            val renewed = SessionTokens("new", "rotated")
+            val offline = IllegalStateException("offline")
+            var rotations = 0
+            val session = FakeSession(original, { if (++rotations == 1) throw offline else renewed })
+            val coordinator = SessionRefreshCoordinator(session)
+            val first = coordinator.credentials()!!
+            val second = coordinator.credentials()!!
+            val firstFailure = assertIs<IllegalStateException>(runCatching { coordinator.refresh(first) }.exceptionOrNull())
+            val secondFailure = assertIs<IllegalStateException>(runCatching { coordinator.refresh(second) }.exceptionOrNull())
+            assertEquals("offline", firstFailure.message)
+            assertEquals(firstFailure.message, secondFailure.message)
+            assertEquals(original, session.tokens)
+            assertEquals(1, rotations)
+            assertEquals(renewed, coordinator.refresh(coordinator.credentials()!!))
+            assertEquals(2, rotations)
+        }
+    }
+
+    @Test fun requestsWaitForRotationEvenIfItsFirstCallerIsCancelled() = runBlocking {
+        withTimeout(5_000) {
+            val started = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            val renewed = SessionTokens("new", "rotated")
+            val session = FakeSession(SessionTokens("old", "refresh"), {
+                started.complete(Unit)
+                release.await()
+                renewed
+            })
+            val coordinator = SessionRefreshCoordinator(session)
+            val rejected = coordinator.credentials()!!
+            val caller = launch { coordinator.refresh(rejected) }
+            started.await()
+            val nextRequest = async(start = CoroutineStart.UNDISPATCHED) { coordinator.credentials()?.tokens }
+            assertEquals(false, nextRequest.isCompleted)
+            caller.cancel()
+            release.complete(Unit)
+            assertEquals(renewed, nextRequest.await())
+            assertEquals(renewed, session.tokens)
+        }
     }
 }

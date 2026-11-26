@@ -22,6 +22,7 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistor
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryEventEnvelope
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistoryKindFilter
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistorySource
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistoryTimelineItem
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.HistoryCalendarContext
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.HistoryCalendarProvider
 import kotlinx.coroutines.CancellationException
@@ -296,7 +297,7 @@ class CombinedHistoryViewModelTest {
         vm.onAction(CombinedHistoryAction.SelectDate("2026-10-10"))
         runCurrent()
         vm.onAction(CombinedHistoryAction.ChangeMonth(0))
-        vm.onAction(CombinedHistoryAction.SelectDate("2026-09-10"))
+        vm.onAction(CombinedHistoryAction.SelectDate("2026-09-31"))
         runCurrent()
         assertEquals("2026-10-10", vm.state.value.selectedDate)
         vm.onAction(CombinedHistoryAction.SelectDate("2026-10-10"))
@@ -898,6 +899,56 @@ class CombinedHistoryViewModelTest {
         vm.onAction(CombinedHistoryAction.Refresh); runCurrent()
         assertNull(vm.state.value.selectedShop)
         assertEquals("shop-1", vm.state.value.shops.items.single().entry.id)
+    }
+
+    @Test fun collapsedWeekCanSelectThePreviousMonthsDay() = runTest(dispatcher) {
+        val clock = Clock().apply { context = Calendar("2026-10-01") }
+        val homes = Homes()
+        val vm = vm(homes = homes, clock = clock)
+        runCurrent()
+        vm.onAction(CombinedHistoryAction.SelectDate("2026-09-30"))
+        runCurrent()
+        assertEquals(HistoryMonth(2026, 9), vm.state.value.month)
+        assertEquals("2026-09-30", vm.state.value.selectedDate)
+        assertEquals(HomeHistoryDateRange("2026-09-30", "2026-09-30"), homes.pages.last().second)
+        assertTrue(vm.state.value.timeline.all { it.date == "2026-09-30" })
+        vm.onAction(CombinedHistoryAction.SelectDate("2026-09-30"))
+        runCurrent()
+        assertNull(vm.state.value.selectedDate)
+    }
+
+    @Test fun collapsedWeekLoadsBothMonthsWithoutChangingTheDisplayedMonth() = runTest(dispatcher) {
+        val clock = Clock().apply { context = Calendar("2026-10-01") }
+        val shops = Shops().apply { calendarResult = Result.success(listOf(shop("previous", "2026-09-30T10:00:00Z"))) }
+        val homes = Homes().apply { calendarResult = Result.success(listOf(HomeHistoryDay("2026-09-30", 2))) }
+        val vm = vm(shops, homes, clock)
+        runCurrent()
+        assertEquals(HistoryMonth(2026, 10), vm.state.value.month)
+        assertEquals(HistoryPeriod("2026-09-01T00:00:00Z", "2026-11-01T00:00:00Z"), shops.periods.single())
+        assertEquals(HomeHistoryDateRange("2026-09-01", "2026-10-31"), homes.ranges.single())
+        assertEquals(3L, vm.state.value.calendarCounts["2026-09-30"])
+        vm.onAction(CombinedHistoryAction.SelectDate("2026-09-30"))
+        runCurrent()
+        assertEquals("2026-09-30", vm.state.value.selectedDate)
+        assertEquals(listOf("shop:previous", "home:home-1"), vm.state.value.timeline.map { it.key })
+    }
+
+    @Test fun emptySelectedDayNeverFallsBackToAllAndClearingRestoresPrivateKinds() = runTest(dispatcher) {
+        val homes = Homes().apply { pageResult = { page, range ->
+            Result.success(HomeHistoryPage(if (range == null) listOf(home("private").copy(visibility = HistoryVisibility.Private))
+                else emptyList(), if (range == null) 1 else 0, page, 20))
+        } }
+        val vm = vm(homes = homes)
+        runCurrent()
+        vm.onAction(CombinedHistoryAction.SelectDate("2026-10-15"))
+        runCurrent()
+        assertTrue(vm.state.value.timeline.isEmpty())
+        vm.onAction(CombinedHistoryAction.SelectDate(null))
+        runCurrent()
+        val rows = vm.state.value.timeline
+        assertEquals(listOf("shop:shop-1", "home:private"), rows.map { it.key })
+        assertEquals(HistoryVisibility.Private, (rows[0] as HistoryTimelineItem.Shop).entry.visibility)
+        assertEquals(HistoryVisibility.Private, (rows[1] as HistoryTimelineItem.Home).entry.visibility)
     }
 
     companion object {

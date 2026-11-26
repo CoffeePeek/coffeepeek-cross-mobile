@@ -57,7 +57,7 @@ class PublicProfileCheckInsTest {
     @Test fun homeKindIsExplicitAndPreparedDateAndRecipeSurvive() = runTest {
         val row = load(post().copy(isHome = true,
             home = PublicPostPreparation("prepared", "hario-v60", "Эфиопия", 18.0, 180, 5,
-                shelfBagCardUrl = "bag-thumb", roasterName = "Roaster", coffeeProductSlug = "coffee")))
+                roasterName = "Roaster", coffeeProductSlug = "ethiopia", shelfBagCardUrl = "https://images.example/bag")))
         assertTrue(row.isHome)
         assertNull(row.coffeeShopSlug)
         assertEquals("Дома", row.venue)
@@ -68,9 +68,19 @@ class PublicProfileCheckInsTest {
         assertEquals(5.0, row.rating)
         assertEquals(18.0, row.preparation?.doseGrams)
         assertEquals(180, row.preparation?.brewDurationSeconds)
-        assertEquals("bag-thumb", row.preparation?.shelfBagCardUrl)
         assertEquals("Roaster", row.preparation?.roasterName)
-        assertEquals("coffee", row.preparation?.coffeeProductSlug)
+        assertEquals("ethiopia", row.preparation?.coffeeProductSlug)
+        assertEquals("https://images.example/bag", row.preparation?.shelfBagCardUrl)
+    }
+
+    @Test fun aHomeRecipeWithoutBagMetadataKeepsNullsAndDoesNotReuseCheckInPhotos() = runTest {
+        val row = load(post().copy(isHome = true,
+            home = PublicPostPreparation("prepared", null, "Personal beans", null, null, null)))
+        assertEquals("Personal beans", row.preparation?.beanName)
+        assertNull(row.preparation?.shelfBagCardUrl)
+        assertNull(row.preparation?.roasterName)
+        assertNull(row.preparation?.coffeeProductSlug)
+        assertEquals(listOf("original"), row.photoUrls)
     }
 
     @Test fun missingRecipeScoresAndDrinkNeverInventRatingsOrHomeKind() = runTest {

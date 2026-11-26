@@ -26,6 +26,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.ShelfAddScreen
 import com.coffeepeek.feature.shelf.impl.ui.compose.ShelfArchiveScreen
 import com.coffeepeek.feature.shelf.impl.ui.compose.ShelfBagScreen
 import com.coffeepeek.feature.shelf.impl.ui.compose.ShelfScreen
+import com.coffeepeek.feature.shelf.impl.ui.compose.ShelfSettingsSheet
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfAddEvent
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveEvent
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagEvent
@@ -50,11 +51,13 @@ class ShelfPorts(
  * Construct once in composition. The shelf's ViewModel lives in the caller's ViewModel-store owner (the Coffee tab);
  * the archive, a bag's screen and the scan live in their own destinations.
  */
+fun createShelfEntry(repository: ShelfRepository, ports: ShelfPorts): ShelfEntry = createShelfFeature(repository, ports)
+
 @OptIn(ExperimentalTime::class)
-fun createShelfEntry(repository: ShelfRepository, ports: ShelfPorts): ShelfEntry =
+internal fun createShelfFeature(repository: ShelfRepository, ports: ShelfPorts): ShelfApiImpl =
     ShelfApiImpl(repository, ports, ShelfCalendar(ports.timeZone) { Clock.System.now() })
 
-private class ShelfApiImpl(
+internal class ShelfApiImpl(
     private val repository: ShelfRepository,
     private val ports: ShelfPorts,
     private val calendar: ShelfCalendar,
@@ -62,6 +65,11 @@ private class ShelfApiImpl(
     private val instanceKey = Uuid.random().toString()
     private val arrivals = ShelfArrivals()
     private val bags = ShelfBagHandoff()
+
+    internal fun shelfModel() = ShelfViewModel(repository, calendar, arrivals, bags)
+    internal fun bagModel(id: String) = ShelfBagViewModel(id, repository, calendar, bags, ports.brews)
+    internal fun addModel() = ShelfAddViewModel(repository, ports.scanner, ports.coffees, arrivals, calendar)
+    internal fun archiveModel() = ShelfArchiveViewModel(repository, calendar, bags)
 
     @Composable
     override fun Shelf(
@@ -71,7 +79,8 @@ private class ShelfApiImpl(
     ) {
         key(this) {
             val model = viewModel(key = "shelf:$instanceKey") { ShelfViewModel(repository, calendar, arrivals, bags) }
-            ShelfScreen(model, signedIn, ports.image, bottomClearance, modifier, header, visibilitySettings) { event ->
+            ShelfScreen(model, signedIn, ports.image, bottomClearance, modifier, header,
+                settings = { dismiss -> ShelfSettingsSheet(::archiveModel, ports.image, visibilitySettings, dismiss, onOpenBag) }) { event ->
                 when (event) {
                     ShelfEvent.OpenArchive -> onOpenArchive()
                     ShelfEvent.SignIn -> onSignIn()
@@ -85,7 +94,7 @@ private class ShelfApiImpl(
     @Composable
     override fun Archive(onBack: () -> Unit, onOpenBag: (String) -> Unit, modifier: Modifier) {
         key(this) {
-            val model = viewModel(key = "shelf-archive:$instanceKey") { ShelfArchiveViewModel(repository, calendar, bags) }
+            val model = viewModel(key = "shelf-archive:$instanceKey") { archiveModel() }
             ShelfArchiveScreen(model, ports.image, modifier) { event ->
                 when (event) {
                     ShelfArchiveEvent.Back -> onBack()

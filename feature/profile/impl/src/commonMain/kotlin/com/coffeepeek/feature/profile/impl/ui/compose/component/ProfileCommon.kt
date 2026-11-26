@@ -5,19 +5,14 @@ import androidx.compose.foundation.BorderStroke
 import com.coffeepeek.feature.profile.impl.resources.Res
 import com.coffeepeek.feature.profile.impl.resources.profile_loading
 import com.coffeepeek.feature.profile.impl.resources.profile_retry
-import com.coffeepeek.feature.profile.impl.resources.profile_section_all
-import com.coffeepeek.feature.profile.impl.resources.profile_section_all_description
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,7 +25,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekShimmer
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -75,23 +69,6 @@ private fun ProfileSectionLoaderPreview(dark: Boolean) = CoffeePeekTheme(darkThe
 
 @Preview @Composable private fun ProfileSectionLoaderLightPreview() = ProfileSectionLoaderPreview(false)
 @Preview @Composable private fun ProfileSectionLoaderDarkPreview() = ProfileSectionLoaderPreview(true)
-
-@Composable
-internal fun ProfileSectionHeading(title: String, onAll: () -> Unit) {
-    val description = stringResource(Res.string.profile_section_all_description, title)
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        TextButton(
-            onClick = onAll,
-            modifier = Modifier.semantics { contentDescription = description },
-            contentPadding = PaddingValues(start = 12.dp),
-        ) {
-            Text(stringResource(Res.string.profile_section_all), color = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(4.dp))
-            CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-        }
-    }
-}
 
 @Composable
 internal fun InlineProfileError(text: String, onRetry: () -> Unit) {

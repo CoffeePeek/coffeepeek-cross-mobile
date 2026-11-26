@@ -13,15 +13,14 @@ class OwnProfileShelf(
     val onOpened: () -> Unit,
 )
 
-/** The localized month and independent navigation actions for the profile header. */
+/** The localized month and independent navigation actions for the public profile calendar. */
 typealias ProfileCalendarHeaderContent = @Composable (month: String, previous: (() -> Unit)?, next: (() -> Unit)?) -> Unit
 
-/** Calendar backed by the owner's session, including their personal photo previews. */
-class OwnProfileActivity(
-    val month: @Composable (
-        selectedDate: String?, onSelectDate: (String?) -> Unit, expanded: Boolean, header: ProfileCalendarHeaderContent,
-    ) -> Unit,
-    val onOpenHistory: () -> Unit,
+/** Profile arranges these slots; the history feature owns their shared state and scrolling. */
+class OwnProfileHistory(
+    val calendar: @Composable () -> Unit,
+    val list: @Composable (header: @Composable () -> Unit) -> Unit,
+    val selectionRevision: Int,
 )
 
 /** App-rendered pieces that only the owner's own profile shows. */
@@ -29,7 +28,8 @@ class OwnProfileSlots(
     val shared: ProfileSlots,
     /** Owns loading/retry states and omits [header] with its content when successfully loaded empty. */
     val favoritesPreview: @Composable (onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit, header: @Composable () -> Unit) -> Unit,
-    val activity: OwnProfileActivity,
+    /** One account-bound history owns the calendar and paginated list across profile tabs. */
+    val history: @Composable (content: @Composable (OwnProfileHistory) -> Unit) -> Unit,
     /** Mascot error content with a retry action. */
     val loadError: @Composable (onRetry: () -> Unit) -> Unit,
     val shelf: OwnProfileShelf? = null,
