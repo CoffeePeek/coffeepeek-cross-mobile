@@ -829,3 +829,24 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   no new sensitive logging, network call or bypass is introduced.
 - Xcode build, Android Sandbox assembly and replacement TestFlight delivery are
   pending. No new real-device or real-login acceptance is claimed.
+
+### Release 2.0 and Google button follow-up (2026-11-26)
+
+- The owner selected exactly 2.0 for the replacement TestFlight build and the
+  prepared App Store page. Shared release metadata now uses 2.0; version checks
+  accept the numeric major/minor form and the existing major/minor/patch form.
+  Build numbers still come from the unchanged Git-count/offset scheme.
+- Login and registration share a native Google button with explicit white/dark
+  Google brand colors, a visible border and the unchanged official full-color
+  Google G asset from `developers.google.com/static/identity/images/g-logo.png`.
+  The former system bordered style inherited the app's pale yellow tint.
+  Existing localized labels, callbacks, availability and busy disabling remain.
+- Colocated light/dark and large-text previews cover the reusable component.
+  Native button pressed feedback preserves scrolling and cancel behavior.
+  The current Xcode project uses explicit source references, so the new Swift
+  file is registered alongside the existing Apple button; the existing asset
+  catalog includes its image. No new package dependency is added.
+- The callback fix remains isolated in PR 437 while this child checkpoint is
+  prepared. Its full verification continues without restarting. Final source
+  compilation, release validation/upload and real-device visual review remain
+  separate gates; no phone interaction or live account writes are performed.

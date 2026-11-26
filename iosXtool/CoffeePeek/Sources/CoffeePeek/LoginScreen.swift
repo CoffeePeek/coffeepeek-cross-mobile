@@ -116,12 +116,7 @@ struct LoginScreen: View {
                 CoffeePeekAppleSignInButton(action: apple)
             }
             if let google = actions.google {
-                Button(action: google) {
-                    Text(strings.text("auth_sign_in_google"))
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
+                CoffeePeekGoogleSignInButton(title: strings.text("auth_sign_in_google"), action: google)
             }
         }
         .foregroundStyle(CoffeePeekNativeStyle.foreground)

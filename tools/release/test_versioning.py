@@ -41,7 +41,7 @@ class ReleaseVersioningTest(unittest.TestCase):
 
     def test_ios_build_is_an_integer_commit_count_and_archive_checks_both_versions(self):
         config = (ROOT / 'iosApp/Configuration/Shared.xcconfig').read_text(encoding='utf-8')
-        self.assertRegex(config, r'(?m)^MARKETING_VERSION = [0-9]+\.[0-9]+\.[0-9]+$')
+        self.assertRegex(config, r'(?m)^MARKETING_VERSION = [0-9]+\.[0-9]+(?:\.[0-9]+)?$')
         workflow = (ROOT / '.github/workflows/ios-testflight.yml').read_text(encoding='utf-8')
         self.assertIn('COMMIT_COUNT=$(git rev-list --count HEAD)', workflow)
         self.assertIn('IOS_BUILD_NUMBER=$((BUILD_NUMBER_OFFSET + COMMIT_COUNT))', workflow)

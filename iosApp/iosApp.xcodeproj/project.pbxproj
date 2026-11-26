@@ -97,6 +97,7 @@
 		A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000012 /* RegisterConsent.swift */; };
 		A0871E7A0000000000000009 /* NativeAuth.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7A000000000000000C /* NativeAuth.strings */; };
 		A0871E7B0000000000000001 /* CoffeePeekAppleSignInButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */; };
+		A26C0FFE0000000000000001 /* CoffeePeekGoogleSignInButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A26C0FFE0000000000000002 /* CoffeePeekGoogleSignInButton.swift */; };
 		A0871E7B0000000000000003 /* CoffeePeekGuestAccountCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */; };
 		A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000006 /* GuestProfileScreen.swift */; };
 		A0871E7B0000000000000007 /* NativeProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000008 /* NativeProfile.strings */; };
@@ -275,6 +276,7 @@
 		A0871E7A000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAuth.strings; sourceTree = "<group>"; };
 		A0871E7A000000000000000B /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeAuth.strings; sourceTree = "<group>"; };
 		A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekAppleSignInButton.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekAppleSignInButton.swift; sourceTree = "<group>"; };
+		A26C0FFE0000000000000002 /* CoffeePeekGoogleSignInButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekGoogleSignInButton.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekGoogleSignInButton.swift; sourceTree = "<group>"; };
 		A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekGuestAccountCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekGuestAccountCard.swift; sourceTree = "<group>"; };
 		A0871E7B0000000000000006 /* GuestProfileScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GuestProfileScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/GuestProfileScreen.swift; sourceTree = "<group>"; };
 		A0871E7B0000000000000009 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeProfile.strings; sourceTree = "<group>"; };
@@ -436,6 +438,7 @@
 				A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */,
 				A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */,
 				A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */,
+				A26C0FFE0000000000000002 /* CoffeePeekGoogleSignInButton.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
 				B30000000000000000000003 /* ShopReportScreen.swift */,
 				B251C0510000000000000004 /* ContributionsNativeHost.swift */,
@@ -805,6 +808,7 @@
 				A0871E7C0000000000000004 /* OwnProfileCheckIns.swift in Sources */,
 				A0871E7B0000000000000003 /* CoffeePeekGuestAccountCard.swift in Sources */,
 				A0871E7B0000000000000001 /* CoffeePeekAppleSignInButton.swift in Sources */,
+				A26C0FFE0000000000000001 /* CoffeePeekGoogleSignInButton.swift in Sources */,
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */,
 				5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */,
