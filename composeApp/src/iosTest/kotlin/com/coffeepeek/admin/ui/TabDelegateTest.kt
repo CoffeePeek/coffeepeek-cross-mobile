@@ -1,58 +1,59 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
-
 package com.coffeepeek.admin.ui
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import platform.UIKit.UINavigationController
-import platform.UIKit.UITabBarController
-import platform.UIKit.UIViewController
 
-/** Native delegate wiring only: no window, Compose content, account, or services. */
+/** Kotlin tab/entry contracts; Swift owns UIKit delegates and lazy controller construction. */
+@OptIn(ExperimentalCoroutinesApi::class)
 class TabDelegateTest {
-    @Test
-    fun activeRootTabIsReselectedOnEveryTap() {
-        val navigation = UINavigationController(rootViewController = UIViewController())
-        val tabs = UITabBarController().apply { setViewControllers(listOf(navigation), false) }
-        val delegate = TabDelegate()
-        val reselected = mutableListOf<UIViewController>()
-        delegate.onTabReselected = reselected::add
+    @Test fun settingsRootRetainsTheSameEntryWhenSwitchingAwayAndBack() {
+        val model = NativeRootNavigationModel(true)
+        val settings = model.actual.stacks[3].single()
+        model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.SettingsTab)))
+        model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.FeedTab)))
+        model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.SettingsTab)))
+        assertEquals(settings, model.actual.stacks[3].single())
+        assertEquals(3, model.actual.selected)
+    }
 
-        repeat(2) {
-            assertTrue(delegate.tabBarController(tabs, shouldSelectViewController = navigation))
+    @Test fun logicalRootOrderMatchesSharedTabIndexesIncludingTheBusinessRoot() {
+        val model = NativeRootNavigationModel(true)
+        model.actual.stacks.forEachIndexed { index, stack ->
+            assertEquals(index, nativeTabIndex(stack.single().screen))
         }
-
-        assertEquals(listOf<UIViewController>(navigation, navigation), reselected)
+        assertEquals(listOf(0, 1, 2, 3), model.visibleTabs)
+        model.configure(true, true)
+        assertEquals(listOf(4, 3), model.visibleTabs)
     }
 
-    @Test
-    fun switchingTabsDoesNotReselectEitherRoot() {
-        val first = UINavigationController(rootViewController = UIViewController())
-        val second = UINavigationController(rootViewController = UIViewController())
-        val tabs = UITabBarController().apply { setViewControllers(listOf(first, second), false) }
-        val delegate = TabDelegate()
-        var reselections = 0
-        delegate.onTabReselected = { reselections++ }
-
-        assertTrue(delegate.tabBarController(tabs, shouldSelectViewController = second))
-        tabs.selectedViewController = second
-        delegate.tabBarController(tabs, didSelectViewController = second)
-
-        assertEquals(0, reselections)
+    @Test fun eachSelectedSearchRootTapEmitsOneTransientReselection() = runTest {
+        val gestures = MainTabReselections()
+        var count = 0
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { gestures.search.collect { count++ } }
+        repeat(2) { gestures.onTabPressed(Navigator.Screen.FeedTab, true) }
+        assertEquals(2, count)
     }
 
-    @Test
-    fun activeTabWithAPushedScreenDoesNotScrollItsHiddenRoot() {
-        val navigation = UINavigationController(rootViewController = UIViewController())
-        navigation.setViewControllers(listOf(navigation.viewControllers.first(), UIViewController()), false)
-        val tabs = UITabBarController().apply { setViewControllers(listOf(navigation), false) }
-        val delegate = TabDelegate()
-        var reselections = 0
-        delegate.onTabReselected = { reselections++ }
+    @Test fun switchingTabsDoesNotEmitARootReselection() = runTest {
+        val gestures = MainTabReselections()
+        var count = 0
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { gestures.search.collect { count++ } }
+        gestures.onTabPressed(Navigator.Screen.FeedTab, false)
+        gestures.onTabPressed(Navigator.Screen.CommunityTab, false)
+        assertEquals(0, count)
+    }
 
-        assertTrue(delegate.tabBarController(tabs, shouldSelectViewController = navigation))
-
-        assertEquals(0, reselections)
+    @Test fun ordinaryTabSelectionRetainsItsPushedDetailForTheSwiftHost() {
+        val model = NativeRootNavigationModel(true)
+        model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.ShopDetail("shop"))))
+        val detail = model.actual.stacks[0].last()
+        model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.ProfileTab)))
+        model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.FeedTab)))
+        assertEquals(detail, model.actual.stacks[0].last())
+        assertEquals(2, model.actual.stacks[0].size)
     }
 }

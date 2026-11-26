@@ -73,7 +73,7 @@
     <string name="community_visibility_failed">Не ўдалося змяніць бачнасць</string>
     <string name="community_report_sent">Скарга адпраўлена</string>
     <string name="community_edit_saved">Чэкін захаваны</string>
-    <string name="community_post_title">Публікацыя</string>
+    <string name="community_post_title">Чэкін</string>
     <string name="community_back">Назад</string>
     <string name="community_post_unavailable_title">Публікацыя недаступная</string>
     <string name="community_post_unavailable_body">Запіс недаступны. Магчыма, аўтар схаваў або выдаліў яго.</string>

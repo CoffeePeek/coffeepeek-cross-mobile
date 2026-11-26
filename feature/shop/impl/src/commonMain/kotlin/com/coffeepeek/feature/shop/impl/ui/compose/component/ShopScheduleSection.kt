@@ -152,7 +152,7 @@ private fun ScheduleDays(schedules: List<ShopSchedule>) {
 }
 
 @Composable
-private fun scheduleHours(schedule: ShopSchedule?): String = when {
+internal fun scheduleHours(schedule: ShopSchedule?): String = when {
     schedule == null -> stringResource(Res.string.shop_schedule_unknown)
     schedule.isClosed -> stringResource(Res.string.shop_schedule_closed)
     schedule.intervals.isEmpty() -> stringResource(Res.string.shop_schedule_unknown)
@@ -162,7 +162,7 @@ private fun scheduleHours(schedule: ShopSchedule?): String = when {
 }
 
 @Composable
-private fun scheduleStatusText(status: ShopScheduleStatus): String = when (status) {
+internal fun scheduleStatusText(status: ShopScheduleStatus): String = when (status) {
     is ShopScheduleStatus.Open -> status.closingTime?.let { stringResource(Res.string.shop_schedule_open_until, it) }
         ?: stringResource(Res.string.shop_overview_open)
     is ShopScheduleStatus.Opens -> when (status.dayOffset) {
@@ -174,7 +174,7 @@ private fun scheduleStatusText(status: ShopScheduleStatus): String = when (statu
     ShopScheduleStatus.Closed -> stringResource(Res.string.shop_overview_closed)
 }
 
-private fun dayName(day: Int) = when (day) {
+internal fun dayName(day: Int) = when (day) {
     1 -> Res.string.shop_schedule_monday
     2 -> Res.string.shop_schedule_tuesday
     3 -> Res.string.shop_schedule_wednesday
@@ -184,7 +184,7 @@ private fun dayName(day: Int) = when (day) {
     else -> Res.string.shop_schedule_sunday
 }
 
-private fun shortDayName(day: Int) = when (day) {
+internal fun shortDayName(day: Int) = when (day) {
     1 -> Res.string.shop_schedule_monday_short
     2 -> Res.string.shop_schedule_tuesday_short
     3 -> Res.string.shop_schedule_wednesday_short

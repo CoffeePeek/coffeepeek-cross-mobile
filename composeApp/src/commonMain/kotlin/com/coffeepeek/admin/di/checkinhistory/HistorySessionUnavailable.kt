@@ -22,6 +22,7 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 
 @Composable
 internal fun HistorySessionUnavailable(onRetry: () -> Unit, onBack: () -> Unit) {
+    if (PlatformHistorySessionUnavailable(onRetry, onBack)) return
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(Modifier.padding(CoffeePeekDimens.spacing6),
             horizontalAlignment = Alignment.CenterHorizontally,

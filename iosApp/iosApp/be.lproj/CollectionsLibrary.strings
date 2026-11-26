@@ -1,0 +1,15 @@
+"library.title" = "Падборкі";
+"library.back" = "Назад";
+"library.new" = "Новая падборка";
+"library.public" = "Публічныя";
+"library.private" = "Асабістыя";
+"library.loading" = "Загрузка падборкі";
+"library.signInHint" = "Увайдзіце, каб выбраць месцы са свайго абранага.";
+"library.signIn" = "Увайсці";
+"library.error" = "Не ўдалося загрузіць падборкі. Паспрабуйце яшчэ раз.";
+"library.retry" = "Паўтарыць";
+"library.search" = "Пошук падборак";
+"library.clearSearch" = "Ачысціць пошук";
+"library.empty" = "У вас пакуль няма падборак.";
+"library.noMatches" = "Нічога не знойдзена";
+"library.count" = "Месцаў: %d";

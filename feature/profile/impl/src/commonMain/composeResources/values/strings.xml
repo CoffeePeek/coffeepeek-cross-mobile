@@ -1,6 +1,8 @@
 <resources>
     <!-- Russian only, copied verbatim from the production profile. -->
     <string name="profile_title">Профиль</string>
+    <string name="profile_open_coffee">Открыть кофе в каталоге</string>
+    <string name="profile_shelf_bag">Пачка с полки</string>
     <string name="profile_loading">Загрузка</string>
     <string name="profile_back">Назад</string>
     <string name="profile_close">Закрыть</string>
@@ -28,7 +30,6 @@
     <string name="profile_section_shelf">Полка</string>
     <string name="profile_shelf_address_required">Чтобы показать полку здесь, настройте адрес профиля</string>
     <string name="profile_section_activity">Активность</string>
-    <string name="profile_section_all">Все</string>
     <string name="profile_section_all_description">Все: %1$s</string>
 
     <string name="profile_check_ins_failed">Не удалось загрузить чекины</string>
@@ -182,6 +183,14 @@
     </plurals>
     <string name="profile_edit_display_preferences">Отображать в профиле</string>
     <string name="profile_edit_display_shelf">Кофейная полка</string>
+    <string name="profile_edit_camera">Сделать фото</string>
+    <string name="profile_edit_gallery">Выбрать из галереи</string>
+    <string name="profile_connections_followers_one">%1$d подписчик</string>
+    <string name="profile_connections_followers_few">%1$d подписчика</string>
+    <string name="profile_connections_followers_many">%1$d подписчиков</string>
+    <string name="profile_connections_following_one">%1$d подписка</string>
+    <string name="profile_connections_following_few">%1$d подписки</string>
+    <string name="profile_connections_following_many">%1$d подписок</string>
     <string name="profile_check_in_like">Поставить лайк. Лайков: %1$d</string>
     <string name="profile_check_in_unlike">Убрать лайк. Лайков: %1$d</string>
     <string name="profile_check_in_like_failed">Не удалось обновить лайк</string>

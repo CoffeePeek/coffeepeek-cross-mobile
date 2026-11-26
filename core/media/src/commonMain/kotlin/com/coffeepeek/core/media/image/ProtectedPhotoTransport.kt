@@ -2,6 +2,7 @@ package com.coffeepeek.core.media.image
 
 import com.coffeepeek.core.media.ImageUrl
 import com.coffeepeek.core.session.JwtUtils
+import com.coffeepeek.core.session.Session
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.plugins.pluginOrNull
@@ -17,9 +18,9 @@ internal suspend fun protectedVariantBytes(client: HttpClient, data: ImageUrl): 
     check(client.pluginOrNull(HttpCache) == null) { "Protected images require an uncached transport" }
     val scope = checkNotNull(data.permissionScope) { "Фото недоступно" }
     val session = ProtectedPhotoSession.session(scope)
-    val jwtDeadline = session?.accessToken?.let(JwtUtils::extractExp)?.takeIf { it in 0..Long.MAX_VALUE / 1000 }?.times(1000)
-    check(session == null || jwtDeadline != null) { "Фото недоступно" }
-    val result = protectedPhotoCache.read(PhotoCacheKey(data.url, scope), jwtDeadline,
+    val accessDeadline = session.accessDeadlineMillis()
+    check(session == null || accessDeadline != null) { "Фото недоступно" }
+    val result = protectedPhotoCache.read(PhotoCacheKey(data.url, scope), accessDeadline,
         { ProtectedPhotoSession.current(scope) }, revalidate = data.displayPermission?.revalidate == true) { etag ->
         retryOnPhotoTimeout { protectedPhotoRequests.withPermit {
             check(ProtectedPhotoSession.current(scope)) { "Фото недоступно" }
@@ -51,10 +52,16 @@ internal fun grantOnlinePhoto(data: ImageUrl, requestStart: Long) {
     check(ProtectedPhotoSession.current(scope)) { "Фото недоступно" }
     val nowMono = SystemPhotoCacheClock.monotonicMillis()
     val nowWall = SystemPhotoCacheClock.wallMillis()
-    val jwt = ProtectedPhotoSession.session(scope)?.accessToken?.let(JwtUtils::extractExp)
-        ?.takeIf { it in 0..Long.MAX_VALUE / 1000 }?.times(1000)
-    check(ProtectedPhotoSession.session(scope) == null || jwt != null) { "Фото недоступно" }
-    val lifetime = minOf((20_000 - (nowMono - requestStart)).coerceAtLeast(0), jwt?.let { (it - nowWall).coerceAtLeast(0) } ?: 20_000)
+    val session = ProtectedPhotoSession.session(scope)
+    val accessDeadline = session.accessDeadlineMillis()
+    check(session == null || accessDeadline != null) { "Фото недоступно" }
+    val lifetime = minOf((20_000 - (nowMono - requestStart)).coerceAtLeast(0),
+        accessDeadline?.let { (it - nowWall).coerceAtLeast(0) } ?: 20_000)
     check(lifetime > 0) { "Фото недоступно" }
     data.displayPermission?.grant(PhotoPermission(nowMono + lifetime, nowWall + lifetime))
+}
+
+private fun Session?.accessDeadlineMillis(): Long? {
+    this?.accessTokenExpiresAt?.let { return it.toEpochMilliseconds().takeIf { millis -> millis >= 0 } }
+    return this?.accessToken?.let(JwtUtils::extractExp)?.takeIf { it in 0..Long.MAX_VALUE / 1000 }?.times(1000)
 }

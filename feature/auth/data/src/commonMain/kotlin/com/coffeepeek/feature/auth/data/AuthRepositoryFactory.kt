@@ -5,10 +5,9 @@ import com.coffeepeek.feature.auth.api.LocalUserData
 import com.coffeepeek.feature.auth.domain.AuthRepository
 import io.ktor.client.HttpClient
 
-/** Composition-only entry. [plain] carries no credentials, [authenticated] attaches the access token. */
+/** Composition-only entry. [plain] carries no credentials; native logout uses its JSON refresh token. */
 fun createAuthRepository(
     plain: HttpClient,
-    authenticated: HttpClient,
     sessions: SessionStore,
     localUserData: LocalUserData,
-): AuthRepository = AuthRepositoryImpl(plain, authenticated, sessions, localUserData)
+): AuthRepository = AuthRepositoryImpl(plain, sessions, localUserData)

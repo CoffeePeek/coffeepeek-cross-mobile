@@ -2,7 +2,7 @@ name: iOS build verification
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, 'codex/ios-native']
     paths:
       - .github/workflows/ios-*.yml
       - build-logic/**
@@ -93,6 +93,15 @@ jobs:
           python3 -m unittest discover -s tools/release -p test_ios_signing_profile.py
           cp tools/ios/GoogleService-Info.verification.plist iosApp/iosApp/GoogleService-Info.plist
 
+      - name: Verify both native controller bootstraps
+        run: python3 -m unittest discover -s tools/ios -p 'test_native_controller_registration.py'
+      - name: Test Discovery map layout before first render
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryMapLayout.swift \
+            tools/ios/DiscoveryMapLayoutTests.swift -o "$RUNNER_TEMP/discovery-map-layout-tests"
+          "$RUNNER_TEMP/discovery-map-layout-tests"
       - name: Compile iPhone launch catalog for xtool
         shell: bash
         run: bash iosXtool/CoffeePeek/prepare-launch-resources.sh
@@ -140,7 +149,7 @@ jobs:
   # own runner, so the wall time is max(build, tests) rather than their sum.
   kotlin-native-tests:
     runs-on: xcode-27
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -186,7 +195,35 @@ jobs:
             --tests 'com.coffeepeek.admin.di.KoinViewModelCompatibilityTest' \
             --tests 'com.coffeepeek.admin.AppLinkHandlingTest' \
             --tests 'com.coffeepeek.admin.ui.AppLinksTest' \
+            --tests 'com.coffeepeek.admin.ui.ShopCheckInSignInHandoffTest' \
+            --tests 'com.coffeepeek.admin.di.homecheckin.IosCheckInCreatePickerTest' \
+            --tests 'com.coffeepeek.admin.di.shop.ShopBrowsingHostViewModelTest' \
+            --tests 'com.coffeepeek.admin.di.shop.ShopBrowsingSessionTest' \
+            --tests 'com.coffeepeek.admin.di.shop.ShopAuthorBlockBridgeTest' \
+            --tests 'com.coffeepeek.admin.di.auth.IosCheckInAuthFlowTest' \
             --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
+            --tests 'com.coffeepeek.admin.di.collections.CollectionsMediaScopeTest' \
+            --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
+            --tests 'com.coffeepeek.admin.di.system.IosGlobalDialogTest' \
+            --tests 'com.coffeepeek.admin.di.system.IosRootModalsTest' \
+            --tests 'com.coffeepeek.admin.di.contributions.IosContributionFormsTest' \
+            --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
+            --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
+            --tests 'com.coffeepeek.admin.di.community.IosCommunitySheetTest' \
+            --tests 'com.coffeepeek.admin.di.media.IosCatalogueMediaTest' \
+            --tests 'com.coffeepeek.admin.di.media.IosCheckInPhotoPresentationTest' \
+            --tests 'com.coffeepeek.admin.di.checkinhistory.IosHistoryFailureTest' \
+            --tests 'com.coffeepeek.admin.di.community.IosCommunityMessageTest' \
+            --tests 'com.coffeepeek.admin.di.discovery.IosDiscoveryAccountTest' \
+            --tests 'com.coffeepeek.admin.di.discovery.IosDiscoveryLocationRequestsTest' \
+            --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
+            --tests 'com.coffeepeek.admin.ui.NativeRootNavigationModelTest' \
+            --tests 'com.coffeepeek.admin.ui.NativeRootNavigationCommandTest' \
+            --tests 'com.coffeepeek.admin.di.roaster.IosRoasterLifetimeTest' \
+            --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
+            --tests 'com.coffeepeek.admin.di.contentreport.IosContentReportTest' \
+            --tests 'com.coffeepeek.admin.di.settings.IosSettingsScreensTest' \
+            --tests 'com.coffeepeek.admin.di.authorblocking.IosBlockedAuthorsTest' \
             --tests 'com.coffeepeek.admin.ui.NavigationDelegateTest' \
             --tests 'com.coffeepeek.admin.ui.MainTabReselectionsTest' \
             --tests 'com.coffeepeek.admin.ui.TabDelegateTest' \
@@ -197,6 +234,121 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-native-tests.log"
               exit 1
             }
+      - name: Run authentication Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:auth:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-auth-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-auth-tests.log"
+              exit 1
+            }
+      - name: Run shop Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:shop:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.shop.impl.ui.ShopMenuGallery*Test' \
+            --tests 'com.coffeepeek.feature.shop.impl.ui.ShopCheckInListViewModelTest' \
+            --tests 'com.coffeepeek.feature.shop.impl.IosShopCheckInListPresentationTest' \
+            --tests 'com.coffeepeek.feature.shop.impl.ui.ShopDetailIosBridgeTest' \
+            --tests 'com.coffeepeek.feature.shop.impl.ui.ShopDetailViewModelTest' \
+            > "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log"
+              exit 1
+            }
+      - name: Run coffee details Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:coffee:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.coffee.impl.ui.CoffeeDetailViewModelTest' \
+            --tests 'com.coffeepeek.feature.coffee.impl.CoffeeDetailIosSessionTest' \
+            > "$RUNNER_TEMP/ios-coffee-detail-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-coffee-detail-tests.log"
+              exit 1
+            }
+      - name: Run notification inbox Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:notifications:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-notification-inbox-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-notification-inbox-tests.log"
+              exit 1
+            }
+      - name: Run Discovery filter Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:discovery:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.discovery.impl.ui.IosDiscoveryFilterDraftTest' \
+            --tests 'com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosIntentsTest' \
+            --tests 'com.coffeepeek.feature.discovery.impl.ui.DiscoveryIdleTest' \
+            --tests 'com.coffeepeek.feature.discovery.impl.SearchViewModelTest' \
+            > "$RUNNER_TEMP/ios-discovery-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-discovery-tests.log"
+              exit 1
+            }
+      - name: Run community Kotlin Native unit and contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --max-workers=6 \
+            :feature:community:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-community-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-community-tests.log"
+              exit 1
+            }
+      - name: Run design-system Kotlin Native contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :core:design-system:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-design-system-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-design-system-tests.log"
+              exit 1
+            }
+      - name: Run own profile and calendar Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:profile:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.profile.impl.IosOwnProfileSessionTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.IosPublicProfileSessionTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.NativeAccountDeletionSessionTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.ui.AccountDeletionViewModelTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.ui.data.PublicProfileWeekTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModelTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModelTest' \
+            :feature:check-in-history:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.checkinhistory.impl.ui.CombinedHistoryViewModelTest' \
+            --tests 'com.coffeepeek.feature.checkinhistory.impl.ui.ProfileActivityViewModelTest' \
+            --tests 'com.coffeepeek.feature.checkinhistory.impl.ui.data.ProfileActivityDatesTest' \
+            > "$RUNNER_TEMP/ios-own-profile-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-own-profile-tests.log"
+              exit 1
+            }
+      - name: Run roaster Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:roaster:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-roaster-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-roaster-tests.log"
+              exit 1
+            }
+      - name: Run shelf Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:shelf:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.shelf.impl.*' \
+            > "$RUNNER_TEMP/ios-shelf-archive-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-shelf-archive-tests.log"
+              exit 1
+            }
       - name: Run shared business ownership unit and contract tests
         shell: bash
         run: |
@@ -204,6 +356,10 @@ jobs:
           ./gradlew --max-workers=6 :feature:business-ownership:domain:iosSimulatorArm64Test \
             :feature:business-ownership:data:iosSimulatorArm64Test \
             :feature:business-ownership:impl:iosSimulatorArm64Test \
+            :feature:contributions:impl:iosSimulatorArm64Test \
+            :feature:shop-report:impl:iosSimulatorArm64Test \
+            :feature:collections:data:iosSimulatorArm64Test \
+            :feature:collections:impl:iosSimulatorArm64Test \
             > "$RUNNER_TEMP/ios-ownership-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-ownership-tests.log"
               exit 1
@@ -214,7 +370,31 @@ jobs:
           name: ios-tests-log
           path: |
             ${{ runner.temp }}/ios-native-tests.log
+            ${{ runner.temp }}/ios-community-tests.log
+            feature/community/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-ownership-tests.log
             feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
+            feature/contributions/impl/build/test-results/iosSimulatorArm64Test/
+            feature/collections/data/build/test-results/iosSimulatorArm64Test/
+            feature/collections/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-shelf-archive-tests.log
+            feature/shelf/impl/build/test-results/iosSimulatorArm64Test/
             composeApp/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-shop-menu-gallery-tests.log
+            feature/shop/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-roaster-tests.log
+            feature/roaster/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-coffee-detail-tests.log
+            feature/coffee/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-notification-inbox-tests.log
+            feature/notifications/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-discovery-tests.log
+            feature/discovery/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-own-profile-tests.log
+            feature/profile/impl/build/test-results/iosSimulatorArm64Test/
+              ${{ runner.temp }}/ios-design-system-tests.log
+              core/design-system/build/test-results/iosSimulatorArm64Test/
+            feature/check-in-history/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-auth-tests.log
+            feature/auth/impl/build/test-results/iosSimulatorArm64Test/
           retention-days: 7

@@ -11,7 +11,8 @@ import com.coffeepeek.feature.shelf.data.scan.createIosBagScanner
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.impl.ShelfPorts
-import com.coffeepeek.feature.shelf.impl.createShelfEntry
+import com.coffeepeek.feature.shelf.impl.IosShelfFeature
+import com.coffeepeek.feature.shelf.impl.createIosShelfFeature
 import org.koin.dsl.module
 import platform.Foundation.NSBundle
 import platform.Foundation.NSDate
@@ -35,11 +36,12 @@ internal fun iosShelfModule(apiBaseUrl: String = Constants.BASE_URL, modelUrl: (
             IosBagScannerModel(INPAINTER_FILE, INPAINTER_BYTES, INPAINTER_SHA256, modelUrl("ShelfInpainterURL")),
         )
     }
-    single<ShelfEntry> {
+    single<IosShelfFeature> {
         val brews = ShelfHomeBrews(get(), SessionShelfAccount(get()))
-        createShelfEntry(get(), ShelfPorts(get(), ShelfCatalogSearch(get()), ShelfCardImage, IosShelfGallery, IosShelfCamera,
+        createIosShelfFeature(get(), ShelfPorts(get(), ShelfCatalogSearch(get()), ShelfCardImage, IosShelfGallery, IosShelfCamera,
             IosShelfTimeZone, brews))
     }
+    single<ShelfEntry> { get<IosShelfFeature>().entry }
 }
 
 /** Read on every call, so a time-zone change while the app runs is picked up. */

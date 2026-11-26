@@ -19,12 +19,14 @@ import androidx.compose.ui.text.style.TextAlign
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import com.coffeepeek.feature.shelf.impl.resources.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Bare shelves with an invitation: the empty shelf and the guest's view share it. */
 @Composable
 internal fun ShelfInvitation(
-    title: String, body: String, buttonLabel: String, onButton: () -> Unit, modifier: Modifier = Modifier,
+    title: String, body: String, buttonLabel: String? = null, onButton: (() -> Unit)? = null, modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
@@ -34,16 +36,22 @@ internal fun ShelfInvitation(
             fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
         Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center)
-        Spacer(Modifier.height(CoffeePeekDimens.spacing3))
-        CoffeePeekButton(buttonLabel, onButton)
+        if (buttonLabel != null && onButton != null) {
+            Spacer(Modifier.height(CoffeePeekDimens.spacing3))
+            CoffeePeekButton(buttonLabel, onButton)
+        }
     }
 }
 
 @Composable
-private fun ShelfInvitationPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    ShelfInvitation("Здесь будет ваш кофе", "Сфотографируйте пачку — она встанет на полку, а когда закончится, уйдёт в архив",
-        "Сканировать пачку", {}, Modifier.background(MaterialTheme.colorScheme.background).padding(CoffeePeekDimens.spacing4))
+private fun ShelfInvitationPreview(dark: Boolean, guest: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    ShelfInvitation(stringResource(if (guest) Res.string.shelf_guest_title else Res.string.shelf_empty_title),
+        stringResource(if (guest) Res.string.shelf_guest_body else Res.string.shelf_empty_body),
+        stringResource(Res.string.shelf_sign_in).takeIf { guest }, {}.takeIf { guest },
+        Modifier.background(MaterialTheme.colorScheme.background).padding(CoffeePeekDimens.spacing4))
 }
 
 @Preview @Composable private fun ShelfInvitationLightPreview() = ShelfInvitationPreview(false)
 @Preview @Composable private fun ShelfInvitationDarkPreview() = ShelfInvitationPreview(true)
+@Preview @Composable private fun ShelfGuestInvitationLightPreview() = ShelfInvitationPreview(false, guest = true)
+@Preview @Composable private fun ShelfGuestInvitationDarkPreview() = ShelfInvitationPreview(true, guest = true)

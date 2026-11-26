@@ -2,19 +2,13 @@
 
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.ComposeUIViewController
 import platform.CoreGraphics.CGSizeMake
 import platform.UIKit.NSLayoutConstraint
 import platform.UIKit.UIColor
@@ -29,19 +23,18 @@ import platform.UIKit.didMoveToParentViewController
 import platform.UIKit.removeFromParentViewController
 import platform.UIKit.willMoveToParentViewController
 
-/** Hosts the same contour renderer inside native controls, with explicit child ownership. */
+private lateinit var nativeLoaderFactory: (UIColor, Double) -> UIViewController
+
+fun configureCoffeePeekNativeLoader(factory: (UIColor, Double) -> UIViewController) {
+    nativeLoaderFactory = factory
+}
+
+/** Native application supplies its contour renderer; no Compose child is mounted in UIKit controls. */
 @Composable
 fun CoffeePeekNativeLoader(parent: UIView?, color: Color, size: Dp = 24.dp) {
     if (parent == null) return
     val host = LocalUIViewController.current
-    val currentColor = rememberUpdatedState(color)
-    val controller = remember(size) {
-        ComposeUIViewController(configure = { opaque = false }) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CoffeePeekLoader(contentDescription = "", size = size, color = currentColor.value)
-            }
-        }
-    }
+    val controller = remember(size, color) { nativeLoaderFactory(color.toUIColor(), size.value.toDouble()) }
     DisposableEffect(host, controller, parent, size) {
         mountNativeLoader(host, parent, controller, size.value.toDouble())
         onDispose { unmountNativeLoader(controller) }

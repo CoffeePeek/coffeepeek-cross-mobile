@@ -1,4 +1,4 @@
-// swift-tools-version: 5.10
+// swift-tools-version: 6.0
 
 import PackageDescription
 import Foundation
@@ -41,6 +41,7 @@ let package = Package(
                 .product(name: "MapLibre", package: "maplibre-gl-native-distribution"),
             ],
             swiftSettings: [
+                .unsafeFlags(["-strict-concurrency=complete"]),
                 .unsafeFlags(["-F", composeFrameworkDirectory], .when(platforms: [.iOS])),
             ],
             linkerSettings: [
@@ -50,5 +51,6 @@ let package = Package(
                 ),
             ]
         ),
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )

@@ -114,10 +114,15 @@ private fun ShopFavorite(selected: Boolean, enabled: Boolean, host: DiscoveryHos
 /** «350 м», «1,2 км»: the previous wording, tenths of a kilometer with a comma whatever the locale. */
 @Composable
 internal fun distanceLabel(meters: Double): String {
-    if (meters < 1000) return stringResource(Res.string.discovery_distance_meters, meters.roundToInt())
+    val value = distanceLabelValue(meters)
+    return stringResource(value.first, value.second)
+}
+
+internal fun distanceLabelValue(meters: Double): Pair<org.jetbrains.compose.resources.StringResource, Any> {
+    if (meters < 1000) return Res.string.discovery_distance_meters to meters.roundToInt()
     val tenths = (meters / 100).roundToInt()
     val text = if (tenths % 10 == 0) "${tenths / 10}" else "${tenths / 10},${tenths % 10}"
-    return stringResource(Res.string.discovery_distance_km, text)
+    return Res.string.discovery_distance_km to text
 }
 
 /** One decimal with a dot in every locale, as in prod (the rating badge never shows a decimal comma). */

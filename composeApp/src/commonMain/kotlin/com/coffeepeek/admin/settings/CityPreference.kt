@@ -4,6 +4,9 @@ import com.coffeepeek.core.network.requestResult
 import com.coffeepeek.feature.discovery.api.DiscoveryCitySelection
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -21,16 +24,19 @@ internal class CityPreference(
     private var manualSavePending = false
     private var detectedCityId: String? = null
     val selected = selection.asStateFlow()
+    private val resolution = MutableSharedFlow<DiscoveryCitySelection?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    /** No startup null: a replay exists only after an actual selection or catalog resolution. */
+    val resolvedSelection = resolution.asSharedFlow()
 
     suspend fun resolve(cityIds: List<String>, nearbyCityId: String? = null): String? = lock.withLock {
         val manual = manualCityId ?: readCityId(MANUAL_CITY_KEY).getOrNull()
         manualCityId = manual
         if (manual != null && manual in cityIds) {
-            selection.value = DiscoveryCitySelection(manual, manual = true)
+            publish(DiscoveryCitySelection(manual, manual = true))
             return@withLock manual
         }
         val resolved = resolveAutomaticCity(cityIds, nearbyCityId)
-        selection.value = resolved?.let { DiscoveryCitySelection(it, manual = false) }
+        publish(resolved?.let { DiscoveryCitySelection(it, manual = false) })
         resolved
     }
 
@@ -53,7 +59,12 @@ internal class CityPreference(
         if (cityId.isBlank() || (cityId == manualCityId && !manualSavePending)) return@withLock
         manualSavePending = saveCityId(MANUAL_CITY_KEY, cityId).isFailure
         manualCityId = cityId
-        selection.value = DiscoveryCitySelection(cityId, manual = true)
+        publish(DiscoveryCitySelection(cityId, manual = true))
+    }
+
+    private fun publish(city: DiscoveryCitySelection?) {
+        selection.value = city
+        resolution.tryEmit(city)
     }
 
     private suspend fun readCityId(key: String) = requestResult { settingRepository.read(key)?.value }

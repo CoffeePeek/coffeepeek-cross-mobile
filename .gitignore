@@ -18,6 +18,9 @@ captures
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
 iosApp/Configuration/Local.xcconfig
+# xcross's flattened local Debug settings can contain developer configuration.
+iosApp/Configuration/Config.xcconfig
+iosApp/.build/
 iosXtool/CoffeePeek/.build/
 __pycache__/
 *.pyc

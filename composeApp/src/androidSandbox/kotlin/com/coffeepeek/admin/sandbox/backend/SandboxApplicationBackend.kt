@@ -69,8 +69,10 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         get() = contributionStore.mode
         set(value) = contributionStore.select(value, populated)
     private var laterPageFailed = false
+    private val nativeRefreshTokens = mutableSetOf<String>()
     fun reset(populated: Boolean) {
         contentReports.clear()
+        nativeRefreshTokens.clear()
         updatePolicy = SandboxUpdatePolicy.UpToDate; cities = SandboxCities.Single; authPolicy = SandboxAuthPolicy.Works
         feed = SandboxFeed.Single; laterPageFailed = false; generated = null
         this.populated = populated
@@ -653,10 +655,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     private fun page(items: JsonArray) = buildJsonObject { put("items", items); put("totalCount", items.size); put("currentPage", 1); put("totalPages", 1) }
     // Sign-in, registration and password recovery. Only the e-mail/password path exists: OAuth is blocked like every external service.
     private fun authRoute(path: String, method: HttpMethod, input: JsonObject): Pair<HttpStatusCode, JsonObject>? = when {
-        path == "/api/tokens" && method == HttpMethod.Post ->
-            if (authPolicy == SandboxAuthPolicy.WrongPassword) HttpStatusCode.Unauthorized to failure("Invalid credentials")
-            else ok(buildJsonObject { put("accessToken", accessToken()); put("refreshToken", "sandbox-refresh-token") })
-        path == "/api/tokens" && method == HttpMethod.Delete -> ok(JsonNull)
+        path == "/api/tokens/native" -> nativeTokens(method, input)
         path.startsWith("/api/tokens/") -> HttpStatusCode.ServiceUnavailable to failure("OAuth is disabled in offline Sandbox")
         path == "/api/users" && method == HttpMethod.Post ->
             if (authPolicy == SandboxAuthPolicy.RegistrationFailure) HttpStatusCode.BadRequest to failure("Registration rejected") else ok(JsonNull)
@@ -664,6 +663,32 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         path == "/api/users/password/forgot" && method == HttpMethod.Post ->
             if (authPolicy == SandboxAuthPolicy.RecoveryFailure) HttpStatusCode.InternalServerError to failure("Recovery unavailable") else ok(JsonNull)
         else -> null
+    }
+
+    private fun nativeTokens(method: HttpMethod, input: JsonObject): Pair<HttpStatusCode, JsonObject>? {
+        val refresh = (input["refreshToken"] as? JsonPrimitive)?.contentOrNull
+        return when (method) {
+            HttpMethod.Post -> if (authPolicy == SandboxAuthPolicy.WrongPassword) {
+                HttpStatusCode.Unauthorized to failure("Invalid credentials")
+            } else issueNativeTokens()
+            HttpMethod.Put -> if (refresh != null && nativeRefreshTokens.remove(refresh)) issueNativeTokens()
+                else HttpStatusCode.Unauthorized to failure("Refresh rejected")
+            HttpMethod.Delete -> {
+                refresh?.let(nativeRefreshTokens::remove)
+                HttpStatusCode.NoContent to envelope(JsonNull)
+            }
+            else -> null
+        }
+    }
+
+    private fun issueNativeTokens(): Pair<HttpStatusCode, JsonObject> {
+        val refresh = UUID.randomUUID().toString().also { nativeRefreshTokens += it }
+        return ok(buildJsonObject {
+            put("accessToken", accessToken())
+            put("refreshToken", refresh)
+            put("accessTokenExpiresAt", "2100-01-01T00:00:00Z")
+            put("refreshTokenExpiresAt", "2100-01-02T00:00:00Z")
+        })
     }
 
     // A JWT whose subject is the Sandbox account, so the real session code derives the same user id as the local session.

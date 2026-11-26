@@ -328,3 +328,76 @@ On `c054e4081` with this patch, the function-body check and both Android
 assemblies passed, including packaged runtime classes and Sandbox isolation.
 Profile compiled for Kotlin iOS Arm64. The scroll behavior was reviewed in
 source and remains unverified on a device.
+
+### Own profile display name (#421) — 2026-11-26
+
+The native owner header now uses the feature-owned presentation name: the
+current own profile's nonblank userName, then the public nickname, then the
+canonical profile slug. A stale public nickname cannot override the current
+own name. No email or authentication identifier is used. Inactive or missing
+owner identities expose no presentation name. The native bridge only maps
+this name; existing header @ styling, profile URLs and check-in author data
+retain their responsibilities.
+
+Verification scope: seven common presentation policy regressions cover names
+that differ from slugs, stale/public/blank fallbacks and missing identity.
+Native snapshot and account-session assertions cover replacement and closure.
+The paired native header previews now include a display name with a space.
+The implementation is based on integration parent 43dfcc43f0b71b42223a0d8f1033e7f1d3612f14.
+On that parent with this patch, Profile impl ran 110 JVM tests across ten suites
+with zero failures, errors or skips, including all seven new name cases. The
+function-body check and directSandbox assembly passed on the first run, including
+Sandbox isolation and packaged DEX runtime-class checks (build 1.2.2.3385-sandbox,
+com.coffeepeek.sandbox, APK SHA-256
+b6af7d9b0f3f6f6f754a20742296cf7dbade69ce658cc77e3f0a85ac3cf8dcfd).
+The native snapshot/session test changes have not been compiled or executed;
+Kotlin/Native and full iOS validation remain pending. Previews were not rendered.
+No device, real account, backend write or TestFlight validation was performed.
+
+### Android profile parity with native iOS — 2026-11-26
+
+User-requested checkpoint `codex/migration-android-profile-parity` starts from
+`02fde81e362a10860f12f7a54277c7556c55b3ef` in develop. This is presentation
+parity for the existing owner profile, not a new feature or navigation migration.
+The native reference is `OwnProfileScreen.swift` and `ShelfNativeGridScreen.swift`.
+
+Verification plan before edits: preserve profile tab/calendar scroll ownership,
+collection cover caching and editor return/cancel behavior, shelf drag/finish/undo,
+archive search and account/session guards. Collections owns its square two-column
+cards; Profile owns the single floating full-library entry above navigation;
+Shelf owns its floating settings control and searchable archive modal. Application
+composition remains wiring and supplies the existing callbacks and nav clearance.
+No new Gradle boundary or cross-feature implementation dependency is needed.
+
+Run the existing Shelf, Collections and Profile unit/contract suites, compile the
+application through directSandbox assembly, and require packaged runtime classes,
+Sandbox isolation and function-body checks. Check resource-key parity and paired
+colocated previews. IDE tools are unavailable in this session. Previews may be
+compiled but must not be reported as rendered. No automated UI/instrumented tests,
+device install/launch, live-account write or production analytics is authorized by
+this verification plan. Manual themes, narrow/large-text layouts, accessibility,
+modal placement/IME, tab scroll and back/cancel remain device acceptance gates.
+The already running iOS TestFlight 2.0 (3398) uses the prior source and is unaffected.
+
+Verification on the Windows/JDK 17 host, base 02fde81 plus this patch:
+Collections impl 7 suites/110 cases, Profile impl 10 suites/110 cases and Shelf
+impl 11 suites/89 cases, 309 total, zero failures/errors/skips. Collections/Profile
+ran after their final edits. The final Shelf rerun followed the modal first-event
+guard; no failed test or build was retried. Affected Android lint reports contain
+zero issues. Function limits passed (125 recorded, zero new), with no baseline
+extension or Gradle/dependency changes. RU/BE resource keys match in all three
+features and composition. Colocated fake light/dark previews compile.
+
+Both initial integration and final-guard directSandbox assemblies passed,
+including packaged DEX runtime-class and Sandbox isolation checks. The local APK
+is com.coffeepeek.sandbox, 1.2.2.3398-sandbox / 3398 (source base plus working patch),
+SHA-256: 2ed4033053cb5ec4b7637f87e970550571045691c7697e75436d7aa10e3f948d.
+
+No preview was rendered and no device was installed or launched. Studio tools
+were unavailable; the read-only ADB inventory could not connect to its daemon,
+so no manual/device acceptance is implied. The manual gates listed above remain
+open, as does compilation of this new common UI on a macOS/native runner.
+Existing Preview and expect/actual compiler deprecation warnings remain; affected
+lint reports are clean. Analytics inventory found the existing favoritesOpened
+callback and no Shelf event producer in these changed presentation paths; the
+new single entry reuses that callback without emitting new production events.

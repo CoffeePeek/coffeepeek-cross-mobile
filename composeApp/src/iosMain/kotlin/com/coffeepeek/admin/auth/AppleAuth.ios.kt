@@ -1,15 +1,11 @@
 package com.coffeepeek.admin.auth
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 interface IosAppleAuthProvider {
     fun signIn(nonce: String, state: String, completion: (String?, String?) -> Unit)
-    fun cancel()
+    fun cancel(state: String)
 }
 
 object IosAppleAuthRegistry {
@@ -21,17 +17,6 @@ actual object AppleAuth {
 
     actual suspend fun signIn(challenge: AppleLoginChallenge): String = withContext(Dispatchers.Main) {
         val provider = checkNotNull(IosAppleAuthRegistry.provider) { "Apple Sign-In не настроен" }
-        suspendCancellableCoroutine { continuation ->
-            provider.signIn(challenge.nonce, challenge.challengeId) { token, error ->
-                if (continuation.isActive) {
-                    when {
-                        error == "APPLE_SIGN_IN_CANCELLED" -> continuation.cancel(CancellationException("Apple Sign-In cancelled"))
-                        !token.isNullOrBlank() -> continuation.resume(token)
-                        else -> continuation.resumeWithException(IllegalStateException(error ?: "Не удалось войти через Apple"))
-                    }
-                }
-            }
-            continuation.invokeOnCancellation { provider.cancel() }
-        }
+        awaitNativeAppleAuth(challenge, provider::signIn, provider::cancel)
     }
 }

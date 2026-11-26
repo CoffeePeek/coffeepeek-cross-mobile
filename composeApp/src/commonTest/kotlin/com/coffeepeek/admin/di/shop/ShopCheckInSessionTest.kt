@@ -96,6 +96,18 @@ class ShopCheckInSessionTest {
         assertEquals(0, notifications)
     }
 
+    @Test fun aSameAccountReloginCannotReuseTheOldEditorOrLatePhotoCallbacks() = runTest {
+        val original = Session("token", userId = "owner")
+        val sessions = CheckInTestSessions(original)
+        val repository = Repository()
+        val lease = ShopCheckInSession(sessions, repository)
+        sessions.applySession(null)
+        sessions.applySession(original)
+        assertFalse(lease.isCurrent())
+        assertFailsWith<CancellationException> { lease.create(input) }
+        assertEquals(0, repository.writes)
+    }
+
     @Test fun resultFailureAndCallerCancellationArePreserved() = runTest {
         var notifications = 0
         val sessions = CheckInTestSessions()
@@ -140,8 +152,13 @@ class ShopCheckInSessionTest {
 
 internal class CheckInTestSessions(initial: Session? = Session("token", userId = "owner")) : SessionStore {
     private val state = MutableStateFlow(initial)
+    private var generation = 0L
+    override fun accountGeneration() = generation
     override fun peekSession() = state.value
-    override fun applySession(session: Session?) { state.value = session }
+    override fun applySession(session: Session?) {
+        if (session?.userId == null || state.value?.userId != session.userId) generation++
+        state.value = session
+    }
     override fun isActiveSession(session: Session?) = session != null && session.accessToken.isNotBlank() && !session.userId.isNullOrBlank()
     override suspend fun getSession() = state.value
     override suspend fun persistSession(session: Session?) = Unit

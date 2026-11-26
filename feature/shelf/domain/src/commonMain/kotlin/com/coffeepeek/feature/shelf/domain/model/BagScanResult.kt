@@ -25,6 +25,7 @@ class BagScanResult(
 
 /** Whether the scanner can run now or first needs to fetch a model of [downloadBytes]. */
 sealed interface BagScannerReadiness {
+    data object Disabled : BagScannerReadiness
     data object Ready : BagScannerReadiness
     data class NeedsDownload(val downloadBytes: Long) : BagScannerReadiness
 }

@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di
 
+import com.coffeepeek.admin.di.discovery.discoveryBindings
+
 import com.coffeepeek.core.media.createImageUrlFetcher
 
 import com.coffeepeek.admin.config.AppConfig
@@ -12,7 +14,7 @@ import com.coffeepeek.admin.di.favorites.RoasterFavorites
 import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
 import com.coffeepeek.admin.di.catalog.BrewMethodCatalogAdapter
 import com.coffeepeek.feature.profile.data.createPublicProfileData
-import com.coffeepeek.feature.notifications.api.NotificationFeature
+import com.coffeepeek.admin.di.notifications.registerNotifications
 import com.coffeepeek.admin.di.favorites.ServerRoasterFavorites
 import com.coffeepeek.core.media.ImageUrlFetcher
 import com.coffeepeek.core.network.ApiClients
@@ -39,7 +41,7 @@ import com.coffeepeek.admin.di.roaster.roasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
-import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
+import com.coffeepeek.admin.ui.screen.checkins.HomeCheckInDetailRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
 import com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer
 import org.koin.core.context.startKoin
@@ -142,28 +144,23 @@ private fun appModule(
     single<CommunityScreenRenderer> { communityRendererFactory() }
     single<CheckInDetailScreenRenderer> { checkInDetailRendererFactory() }
     single<ContributionsScreenRenderer> { contributionsRendererFactory() }
-    single<DiscoveryScreenRenderer> { discoveryRendererFactory() }
+    discoveryBindings(discoveryRendererFactory)
     includes(com.coffeepeek.admin.di.community.communityModule())
     single<com.coffeepeek.feature.auth.api.LocalUserData> { com.coffeepeek.admin.di.auth.UserSessionLocalUserData(get()) }
     single<com.coffeepeek.feature.auth.api.AuthAnalytics> { com.coffeepeek.admin.di.auth.AppAuthAnalytics() }
     single<com.coffeepeek.feature.auth.domain.AuthRepository> {
         val gateway = get<ApiClients>()
-        com.coffeepeek.feature.auth.data.createAuthRepository(gateway.plainClient, gateway.client, get(), get())
+        com.coffeepeek.feature.auth.data.createAuthRepository(gateway.plainClient, get(), get())
     }
     single<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer> { checkInRenderers.shopPicker(this) }
     single<CheckInCreateFlowRenderer> { checkInRenderers.create(this) }
-    single<CheckInHistoryScreenRenderer> { checkInRenderers.history(this) }
+    single<HomeCheckInDetailRenderer> { checkInRenderers.homeDetail(this) }
     single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }
     single<ShopCheckInListScreenRenderer> { shopCheckInListRendererFactory() }
     single<ShopCheckInFormRenderer> { shopCheckInRendererFactory() }
     single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
     single<ShopMenuGalleryScreenRenderer> { shopGalleryRendererFactory(get()) }
-    single<com.coffeepeek.feature.notifications.api.NotificationFeature> {
-        com.coffeepeek.feature.notifications.impl.createNotificationFeature(
-            com.coffeepeek.feature.notifications.data.createNotificationRepository(get<ApiClients>().client),
-            com.coffeepeek.admin.di.notifications.SessionNotificationAccount(get()), com.coffeepeek.admin.notifications.NativePushBridge,
-        )
-    }
+    registerNotifications()
     single<BrewMethodCatalog> { BrewMethodCatalogAdapter(get()) }
     single { com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature(get<ApiClients>().client, com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount(get())) }
     single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.impl.AuthorBlockingFeature>().visibility }
