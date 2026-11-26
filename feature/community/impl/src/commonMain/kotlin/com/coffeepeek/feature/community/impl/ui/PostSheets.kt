@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.heightIn
 
 
 import androidx.compose.foundation.Image
+import androidx.compose.material3.ButtonDefaults
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.community.impl.resources.Res
 import com.coffeepeek.feature.community.impl.resources.community_cancel
@@ -249,10 +250,14 @@ internal fun ReportSheetContent(form: ReportForm, callbacks: ReportCallbacks) {
             else -> null
         }
         message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        TextButton(callbacks.onSubmit, enabled = !form.isSending) {
-            Text(stringResource(if (form.isSending) Res.string.community_report_sending else Res.string.community_report_send))
+        // The owner's pick from the #416 variants gallery (variant C): the app's
+        // primary button for send, a quiet text action for cancel below.
+        CoffeePeekButton(stringResource(if (form.isSending) Res.string.community_report_sending else Res.string.community_report_send),
+            callbacks.onSubmit, Modifier.fillMaxWidth(), enabled = !form.isSending)
+        TextButton(callbacks.onDismiss, Modifier.fillMaxWidth(), enabled = !form.isSending,
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)) {
+            Text(stringResource(Res.string.community_cancel))
         }
-        TextButton(callbacks.onDismiss, enabled = !form.isSending) { Text(stringResource(Res.string.community_cancel)) }
     }
 }
 
@@ -289,10 +294,13 @@ private fun TextArea(value: String, onChange: (String) -> Unit, placeholder: Str
 @Preview @Composable private fun EditSheetLightPreview() = EditSheetPreview(false)
 @Preview @Composable private fun EditSheetDarkPreview() = EditSheetPreview(true)
 
-@Composable private fun ReportSheetPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+@Composable private fun ReportSheetPreview(dark: Boolean, sending: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     androidx.compose.material3.Surface {
-        ReportSheetContent(ReportForm("Нарушение", ReportIssue.Empty, failed = false, failure = null, isSending = false), ReportCallbacks({}, {}, {}))
+        ReportSheetContent(ReportForm("Нарушение", if (sending) null else ReportIssue.Empty,
+            failed = false, failure = null, isSending = sending), ReportCallbacks({}, {}, {}))
     }
 }
 @Preview @Composable private fun ReportSheetLightPreview() = ReportSheetPreview(false)
 @Preview @Composable private fun ReportSheetDarkPreview() = ReportSheetPreview(true)
+@Preview @Composable private fun ReportSheetSendingLightPreview() = ReportSheetPreview(false, sending = true)
+@Preview @Composable private fun ReportSheetSendingDarkPreview() = ReportSheetPreview(true, sending = true)
