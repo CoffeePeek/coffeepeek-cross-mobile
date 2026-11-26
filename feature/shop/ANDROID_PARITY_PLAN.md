@@ -1081,3 +1081,12 @@ The prior CHANGES_REQUESTED review has no inline review threads. It is not
 represented here as a new human approval or dismissed review. The owner has
 explicitly authorized fixing and merging the ordered stack; final review,
 immutable-head checks and the actual merge remain root's responsibility.
+
+Root verification, 2026-11-27 (Windows/JDK 17), source 11f357df2:
+Shop impl executed 118 tests across 12 suites, zero failures/errors/skips;
+affected Android lint reported zero issues. Function-body verification passed
+(125 recorded, zero new), with no baseline change. Direct Sandbox assembly,
+packaged runtime-class verification and isolation passed. Artifact identity:
+com.coffeepeek.sandbox, 1.2.2.3404-sandbox / 3404. No device install/launch or
+preview rendering ran. Manual ripple/theme/large-text checks remain unverified;
+macOS compilation and Native contracts are separate CI gates.
