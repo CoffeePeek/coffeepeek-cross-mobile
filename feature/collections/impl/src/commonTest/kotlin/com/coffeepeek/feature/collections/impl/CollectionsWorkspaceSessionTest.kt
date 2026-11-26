@@ -163,6 +163,75 @@ class CollectionsWorkspaceSessionTest {
         assertEquals(0, saved.creates)
     }
 
+    @Test fun nativeShopPickerCancelsQuickCreationWithoutLosingItsSelection() = runTest(dispatcher) {
+        assertQuickCreationCancel(CollectionPlaceKind.CoffeeShop)
+    }
+
+    @Test fun nativeRoasterPickerCancelsQuickCreationWithoutLosingItsSelection() = runTest(dispatcher) {
+        assertQuickCreationCancel(CollectionPlaceKind.Roaster)
+    }
+
+    private fun TestScope.assertQuickCreationCancel(kind: CollectionPlaceKind) {
+        val session = draftPicker(kind)
+        assertTrue(session.current().canCreateQuick)
+        session.quickTitle(null)
+        runCurrent()
+        assertPickerSelectionRetained(session)
+        assertEquals(0, saved.creates)
+        assertEquals(0, saved.membershipWrites)
+        assertTrue(events.isEmpty())
+        session.back()
+        runCurrent()
+        assertEquals(listOf("back"), events)
+        assertEquals(0, saved.membershipWrites)
+    }
+
+    @Test fun nativePickerCanCancelAfterQuickCreationFails() = runTest(dispatcher) {
+        saved.createGate = CompletableDeferred()
+        saved.createFailure = IllegalStateException("Offline")
+        val session = draftPicker(CollectionPlaceKind.CoffeeShop)
+        session.createQuick()
+        runCurrent()
+        assertTrue(session.current().busy)
+        saved.createGate?.complete(Unit)
+        runCurrent()
+        assertFalse(session.current().busy)
+        assertEquals("Save", session.current().failure)
+        session.quickTitle(null)
+        runCurrent()
+        assertPickerSelectionRetained(session)
+        assertEquals(0, saved.membershipWrites)
+    }
+
+    @Test fun nativePickerBackClosesAnActiveDraftWithoutWriting() = runTest(dispatcher) {
+        val session = draftPicker(CollectionPlaceKind.Roaster)
+        session.back()
+        runCurrent()
+        assertEquals(listOf("back"), events)
+        session.close()
+        session.createQuick()
+        session.commitMemberships()
+        runCurrent()
+        assertEquals(0, saved.creates)
+        assertEquals(0, saved.membershipWrites)
+    }
+
+    private fun TestScope.draftPicker(kind: CollectionPlaceKind): CollectionsWorkspaceSession {
+        val session = picker(kind)
+        runCurrent()
+        session.query("Public")
+        session.toggleMembership("public")
+        session.quickTitle("Unfinished list")
+        runCurrent()
+        return session
+    }
+
+    private fun assertPickerSelectionRetained(session: CollectionsWorkspaceSession) {
+        assertNull(session.current().quickTitle)
+        assertEquals("Public", session.current().query)
+        assertTrue(session.current().lists.single { it.id == "public" }.selected)
+    }
+
     @Test fun nativePickerKeepsSelectionsAfterFailureAndRejectsWritesAfterClose() = runTest(dispatcher) {
         val session = picker()
         runCurrent()
@@ -200,8 +269,9 @@ class CollectionsWorkspaceSessionTest {
         assertEquals(0, saved.membershipWrites)
     }
 
-    private fun picker(): CollectionsWorkspaceSession = CollectionsWorkspaceSession(saved, SavedTestSnapshots(),
-        account, CollectionsWorkspaceMode.Picker, null, null, SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop"),
+    private fun picker(kind: CollectionPlaceKind = CollectionPlaceKind.CoffeeShop): CollectionsWorkspaceSession = CollectionsWorkspaceSession(saved, SavedTestSnapshots(),
+        account, CollectionsWorkspaceMode.Picker, null, null,
+        SavedCollectionTarget(kind, if (kind == CollectionPlaceKind.CoffeeShop) "shop" else "roaster"),
         { events.add("back") }, { events.add("sign-in") }, {}, {}, {}, {}, {}).also(sessions::add)
 
     private fun session(mode: CollectionsWorkspaceMode, id: String? = null,

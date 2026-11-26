@@ -827,8 +827,17 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   storage and server authorization are outside this patch. Existing account and
   run-generation guards, token revocation and permission decisions are unchanged;
   no new sensitive logging, network call or bypass is introduced.
-- Xcode build, Android Sandbox assembly and replacement TestFlight delivery are
-  pending. No new real-device or real-login acceptance is claimed.
+- Android `:composeApp:assembleDirectSandbox --max-workers=6` passed, including
+  Sandbox isolation and packaged DEX/runtime-class checks. No app was installed
+  or launched. Existing compiler warnings remain outside this correction.
+- macOS run 45842230429 passed the full iOS Simulator Kotlin/Swift build,
+  binary compatibility and tooling checks for d73fc592419818aa21e58d23883c5b35bcb899db.
+  Its broader Native job reached the 45-minute limit in the final shared stage;
+  836 cases / 125 retained XML suites had zero failures/errors/skips. That
+  partial run is not recorded as a complete successful suite.
+- Independent static review found no actionable callback-boundary findings.
+  Replacement TestFlight delivery follows final-source verification below.
+  No new real-device or real-login acceptance is claimed.
 
 ### Release 2.0 and Google button follow-up (2026-11-26)
 
@@ -846,7 +855,56 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   The current Xcode project uses explicit source references, so the new Swift
   file is registered alongside the existing Apple button; the existing asset
   catalog includes its image. No new package dependency is added.
-- The callback fix remains isolated in PR 437 while this child checkpoint is
-  prepared. Its full verification continues without restarting. Final source
-  compilation, release validation/upload and real-device visual review remain
-  separate gates; no phone interaction or live account writes are performed.
+- PR 437 merged the callback fix into codex/ios-native as
+  ce3272426ea56992a13f813f15496c54af151f50. PR 438 was then retargeted to native
+  and merged as 0c8f947ddbc8216cc476bdced557690bc32f81ef. Its complete tree
+  matches verified source de68c6419ceea9e318daf0006d4bba7b3c003761 exactly.
+- Final-source macOS run 45848388509 passed the complete Kotlin/Swift iOS
+  Simulator build, binary/deployment/Liquid Glass compatibility and iOS tooling
+  contracts, including the worker callback regression. Four versioning and six
+  Apple-processing observer contracts also passed locally. Xcode project syntax
+  and exact-once source linkage passed before compilation.
+- The first final-source Native attempt retained 1130 cases / 156 XML suites,
+  with zero failures/errors/skips. Its last shared-business Gradle command
+  reported BUILD SUCCESSFUL, but GitHub cancelled the job at its 45-minute
+  limit before normal completion. This job status is retained separately from
+  the successful test results. Repeating only that Native job after the app
+  build saved its branch-scoped cache completed successfully as job 140034516329;
+  the full verification run is now successful. The first timeout is retained.
+- Signed Release delivery of exactly 2.0 (3253) was dispatched once as run
+  45854529075 for native source 0c8f947ddbc8216cc476bdced557690bc32f81ef.
+  While its archive was running, the owner reported a new collection-creation
+  cancellation defect. The run was cancelled before upload; App Store Connect
+  upload and Apple processing were skipped and temporary signing cleanup passed.
+  No successful delivery is claimed for 3253. The replacement release will include
+  the cancellation correction below. No phone interaction, live account writes
+  or new real-device visual acceptance is claimed.
+
+### Collection creation cancellation from favorites (2026-11-26)
+
+- Both shop and roaster favorite actions open the same native membership picker
+  through IosRootModals. Quick creation previously presented a second SwiftUI
+  sheet above the UIKit picker sheet, with value snapshots for busy/enabled/error
+  state. The owner reports being unable to cancel this form. No touch-based
+  reproduction is claimed while the owner retains device control.
+- Picker and quick creation now share one observing native host. Cancel returns
+  to the existing membership selection and query without a write or navigation
+  event. A late TextField edit cannot reopen a cancelled draft. The existing
+  medium/large sheet sizes, busy dismissal guards, analytics ownership and
+  server-backed membership writer remain; no Kotlin production code changed.
+- The actual Swift late-edit contract reproduces the cancelled-draft reopening
+  with the old production setter and passes with the guarded setter. The first
+  restricted compiler launch returned Windows access error 0xc0000022; the same
+  contract passed with normal Swift compiler access. This is not a device UI test.
+- All 14 CollectionsWorkspaceSession JVM cases passed, including four new cases
+  for both target kinds, failure recovery and close/back with no membership
+  writes. Function-body verification passed with 125 recorded and zero new
+  violations. Android Sandbox assembly, isolation and packaged runtime-class
+  checks passed; no installation or app launch was performed. Existing native
+  light/dark picker and quick-create content previews remain colocated.
+- Native verification's 45-minute deadline cancelled multiple otherwise clean
+  runs, including one whose final Gradle command and all 1130 cases had finished.
+  Increase only that job's deadline to 60 minutes so this checkpoint can finish
+  its reports and cache cleanup without another whole-suite timeout retry.
+- Full Xcode verification and replacement 2.0 TestFlight delivery remain pending.
+  No new real-device visual acceptance or live account mutation is claimed.

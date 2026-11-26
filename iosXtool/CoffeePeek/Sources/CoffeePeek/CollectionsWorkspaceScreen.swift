@@ -54,6 +54,13 @@ private struct CollectionsMembershipHost: View {
     private var enabled: Bool { state.signedIn && !state.loading && !state.busy && state.membershipsLoaded }
 
     var body: some View {
+        Group {
+            if state.quickTitle != nil { quickCreate }
+            else { membershipPicker }
+        }.interactiveDismissDisabled(state.busy)
+    }
+
+    private var membershipPicker: some View {
         CollectionsMembershipContent(strings: model.strings,
             items: state.matchingLists.map { CollectionMembershipItem(id: $0.id, title: $0.title,
                 isPublic: $0.isPublic, count: $0.count, selected: $0.selected) },
@@ -68,20 +75,19 @@ private struct CollectionsMembershipHost: View {
                 WorkspaceCover(workspace: model.workspace, id: item.id, version: state.accountVersion)
                     .id(state.lists.first { $0.id == item.id }?.imageKey)
             }
-            .interactiveDismissDisabled(state.busy)
-            .sheet(isPresented: Binding(get: { state.quickTitle != nil }, set: { visible in
-                if !visible { model.workspace.quickTitle(value: nil) }
-            })) { quickCreate }
     }
 
     private var quickCreate: some View {
         CollectionsQuickCreateContent(strings: model.strings,
-            title: Binding(get: { state.quickTitle ?? "" }, set: { model.workspace.quickTitle(value: $0) }),
+            title: Binding(get: { state.quickTitle ?? "" }, set: updateQuickTitle),
             busy: state.busy, enabled: state.canCreateQuick, failure: state.failure,
             cancel: { model.workspace.quickTitle(value: nil) }, create: model.workspace.createQuick)
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-            .interactiveDismissDisabled(state.busy)
+    }
+
+    private func updateQuickTitle(_ value: String) {
+        // A TextField can deliver its final edit after Cancel removed its draft.
+        guard model.workspace.current().quickTitle != nil else { return }
+        model.workspace.quickTitle(value: value)
     }
 }
 
