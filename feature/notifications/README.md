@@ -119,3 +119,28 @@ and notification-generation guards remain in force. This change adds no analytic
 Native macOS/iOS compilation, manual UI review, real backend persistence and FCM/APNs delivery
 were not exercised locally. Sandbox and in-memory contracts do not certify those gates.
 No UI/instrumented/screenshot test, real-account write, live push, merge or deployment ran.
+
+### Combined release checkpoint — 2026-11-26
+
+For the owner-requested develop merge and TestFlight release, this branch now follows
+collections checkpoint `2effe0c65212f2ece502c9e8ead817950adc6a6d`. That parent repairs
+the native profile factory argument mapping exposed by failed iOS run 45887439805;
+the original failure is retained in the native exit plan. The notification definitions
+move together into the existing notifications composition package, preserving their
+dependencies and singleton lifetime. Generated function-limit debt shrinks only the
+Koin appModule entry from 70 to 66; no baseline entry is added or increased.
+
+At local merge `29a678edc` plus this DI extraction, Windows/JDK 17 with
+`--max-workers=6` passed the combined gate: notification data 7 cases, notification
+impl 42, collections impl 110, profile impl 110 and application unit 751. The retained
+reports contain 1020 cases across 193 suites, zero failures/errors/skips; the 751 app
+cases executed in this invocation, while unchanged feature tasks reused valid cached
+or up-to-date results. DirectSandbox assembly, isolation and packaged DEX checks passed
+(com.coffeepeek.sandbox, 1.2.2.3395-sandbox / 3395), with no installation or app run.
+Function limits passed before regeneration; its generated diff contains only the
+appModule reduction. The second limit verification also passed: 125 recorded, zero new.
+
+The server companion #381 was owner-approved for main and merged as `3c1ea2368b`.
+Its production deployment and the combined mobile iOS gate remain release gates.
+The owner explicitly requested waiting for the exact new iOS 2.0 build to finish
+Apple processing; the older successful 2.0 (3257) is not acceptance for these fixes.
