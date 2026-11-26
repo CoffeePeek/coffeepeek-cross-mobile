@@ -971,3 +971,10 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   No UI/instrumentation/screenshot tests, real-account writes or phone actions.
   Function-body verification passed with 125 recorded and zero new violations;
   the stricter native baseline is preserved without manually raising entries.
+- The initial integration test command selected nonexistent
+  testDirectSandboxUnitTest; no tests ran in that invocation. It was corrected to
+  the existing testDirectDebugUnitTest with inspected fake session/navigation/
+  MockEngine composition fixtures; the APK target remains directSandbox.
+- The first compile then caught a duplicate onOpenCoffee named argument created
+  by automatic merging in the public-profile slot adapter. The identical second
+  callback was removed; original selection/compile failure logs remain local.

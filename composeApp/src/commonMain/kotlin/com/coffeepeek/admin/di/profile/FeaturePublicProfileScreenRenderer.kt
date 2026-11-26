@@ -86,7 +86,6 @@ internal fun profileSlots(): ProfileSlots {
         progressiveImage = { preview, detail, modifier, scale, onSize -> CoffeePeekImage(data = preview, highQualityData = detail,
             modifier = modifier, contentScale = scale, showLoader = true, onDecodedSize = onSize) },
         reportCheckIn = { Navigator.navigate(Navigator.Screen.ReportCheckIn(it)) },
-        onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
         photoPrefetch = { listState, items -> PrefetchListPhotos(listState, items) },
     )
 }
