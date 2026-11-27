@@ -1,7 +1,7 @@
 PRODUCT_NAME = CoffeePeek
 PRODUCT_BUNDLE_IDENTIFIER = com.coffeepeek
 CODE_SIGN_ENTITLEMENTS = iosApp/CoffeePeek.entitlements
-MARKETING_VERSION = 1.2.0
+MARKETING_VERSION = 2.0.0
 // Keep release build codes above TestFlight builds made from the longer native iOS branch.
 BUILD_NUMBER_OFFSET = 1100
 CURRENT_PROJECT_VERSION = 1
