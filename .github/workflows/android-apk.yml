@@ -17,6 +17,7 @@ jobs:
   build_apk:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     outputs:
       channel: ${{ steps.meta.outputs.channel }}
       release_dir: ${{ steps.meta.outputs.release_dir }}
@@ -34,6 +35,9 @@ jobs:
 
       - name: Test Android release activation guard
         run: python3 -m unittest discover -s tools/release -p 'test_*.py' -v
+
+      - name: Test Android checks watchdog
+        run: python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
 
       - name: Set up JDK 17
         uses: actions/setup-java@v6
@@ -136,8 +140,13 @@ jobs:
           umask 077
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/coffeepeek-release.jks"
 
-      - name: Run Android checks
-        run: ./gradlew --no-daemon --max-workers=6 testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug
+      - name: Android unit tests
+        timeout-minutes: 30
+        run: bash tools/ci/run_android_checks.sh unit
+
+      - name: Android lint
+        timeout-minutes: 30
+        run: bash tools/ci/run_android_checks.sh lint
 
       - name: Build signed release artifacts
         env:

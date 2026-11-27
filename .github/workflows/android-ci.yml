@@ -20,6 +20,7 @@ concurrency:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -60,6 +61,9 @@ jobs:
         shell: bash
         run: printf 'API_BASE_URL=https://example.com/\nGOOGLE_WEB_CLIENT_ID=\n' > local.properties
 
+      - name: Test Android checks watchdog
+        run: python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
+
       - name: Test APK runtime verification
         run: ./gradlew -p build-logic --no-daemon --max-workers=6 :build-logic-utils:test
 
@@ -80,9 +84,10 @@ jobs:
           '-Dorg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8'
           :composeApp:assemblePlayDebug
 
-      - name: Android unit tests and lint
-        run: >-
-          ./gradlew --no-daemon --max-workers=6
-          '-Dorg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8'
-          testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest
-          lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug
+      - name: Android unit tests
+        timeout-minutes: 30
+        run: bash tools/ci/run_android_checks.sh unit
+
+      - name: Android lint
+        timeout-minutes: 30
+        run: bash tools/ci/run_android_checks.sh lint
