@@ -401,3 +401,30 @@ Existing Preview and expect/actual compiler deprecation warnings remain; affecte
 lint reports are clean. Analytics inventory found the existing favoritesOpened
 callback and no Shelf event producer in these changed presentation paths; the
 new single entry reuses that callback without emitting new production events.
+
+### Remove the duplicate Collections heading — 2026-11-27
+
+From develop `8168bfed4`, the selected Collections profile tab now renders its
+existing cards directly below the tab strip. The main owner entry, no-public-slug
+fallback and own public-profile route omit the repeated section heading; native
+iOS omits the same heading above its embedded collection controller. Tab labels,
+the floating full-library action and its accessibility label remain unchanged.
+The last unused ProfileSectionHeading implementation is removed. Colocated
+light/dark collection previews use a fake two-column grid beneath the existing
+tabs. No collection data, navigation, analytics, public API or resources change.
+
+Verification plan: compile the affected Profile presentation and assemble
+directSandbox with packaged runtime-class/isolation and function-body checks.
+Previews require no DI or network. No new automated UI/instrumented/screenshot
+tests or low-value text-presence unit tests are added for this presentation-only
+removal. Native Swift compilation, rendered previews and manual themes, font
+sizes, scrolling and accessibility remain separate validation gates until run.
+
+Verification on 2026-11-27 from `8168bfed4` plus this patch: Profile lint has
+zero issues; the function-body check passes (125 recorded, zero new violations).
+The `directSandbox` application assembled successfully, including packaged DEX
+runtime-class and Sandbox isolation checks. Existing Preview and expect/actual
+deprecation warnings remain; no new warning was introduced in these paths.
+Previews compiled but were not rendered. No app was installed or launched, and
+no new tests were added for this text/layout removal. Full native Swift build
+remains a macOS CI gate; manual themes, font sizes and accessibility remain open.
