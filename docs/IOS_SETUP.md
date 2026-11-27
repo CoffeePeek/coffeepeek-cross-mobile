@@ -113,7 +113,7 @@ Kotlin/Native тесты. Markdown и Android-only пути исключены �
 не является автоматическим TestFlight upload. Environment — `testflight`.
 Markdown-only изменения не запускают автоматическую публикацию.
 
-Публичная версия берётся из `MARKETING_VERSION` (сейчас 2.0), номер сборки —
+Публичная версия берётся из общего с Android `MARKETING_VERSION` (сейчас 2.0.0), номер сборки —
 `BUILD_NUMBER_OFFSET + git rev-list --count HEAD` (сейчас offset 1100).
 Повтор того же коммита не увеличивает номер. Источник — `Shared.xcconfig` и шаг
 Read build number; не поддерживайте отдельный ручной номер в документации.

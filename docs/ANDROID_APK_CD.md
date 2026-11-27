@@ -115,7 +115,7 @@ ssh-keygen -l -E sha256 -f /etc/ssh/ssh_host_ed25519_key.pub | awk '{print $2}'
 
 ## Версии и metadata
 
-Android version name рассчитывается в `composeApp/build.gradle.kts` (сейчас `1.2.2.N`). Номер сборки — `BUILD_NUMBER_OFFSET + git rev-list --count HEAD`; текущий offset `1100` читается из `iosApp/Configuration/Shared.xcconfig`. iOS использует отдельный `MARKETING_VERSION` (сейчас `2.0`). Источник и правила повторов — [GOOGLE_PLAY_CD.md](GOOGLE_PLAY_CD.md). Workflow сохраняет в GitHub job summary:
+Android version name читается из общего с iOS `MARKETING_VERSION` (сейчас `2.0.0`) в `iosApp/Configuration/Shared.xcconfig`. Номер сборки хранится отдельно: `BUILD_NUMBER_OFFSET + git rev-list --count HEAD`, текущий offset `1100`. Источник и правила повторов — [GOOGLE_PLAY_CD.md](GOOGLE_PLAY_CD.md). Workflow сохраняет в GitHub job summary:
 
 - version name и version code;
 - размер APK;
