@@ -91,6 +91,25 @@ class NativeRootNavigationModelTest {
         assertEquals(4, model.actual.selected)
         assertEquals(model.actual, model.plan(Navigator.NavEvent.SelectTab(Navigator.Screen.FeedTab)))
     }
+    @Test fun switchingModesKeepsSubsequentNavigationInsideTheVisibleRoots() {
+        val model = NativeRootNavigationModel(true)
+        model.confirm(model.plan(Navigator.NavEvent.SelectTab(Navigator.Screen.ProfileTab)))
+        model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.ShopDetail("personal"))))
+        model.configure(true, true)
+        model.confirm(model.plan(Navigator.NavEvent.PopBack))
+        assertEquals(4, model.actual.selected)
+        assertEquals(listOf(Navigator.Screen.BusinessTab), model.actual.stacks[4].map { it.screen })
+        model.configure(true, false)
+        model.confirm(model.planLink(Navigator.Screen.ShopDetail("personal-again")))
+        assertEquals(0, model.actual.selected)
+        assertEquals(Navigator.Screen.ShopDetail("personal-again"), model.actual.stacks[0].last().screen)
+    }
+    @Test fun staleBusinessModeCannotGiveTheGuestAHiddenBusinessRoot() {
+        val model = NativeRootNavigationModel(false, businessMode = true)
+        assertEquals(listOf(0, 1, 2, 3), model.visibleTabs)
+        assertEquals(0, model.actual.selected)
+        assertEquals(model.actual, model.plan(Navigator.NavEvent.SelectTab(Navigator.Screen.BusinessTab)))
+    }
     @Test fun aRootOrUnknownWebLinkReturnsToTheSelectedRootWithoutPushingMain() {
         val model = NativeRootNavigationModel(false)
         model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.ShopDetail("shop"))))
