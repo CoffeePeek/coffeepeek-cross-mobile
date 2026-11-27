@@ -70,7 +70,11 @@ class AttributionEngine(
         process()
     }
 
-    suspend fun pause() = lock.withLock { identity = null }
+    suspend fun pause() = lock.withLock {
+        identity = null
+        load()
+        retryRevocations()
+    }
 
     suspend fun clearAccount(resetInstallation: Boolean) = lock.withLock {
         identity = null
@@ -103,9 +107,12 @@ class AttributionEngine(
     }
 
     private suspend fun load() {
-        if (state != null) return
-        val loaded = store.load()
-        state = loaded.copy(revocations = validRevocations(loaded.revocations))
+        val loaded = state ?: store.load()
+        val expired = loaded.evidence?.takeIf { it.receiptExpiresAt <= clock.now() }
+        val controls = loaded.revocations + listOfNotNull(expired?.let { ObserverRevocation(it.observerToken, clock.now() + WEEK) })
+        state = loaded.copy(evidence = loaded.evidence.takeUnless { expired != null }, revocations = validRevocations(controls))
+        if (expired != null && (acceptedObservation != null || observed)) expireObserver()
+        if (state != loaded) store.save(requireNotNull(state))
     }
 
     private suspend fun process() {

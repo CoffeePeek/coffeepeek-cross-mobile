@@ -28,5 +28,9 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-37.0 build-tools;36.0.0'
+          log-accepted-android-sdk-licenses: 'false'
+      - uses: gradle/actions/setup-gradle@v6
       - name: Compile the actual iOS transport and storage
         run: ./gradlew :feature:attribution:data:compileKotlinIosSimulatorArm64 --max-workers=6 --console=plain

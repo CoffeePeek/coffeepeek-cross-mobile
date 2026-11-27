@@ -16,6 +16,7 @@ import kotlin.time.TimeSource
 internal enum class AnalyticsConsent { Unknown, Accepted, Declined }
 internal data class AnalyticsContext(val app: String, val version: String, val environment: String)
 internal data class AnalyticsScope(val generation: Long, val page: String)
+internal data class AnalyticsIdentityLease(val distinctId: String, val sessionId: String?, val revision: Long)
 internal data class AnalyticsState(
     val consent: AnalyticsConsent = AnalyticsConsent.Unknown,
     val restored: Boolean = false,
@@ -110,10 +111,12 @@ internal class AnalyticsService(
 
     suspend fun restoreConsent() = reconcileAndWait()
 
-    fun attributionIdentity(): Pair<String, String?>? {
+    fun attributionIdentity(): AnalyticsIdentityLease? {
         if (!allowed() || !state.value.ready) return null
-        return transport.identity()?.takeIf { it.first == state.value.userId }
+        return transport.identity()?.takeIf { it.first == state.value.userId }?.let { AnalyticsIdentityLease(it.first, it.second, sdkRevision) }
     }
+
+    fun isAttributionLeaseCurrent(revision: Long) = allowed() && state.value.ready && sdkRevision == revision
 
     private suspend fun restoreAccountPreference() {
         val snapshot = state.value

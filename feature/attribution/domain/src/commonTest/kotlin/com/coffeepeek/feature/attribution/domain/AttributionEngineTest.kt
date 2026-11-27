@@ -5,6 +5,17 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 
 class AttributionEngineTest {
+    @Test fun expiredReceiptIsErasedEvenWhileCollectionIsPaused() = runTest {
+        val fixture = Fixture()
+        fixture.backend.failRevoke = true
+        fixture.store.state = AttributionLocalState(evidence = AttributionEvidence("expired-observer", fixture.time - DAY,
+            "expired-receipt", fixture.time - 1, "recipient"))
+        fixture.engine.pause()
+        assertNull(fixture.store.state.evidence)
+        assertEquals(1, fixture.store.state.revocations.size)
+        assertTrue(fixture.backend.observations.isEmpty())
+    }
+
     @Test fun serverExpiredObserverStartsFreshObservationWithoutOldCredential() = runTest {
         val fixture = Fixture()
         fixture.ready()

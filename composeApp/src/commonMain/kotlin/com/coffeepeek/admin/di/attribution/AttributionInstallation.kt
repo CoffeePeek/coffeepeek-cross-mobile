@@ -56,15 +56,16 @@ private suspend fun maintainAttribution(identity: AttributionIdentity) {
     }
 }
 
-private fun permittedIdentity(service: AnalyticsService, sessions: SessionReader): AttributionIdentity? {
+internal fun permittedIdentity(service: AnalyticsService, sessions: SessionReader): AttributionIdentity? {
     val state = service.state.value
     val sdk = service.attributionIdentity() ?: return null
     val session = sessions.peekSession()?.takeIf { it.userId == state.userId } ?: return null
     val generation = sessions.accountGeneration()
-    return AttributionIdentity(requireNotNull(session.userId), sdk.first, sdk.second, AppConfig.updatePlatform,
+    return AttributionIdentity(requireNotNull(session.userId), sdk.distinctId, sdk.sessionId, AppConfig.updatePlatform,
         AppConfig.versionName.take(64), if (AppConfig.isDebug) "development" else "production") {
         val current = service.state.value
-        current.generation == state.generation && current.ready && current.foreground &&
+        service.isAttributionLeaseCurrent(sdk.revision) && current.consentRevision == state.consentRevision &&
+            current.generation == state.generation && current.ready && current.foreground &&
             current.consent == AnalyticsConsent.Accepted && current.consentPersisted &&
             sessions.accountGeneration() == generation && sessions.peekSession()?.userId == session.userId &&
             sessions.isActiveSession(sessions.peekSession()) && current.userId == session.userId
