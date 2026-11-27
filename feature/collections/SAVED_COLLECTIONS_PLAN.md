@@ -611,3 +611,34 @@ The shared ProfilePreference contract is retained for the native/API boundary.
 Paired grid/control/section/collection-pane previews use fake state and compile
 without requiring an account. Full verification evidence and manual gates are in
 `../profile/PROFILE_TABS_PLAN.md` under Android profile parity.
+
+### Saved editor selects the profile Collections section — #422 follow-up, 2026-11-27
+
+Base: develop `8168bfed4388b8051fc0c87ca6411198e3e69ca2`, branch
+`codex/migration-collections-return-422-v2`. The previous fix already routes
+successful new/edit saves through the library, profile preview and native
+workspace adapters to the profile root. It does not request the Collections
+section: Compose restores its last section (or Check-ins), and native profile
+only observes explicit Shelf and Check-ins requests. The Telegram video was not
+viewed; this finding follows the active production entry and callback paths.
+
+Verification plan before implementation: add a one-shot Collections request at
+accepted root-event delivery, after the existing root/account-lifetime guard.
+Pass it into profile through a narrow slot; observe and consume it in the
+retained/recreated Compose profile and the native profile. Explicit Shelf,
+Check-ins and Collections intents supersede one another; account replacement or
+logout clears private requests. An ordinary profile tab tap keeps its section.
+No save ViewModel, persistence, picker quick-create, cancel/back, failure,
+privacy, media or analytics behavior changes. Existing save guards remain the
+only source of successful editor completion.
+
+In-memory contracts will verify accepted/stale completion delivery, pending
+selection and one-time consumption, opposing intents and session reset. Reuse
+existing new/edit save, failure, cancellation, account and native callback suites.
+Required integration gates: collections/profile unit contracts, application
+Direct Debug unit tests, Direct Sandbox assembly/isolation/packaged runtime
+checks, function-body limits and macOS Kotlin/Swift native compilation. No Gradle
+run, device test, live account write, UI/instrumented/screenshot test or preview
+render has run for this follow-up at authoring time. Manual Sandbox/native
+checks of new/edit success, cancel/failure and retained profile sections remain
+separate gates.

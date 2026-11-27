@@ -98,6 +98,7 @@ private fun OwnPublicProfileContent(
             favoritesPreview = { header -> slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster, header) },
             checkInCount = profile.checkInCount, history = history,
             bottomContentPadding = bottomPadding, shelf = slots.shelf,
+            collectionsRequest = slots.collectionsRequest,
         ),
     )
 }

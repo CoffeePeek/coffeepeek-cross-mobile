@@ -255,6 +255,9 @@ private fun RootNavHost(
     private val _pendingProfileCheckIns = MutableStateFlow(false)
     val pendingProfileCheckIns = _pendingProfileCheckIns.asStateFlow()
 
+    private val _pendingProfileCollections = MutableStateFlow(false)
+    val pendingProfileCollections = _pendingProfileCollections.asStateFlow()
+
     fun consumeProfileShelf() {
         _pendingProfileShelf.value = false
     }
@@ -263,9 +266,14 @@ private fun RootNavHost(
         _pendingProfileCheckIns.value = false
     }
 
+    fun consumeProfileCollections() {
+        _pendingProfileCollections.value = false
+    }
+
     /** Explicit history intent; ordinary profile tab selection retains its current section and date. */
     fun openProfileCheckIns(popCurrent: Boolean = false) {
         consumeProfileShelf()
+        consumeProfileCollections()
         _pendingProfileCheckIns.value = true
         if (popCurrent) popThenSelectTab(Screen.ProfileTab) else selectTab(Screen.ProfileTab)
     }
@@ -274,11 +282,13 @@ private fun RootNavHost(
         hasOpenedAppLink.value = false
         consumeProfileShelf()
         consumeProfileCheckIns()
+        consumeProfileCollections()
         consumeTabSelection()
     }
 
     fun returnToProfileShelf() {
         consumeProfileCheckIns()
+        consumeProfileCollections()
         _pendingProfileShelf.value = true
         popThenSelectTab(Screen.ProfileTab)
     }
@@ -391,10 +401,17 @@ private fun RootNavHost(
         navigatorScope.launch { _navigationEvents.emit(NavEvent.ReturnToProfile(origin)) }
     }
 
-    internal fun prepareProfileReturn() {
+    private fun prepareProfileReturn() {
         consumeProfileShelf()
         consumeProfileCheckIns()
         consumeTabSelection()
+        _pendingProfileCollections.value = true
+    }
+
+    internal fun prepareRootEvent(event: NavEvent, origin: RootNavigationOrigin, session: RootNavigationSession): Boolean {
+        if (!origin.accepts(event, session)) return false
+        if (event is NavEvent.ReturnToProfile) prepareProfileReturn()
+        return true
     }
 
     fun closeAuth() {
@@ -776,12 +793,11 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
     }
 
     private fun NavHostController.handleRootEvent(event: NavEvent, origin: RootNavigationOrigin, sessions: SessionReader) {
-        if (!origin.accepts(event, sessions.currentRootNavigationSession())) return
+        if (!prepareRootEvent(event, origin, sessions.currentRootNavigationSession())) return
         when (event) {
             NavEvent.PopBack -> popBackStack()
             NavEvent.NavigateUp -> navigateUp()
             is NavEvent.ReturnToProfile -> {
-                prepareProfileReturn()
                 popBackStack<Screen.Main>(inclusive = false)
                 _pendingTabSelection.value = Screen.ProfileTab
             }

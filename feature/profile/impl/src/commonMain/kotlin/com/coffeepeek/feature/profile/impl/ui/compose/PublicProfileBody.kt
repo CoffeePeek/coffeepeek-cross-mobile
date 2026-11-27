@@ -99,6 +99,7 @@ private fun PublicProfileLoadedContent(state: PublicProfileState, profile: Publi
         shelf = { slots.shelfPreview(profile.slug, viewingOwn) },
         modifier = Modifier.fillMaxSize().then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
         ownerShelf = own?.shelf, ownerHistory = own?.history, bottomPadding = own?.bottomContentPadding ?: 20.dp,
+        ownerCollections = own?.collectionsRequest,
     ) { selectCheckIns ->
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Spacer(Modifier.height(2.dp))

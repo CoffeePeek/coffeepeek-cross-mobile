@@ -210,8 +210,7 @@ class IosNativeRoot internal constructor(private val dependencies: Koin, private
     }
     private fun planNavigation(event: Navigator.NavEvent, model: NativeRootNavigationModel): NativeRootStacks {
         val current = owner ?: return model.actual
-        if (!current.origin.accepts(event, sessions.currentRootNavigationSession())) return model.actual
-        if (event is Navigator.NavEvent.ReturnToProfile) Navigator.prepareProfileReturn()
+        if (!Navigator.prepareRootEvent(event, current.origin, sessions.currentRootNavigationSession())) return model.actual
         return model.plan(event)
     }
     private fun observeDeferredLogin() {

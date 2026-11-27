@@ -10,6 +10,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import com.coffeepeek.feature.profile.api.OwnProfileHistory
 import com.coffeepeek.feature.profile.api.OwnProfileShelf
+import com.coffeepeek.feature.profile.api.OwnProfileSectionRequest
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +45,7 @@ internal class OwnProfileExtras(
     val history: OwnProfileHistory,
     val bottomContentPadding: Dp,
     val shelf: OwnProfileShelf?,
+    val collectionsRequest: OwnProfileSectionRequest?,
 )
 
 internal class PublicProfileCallbacks(

@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.feature.profile.api.OwnProfileHistory
 import com.coffeepeek.feature.profile.api.OwnProfileShelf
+import com.coffeepeek.feature.profile.api.OwnProfileSectionRequest
 import com.coffeepeek.core.designsystem.component.CoffeePeekUnderlineTabs
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -49,20 +50,12 @@ internal fun ProfileContentTabs(
     ownerShelf: OwnProfileShelf? = null, ownerHistory: OwnProfileHistory? = null, bottomPadding: Dp = 0.dp,
     checkInsList: (@Composable (Modifier, @Composable () -> Unit) -> Unit)? = null,
     onOpenCollections: (() -> Unit)? = null,
+    ownerCollections: OwnProfileSectionRequest? = null,
     header: @Composable (onSelectCheckIns: () -> Unit) -> Unit = {},
 ) {
     var selectedName by rememberSaveable(stateKey) { mutableStateOf(ProfileContentTab.CheckIns.name) }
     val selected = ProfileContentTab.entries.firstOrNull { it.name == selectedName } ?: ProfileContentTab.CheckIns
-    LaunchedEffect(ownerHistory?.selectionRevision) {
-        if ((ownerHistory?.selectionRevision ?: 0) > 0) selectedName = ProfileContentTab.CheckIns.name
-    }
-    val requested = ownerShelf?.openRequested?.invoke() == true
-    LaunchedEffect(requested) {
-        if (requested) {
-            selectedName = ProfileContentTab.Shelf.name
-            ownerShelf?.onOpened?.invoke()
-        }
-    }
+    ProfileRequestedSection(ownerHistory, ownerShelf, ownerCollections) { selectedName = it.name }
     val scrolls = remember(stateKey) { ProfileContentTab.entries.associateWith { ScrollState(0) } }
     val scroll = scrolls.getValue(selected)
     val select: (ProfileContentTab) -> Unit = { selectedName = it.name }
@@ -75,6 +68,28 @@ internal fun ProfileContentTabs(
     }
     ProfileTabPane(selected, scroll, modifier, bottomPadding, ownerShelf, ownerHistory, checkInsList,
         onOpenCollections, { tabHeader(selected, select, header) }, checkIns, collections, shelf)
+}
+
+@Composable
+private fun ProfileRequestedSection(history: OwnProfileHistory?, shelf: OwnProfileShelf?,
+    collections: OwnProfileSectionRequest?, onSelect: (ProfileContentTab) -> Unit) {
+    LaunchedEffect(history?.selectionRevision) {
+        if ((history?.selectionRevision ?: 0) > 0) onSelect(ProfileContentTab.CheckIns)
+    }
+    val shelfRequested = shelf?.openRequested?.invoke() == true
+    LaunchedEffect(shelfRequested) {
+        if (shelfRequested) {
+            onSelect(ProfileContentTab.Shelf)
+            shelf?.onOpened?.invoke()
+        }
+    }
+    val collectionsRequested = collections?.requested?.invoke() == true
+    LaunchedEffect(collectionsRequested) {
+        if (collectionsRequested) {
+            onSelect(ProfileContentTab.Collections)
+            collections?.onConsumed?.invoke()
+        }
+    }
 }
 
 @Composable
@@ -123,7 +138,7 @@ private fun ProfileTabHeader(
 }
 
 @Composable
-private fun ProfileContentTabsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+private fun ProfileContentTabsPreview(dark: Boolean, collectionsRequested: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     Surface {
         ProfileContentTabs("preview", { Text(stringResource(Res.string.profile_section_check_ins)) },
             { Text(stringResource(Res.string.profile_section_favorites)) },
@@ -135,7 +150,7 @@ private fun ProfileContentTabsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme
                     }
                 },
                 openRequested = { false }, onOpened = {},
-            )) {
+            ), ownerCollections = OwnProfileSectionRequest({ collectionsRequested }, {})) {
             Text(stringResource(Res.string.profile_title), Modifier.padding(horizontal = 16.dp))
         }
     }
@@ -143,6 +158,8 @@ private fun ProfileContentTabsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme
 
 @Preview @Composable private fun ProfileContentTabsLightPreview() = ProfileContentTabsPreview(false)
 @Preview @Composable private fun ProfileContentTabsDarkPreview() = ProfileContentTabsPreview(true)
+@Preview @Composable private fun ProfileCollectionReturnLightPreview() = ProfileContentTabsPreview(false, true)
+@Preview @Composable private fun ProfileCollectionReturnDarkPreview() = ProfileContentTabsPreview(true, true)
 
 @Composable
 private fun ProfileCollectionsPanePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
