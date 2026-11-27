@@ -60,6 +60,14 @@
 
 `VisitedPlacesRouteTest` сохраняет serial identity и проверяет отсутствие route в fresh root navigation. В upstream-коммите зафиксированы 22 JVM-теста навигации, function limits, Direct Debug/Sandbox assembly с DEX/isolation и ручной Sandbox smoke. Это результаты исходного исправления, не повторный запуск документационного merge. Полное восстановление исходного сохранённого Activity bundle и реальный аккаунт вне Sandbox остаются непроверенными. Новую миграцию стека нельзя обосновывать удалением этого совместимого типа без проверки upgrade consumers.
 
+## Discovery: релизная регистрация DI после R8
+
+Проверка 27.11.2026, ветка `codex/migration-discovery-r8-bindings` от develop `ec7759f9b`. В Play-сборке 3456 (main `3526491bf`, R8 9.2.14) оптимизатор объединил `DiscoveryScreenRenderer` и `NativeDiscoverySessionFactory` с реализацией. Две отдельные Koin single-регистрации получили один ключ; alias стал разрешать себя и вызвал `StackOverflowError` при старте. Root composition теперь регистрирует одну фабрику с дополнительной привязкой через `binds`; создание остаётся ленивым, оба контракта возвращают один объект.
+
+`DiscoveryBindingsTest`: на прежнем коде 1 из 3 тестов выявляет две фабрики; после исправления все 3 проходят. Полный `:composeApp:testDirectDebugUnitTest` исполнен: 782 теста, 176 suites, 0 failures/errors/skips. `:verifyFunctionBodyLimits`, `assembleDirectDebug` и `assembleDirectSandbox` прошли, включая packaged DEX checks и Sandbox isolation. Изолированный JVM-воспроизводитель с production `discoveryBindings`, минимальными контрактами и R8 9.2.14 воспроизводит исходный `StackOverflowError`; исправленная регистрация проходит оба порядка разрешения после объединения типов. Это не запуск Android-приложения.
+
+`:composeApp:bundlePlayRelease` прошёл с R8 9.2.14 и release vital lint: локальный неподписанный AAB, 93 725 083 байта. Mapping и DEX подтверждают повторное объединение обоих контрактов с `FeatureDiscoveryScreenRenderer`; обе привязки используют одну `SingleInstanceFactory`, разрешающего себя alias больше нет. Установка, device startup, Google Play delivery и Kotlin/Native/iOS-проверки этим исправлением пока не подтверждены; production-сервисы и пользовательские данные при проверке не использовались. Диагностика и воспроизводитель сохранены локально вне tracked sources.
+
 ## Что не подтверждено этим обновлением документации
 
 Ручная проверка устройств, production API, OAuth, пушей, store declarations и доставки не выполняется при редактировании Markdown. Новая дата документа не переаттестовывает старые тесты или релиз. Для каждого следующего изменения фиксируйте SHA/variant/device, executed/compiled/cached tests, исходные сбои и оставшиеся gates согласно [VERIFICATION_FLOW.md](../docs/VERIFICATION_FLOW.md).
