@@ -77,8 +77,22 @@ passed. APK: `com.coffeepeek.sandbox`, `1.2.2.3437-sandbox` / 3437, SHA-256
 After the successful Android run, static native review qualified the UIKit enum
 as `UIApplicationState.UIApplicationStateActive` and added the standard foreign
 API opt-in. Those iOS-only source edits do not change tested Android/common code.
-Native Kotlin compilation and full iOS application verification remain pending CI;
-Android success is not native acceptance.
+At published runtime head `6b89eec5985af7ae50cb2a206f729092c06421d6`, iOS CI
+`45971098951` passed actual Kotlin/Swift Simulator compilation and binary
+compatibility. The original core contract step also passed its selected tests.
+
+A subsequent selector audit found that the core command did not select the new
+`LocationPermissionRequestTest` and `PermittedUserLocationTest` classes, and the
+Discovery command selected `SearchViewModelTest` but not `MapViewModelTest`.
+Those earlier green stages prove compilation and their existing selection;
+they do not prove execution of the omitted new Native regressions. The 975 JVM
+cases above were executed and are unaffected by this gap.
+
+The same existing Native commands now explicitly select both new location
+classes and `MapViewModelTest`. All earlier filters are retained, with no new
+workflow or runtime-code change. Native execution of the added selectors remains
+a required CI gate on the follow-up head. No local Gradle rerun was used for this
+YAML/documentation-only correction. Manual device behavior remains unverified.
 
 Bounded static review covered OS permission → location reader → distance origin,
 callback lifetime, disposal and cancellation (ASVS V4/V8/V11). It found no new
