@@ -1,5 +1,7 @@
 # CoffeePeek Project issue workflow
 
+Reviewed against `.github/workflows/project-merge-status.yml` and the local sync/lifecycle implementation on 2026-11-27. Repository variables, App permissions and live project settings must be checked separately; no writing run is implied by this guide.
+
 The workflow acts on [CoffeePeek Project #6](https://github.com/orgs/CoffeePeek/projects/6). It keeps issue cards separate from pull request cards.
 
 | Event | Change |

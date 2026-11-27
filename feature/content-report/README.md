@@ -1,65 +1,54 @@
-# Content reports — route migration
+# Reports about published content
 
-This owner migrates `ReportCheckIn` and the retained `ReportReview(id, isPreview)`
-compatibility route from composeApp/review. Actual entry points are Shop detail,
-public check-in lists and public profile cards. No active producer of ReportReview
-was found; its route and review-specific HTTP contract are retained deliberately.
-The Community feed's existing inline report dialog remains with Community.
-This is moderation of a publication, distinct from Shop-report's inaccurate-place data.
+Reviewed against `develop` on 2026-11-27. This feature reports publications;
+[Shop Report](../shop-report/README.md) handles inaccurate place information.
 
-| Gradle boundary | Responsibility / dependencies | Consumers / hidden details |
-|---|---|---|
-| api | Runtime-only composable entry, no domain or transport exports | App composition; hides state, VM, routes and request details |
-| domain | Report target, 1–2000 trimmed-character rule, repository and failure categories; Kotlin only | Own data/impl and app adapters; no Ktor/Compose/DI |
-| data | Existing two POST contracts via app's configured client; domain, core/network, Ktor/serialization | App construction only; backend/request DTOs and response validation hidden |
-| impl | Typed MVI form, resources, previews and entry; own api/domain, design-system, presentation/lifecycle | App rendering only; no data/legacy imports |
+## Ownership and runtime
 
-Separate Gradle boundaries enforce the same dependencies as other migrated owners:
-packages inside composeApp would retain legacy UI/network dependencies and would
-not prevent UI from reaching transport. No empty/future modules are registered.
-Composition owns session-bound lifetime, root navigation and client configuration.
-The additional build boundaries are justified by independent Android/Native
-protocol tests and enforcing that the reusable presentation cannot import Ktor
-or legacy repositories. Settings includes them through the existing Modules.all
-registry; no second application or generic reporting framework is introduced.
+The populated `api/domain/data/impl` modules own the report target/reason, request
+contract, MVI form, resources and entry. App composition supplies the configured
+authenticated client, an account-bound child lifetime and navigation callbacks.
+Android renders the feature Compose form; iOS uses `NativeContentReport` and the
+native SwiftUI form over the same report ViewModel. Public APIs do not export
+DTOs, repositories or ViewModels. Domain has no transport/platform dependency.
 
-Preserve free text, limit 2000, explicit submit, submitted/preview confirmation,
-back/Done and guest submit → sign-in. Preview never reads a session or sends data.
-No reason categories, second analytics service or replacement root navigation.
-The old form emitted no report-specific analytics; root screen exposure and callers
-remain owners. Only Russian `values` exists for this form.
+`ReportCheckIn(id, isPreview)` is used from shop detail/check-in lists and public
+profile cards. The `ReportReview(id, isPreview)` compatibility destination and
+review-specific backend contract remain; retaining that route does not imply an
+active review editor. Community's inline report presentation remains owned by
+Community and must not silently change into this route's form.
 
-This feature never retries delivery failures automatically; the configured client's
-existing auth-refresh handling remains in place. A received 4xx rejection can be corrected
-and resubmitted; lost/invalid acknowledgements and 5xx are conservatively unconfirmed
-and block another submission in that form instance. This cannot guarantee global
-deduplication after a new route/process without server idempotency support.
-Community and legacy HTTP paths remain compatibility implementations until their
-callers can safely share this owner; do not change their dialog semantics here.
+## Contracts to preserve
 
-Migration: add isolated contracts/data/MVI → bind account-scoped app renderer on
-both platforms → switch both existing navigation hosts → contract/unit and Android/
-Native build gates → manual Sandbox/iOS acceptance. Retain legacy fallback until
-that acceptance. Live reports, analytics and account writes are not test fixtures.
+- A reason is required and trimmed length must be 1–2000 characters. Preserve
+  Unicode pairs while truncating input. Submit is explicit; success/preview
+  confirmation, Back/Done and guest sign-in retain their existing semantics.
+- Data posts to `/api/v1/check-ins/{id}/reports` or
+  `/api/CoffeeShopReviews/{id}/reports`, using the existing configured client.
+  Request/response validation and error categories remain inside data.
+- There is one pending submission. A known rejection permits correction/retry.
+  Lost/invalid acknowledgements and conservative unconfirmed outcomes block a
+  second send in that form instance. No automatic delivery retry or cross-route
+  idempotency guarantee is introduced; auth refresh remains client-owned.
+- Account replacement revokes requests/actions and clears private draft data.
+  Same-account token refresh preserves the draft. Missing stable account IDs
+  fail closed on identity changes. Preview bypasses session/network ownership.
+  Cancellation is propagated, not rendered as another recoverable rejection.
+- Root navigation/callers remain analytics owners. Do not create a new report
+  tracker or production telemetry from tests.
 
-## Activation / verification — 2026-10-25
+## Source and verification
 
-Android and iOS select the same feature renderer for both existing route hosts.
-The account-bound child store clears the draft and cancels operations on account
-replacement, preserves known-user token renewal and blocks late results. Missing
-stable user IDs use token identity and fail closed on replacement. SessionReader
-is read-only: this form does not copy legacy requireAuthSession's credential clearing.
-Preview bypasses the account host entirely. The old screen/VM and its two unit
-tests remain as fallback until manual acceptance; the compatibility Review route
-retains the old check-in wording rather than inventing a new product surface.
+Inspect [API](api/src/commonMain), [validation](domain/src/commonMain),
+[transport](data/src/commonMain), [MVI/Compose](impl/src/commonMain) and
+[native adapter](impl/src/iosMain). Existing domain/data/ViewModel and app session
+contracts cover reason limits, endpoint selection, known/uncertain failures,
+guest/preview and stale-account behavior. Sandbox uses validated in-memory
+check-in reporting; it does not manufacture a review-report dataset.
 
-Sandbox implements check-in report POST as an in-memory fixture with validation,
-own-record rejection and reset. New local visits may lack authorId: ownership
-also comes from the private visit store. Review reports have no active Sandbox
-producer; their transport is covered by MockEngine contracts, not a fabricated
-review dataset. Neither fake scenario certifies deployed moderation behavior.
-
-Unit/contract, Android/Native build identities, original failures and remaining
-manual gates are in the shared iOS plan. No automated UI/instrumentation/screenshot
-tests, test Activities or real reports are used. CI's existing all-project
-testDebugUnitTest task includes the new feature tests; CI itself was not run here.
+For behavioral changes run affected non-UI suites, Android assembly/DEX and
+Native gates. Manual acceptance separately covers keyboard, light/dark and large
+text, accessibility, success/uncertain states, repeated taps, Back and completed/
+cancelled native pop. No real report, app run, build or device check occurred in
+this documentation-only review. Legacy exit acceptance remains tracked by the
+[feature exit plan](../LEGACY_EXIT_PLAN.md).

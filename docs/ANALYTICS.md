@@ -1,7 +1,8 @@
 # Аналитика CoffeePeek для Android и iOS
 
-Обновлено: 13.11.2026. Базовый контракт: [POSTHOG-MOBILE-IMPLEMENTATION.md](POSTHOG-MOBILE-IMPLEMENTATION.md).
-Версия схемы — `1`. Здесь описана именно мобильная реализация; результаты проверок web из исходного документа к ней не относятся.
+Сверено с мобильными исходниками 27.11.2026. Версия схемы — `1`.
+Источник wire-контракта — `composeApp/.../analytics/AnalyticsEvent.kt` и schema/privacy tests.
+Старый web-to-mobile implementation prompt снят: здесь описана действующая мобильная реализация, не состояние web.
 
 Сведения для релиза и заполнения App Privacy / Data safety:
 [ANALYTICS_STORE_RELEASE.md](ANALYTICS_STORE_RELEASE.md).
@@ -53,7 +54,7 @@ native 3.64.1 включает surveys по умолчанию, а KMP 0.5.1 н�
 
 Точки событий остаются в соответствующих feature UI/ViewModel. Избранное
 публикует небольшой entry point в `feature/favorites/api`, а переход общего
-процесса чекина между формами — в `feature/checkin/api`. При недоступной аналитике
+процесса чекина между формами — в `feature/home-check-in/api`. При недоступной аналитике
 действия с избранным продолжают выполняться.
 
 `core/network` предоставляет независимый `RequestObserver`; корень приложения
@@ -92,7 +93,7 @@ Debug/Sandbox guards, схема событий и запрет на replay/auto
 
 Backend и миграция должны быть развёрнуты раньше этого клиента. До появления API
 клиент остаётся с выключенной аналитикой; отсутствие API не трактуется как `true`.
-План и результаты проверок: [ACCOUNT_ANALYTICS_PLAN.md](../feature/settings/ACCOUNT_ANALYTICS_PLAN.md).
+Текущий account preference contract: [Settings](../feature/settings/README.md).
 
 После входа SDK получает `identify` только с внутренним backend user ID.
 До входа SDK не создаёт гостевую identity и не накапливает события.
@@ -116,7 +117,7 @@ Alias не используется. После выхода SDK очищает�
 * Во время непрерывной foreground-работы SDK перезапускается с очисткой очереди
   примерно раз в час. Отдельной прикладной HTTP-очереди и повторного бизнес-действия нет.
 * Эта политика сознательно теряет недоставленные события при background/restart;
-  предложенное в исходном документе хранение offline до 24 часов между запусками
+  прежнее предложение хранить offline до 24 часов между запусками
   здесь не используется. Байтовый предел относится к свойствам, без служебного
   формата файлов SDK.
 
@@ -130,7 +131,7 @@ remote config: после разрешённого setup возможны слу
 
 ## События и реальные точки
 
-Все 37 имён из web-контракта описаны в `AnalyticsEvent` и проверяются закрытой
+Имена shared web/mobile wire-контракта описаны в `AnalyticsEvent` и проверяются закрытой
 схемой: обязательные/необязательные ключи, типы, enum, статусы, категории полей
 и фильтров. Произвольные имена и свойства отклоняются. Общий контекст добавляет
 сервис. `beforeSend` дополнительно удаляет URL, device name, person properties
@@ -179,11 +180,10 @@ remote config: после разрешённого setup возможны слу
 7. Не применимо: storefront download buttons; roaster assortment UI; переход
    по автору/feed home detail, если элемент
    не интерактивен в текущем UI. События ради отсутствующих функций не добавляются.
-8. На Android проверены реальные JSON-записи нативной очереди SDK, сохранение
-   boolean-типов, удаление запрещённых свойств и физическая очистка при отзыве.
-   Проверка выполняется без сети. Отправка HTTP и PostHog Activity, iOS runtime,
-   rotation и возвращение из photo picker на устройстве остаются непроверенными.
-   Unit-тесты дополнительно проверяют application payload и lifecycle state.
+8. Privacy schema и lifecycle покрываются unit/contract tests. Физическая очередь
+   нативного SDK, реальный HTTP payload, отзыв, rotation и возвращение из photo picker
+   требуют отдельного согласованного platform check. Старые device results не являются
+   свежей приёмкой текущего develop.
 9. По продуктовому решению мобильная аналитика теперь собирается только после
    входа. Гостевые exposure/attempt/auth-gate не попадают в PostHog. Для email
    регистрация сама не создаёт сессию: при согласии успешная регистрация хранит
@@ -194,66 +194,27 @@ remote config: после разрешённого setup возможны слу
    Существующие аккаунты без согласия могут включить сбор на странице
    Настройки → Политика использования.
 
-## Проверки
+## Проверки и источники
 
-Исходная интеграция (`d2492e9`):
+Схема событий/enum/required props — `AnalyticsEvent.kt`; privacy allowlist —
+`AnalyticsPrivacy.kt`; очередь/consent/identity — `AnalyticsService.kt` и
+`AnalyticsSessionObservation.kt`; native delivery — `PostHogTransport.kt` и
+platform bootstrap; visibility/correlation — `AnalyticsVisibility.kt`,
+`FeatureExposureLedger.kt`, `AnalyticsTrackers.kt`. HTTP observation принадлежит
+`core/network`, не удалённому `modules/network`.
 
-| Проверка | Результат |
-|---|---|
-| `:composeApp:testPlayDebugUnitTest` | 163 теста, 0 ошибок/пропусков |
-| `:modules:network:testDebugUnitTest` | 54 теста, 0 ошибок/пропусков; в том числе один результат для 401 → refresh → retry |
-| `:modules:data:testDebugUnitTest` | 25 тестов, 0 ошибок/пропусков |
-| `:features:home-checkin:testDebugUnitTest` | 16 тестов, 0 ошибок/пропусков |
-| `:composeApp:assembleDirectDebug`, `:composeApp:assemblePlayDebug` | Обе APK собраны |
-| `:composeApp:lintPlayDebug` | 0 ошибок, 65 предупреждений в текущем checkout |
-| `:composeApp:compileKotlinIosArm64`, `:composeApp:compileKotlinIosSimulatorArm64` | Kotlin/Native KLIB собраны; это не полная Xcode-сборка приложения |
-| `:composeApp:assemblePlayDebugAndroidTest` | Тестовый APK собран |
-| `PostHogPayloadTest` на отдельном Pixel 8 AVD | 1 тест прошёл: нативная offline-очередь SDK и её очистка |
-| `HomeCheckInFormInteractionTest` на Pixel 8 AVD | 2 UI-теста прошли после выдачи геолокации тестовому AVD |
+Проверяйте соответствующие app `commonTest` и platform contract tests, Settings
+account preference tests и feature analytics ports. Обязательны отсутствие guest
+setup, запрет raw text/coordinates/headers, revoke/account generations, API
+refresh+retry без дублей и screen/exposure ownership на активных native routes.
+Новые тесты должны реально исполняться в выборочных Native CI filters.
 
-Итого 258 unit-тестов. Gradle запускался с `--no-daemon --max-workers=2`.
-Для device-проверок использовался read-only AVD без сохранения snapshot, с
-выключенными Wi-Fi/mobile data и airplane mode. Тесты запускались через `adb -s
-<serial> shell am instrument -w -r -e class <test-class>
-com.coffeepeek.test/androidx.test.runner.AndroidJUnitRunner`, с явным serial.
-`PostHogPayloadTest` пропускается при доступной сети до setup SDK. Тестовые
-события в production-проект не отправлялись; просмотр Activity не проверен.
+Ручная приёмка SDK payload, облачного хранения/GeoIP, offline/foreground/revoke
+и store declarations остаётся отдельной проверкой на согласованном окружении.
+Не отправляйте тестовые события в production ради unit/UI smoke test. Сборка и
+исторический прогон не подтверждают фактическую настройку облачного проекта.
 
-Для `a195f3d` при переносе согласия на регистрацию 166 unit-тестов приложения прошли, в том числе
-3 новых теста необязательного выбора, его сохранения между шагами и применения
-до публикации social-login сессии. Проверены запрет setup/событий гостя даже с
-сохранённым согласием, отсутствие воспроизведения гостевых событий после входа
-и остановка при logout. Play/Direct Debug APK, тестовый APK, оба iOS KLIB и
-`lintPlayDebug` собраны успешно (0 lint errors, 65 warnings). Изменённый offline
-device-тест для политики «только после входа» в этом прогоне собран, но на AVD
-повторно не запускался; результаты трёх device-тестов выше относятся к исходной
-интеграции.
-
-После переноса поверх параллельного `2cbdaab` повторно прошли 182 unit-теста
-приложения, Play Debug APK и Kotlin/Native iOS Arm64. Конфликтов при интеграции
-не было; изменения фото не входят в коммит переноса согласия.
-
-Отдельная страница политики и галочка только на втором шаге: 182 unit-теста,
-Play/Direct Debug APK и оба iOS KLIB прошли; `lintPlayDebug` — 0 ошибок,
-66 предупреждений в текущем checkout. Обновлён тест social login: вход не
-перезаписывает согласие значением скрытой галочки. Описание «Другие настройки»
-сверено с историей до внедрения аналитики и сохранено без изменения.
-
-Для macOS: открыть существующий `iosApp/iosApp.xcodeproj`. Сгенерированный
-`KotlinMultiplatformLinkedPackage` уже добавлен к target и xtool launcher;
-не запускать второй экземпляр PostHog из Swift. После обновления SDK регенерировать:
-
-```bash
-XCODEPROJ_PATH="$PWD/iosApp/iosApp.xcodeproj" ./gradlew :composeApp:integrateLinkagePackage
-```
-
-На Windows генерация package проходит, но автоматическое изменение Xcode project
-останавливается из-за отсутствующего `/usr/bin/plutil`; ссылка на сгенерированный
-пакет добавлена в проект вручную. Native Swift build, SwiftPM resolution и
-проверка privacy manifest требуют macOS/Xcode.
-
-Основные файлы: `analytics/AnalyticsService.kt`, `AnalyticsEvent.kt`,
-`PostHogTransport.kt`, `AnalyticsInstallation.kt`, `AnalyticsVisibility.kt`,
-`AnalyticsTrackers.kt`, платформенные `PostHogPlatform.*.kt`, feature
-`FavoriteInteractions` / `TrackedFavoriteInteractions`, `CheckInFlowHandoff`,
-затронутые feature screens/ViewModels и `modules/network/.../RequestObservation.kt`.
+iOS linkage подключается существующим KotlinMultiplatformLinkedPackage.
+После изменения SDK сверяйте сгенерированное package, SwiftPM resolution и
+privacy resources через [iOS setup](IOS_SETUP.md); второй SDK в Swift не создаётся.
+Для релиза — [сведения для сторов](ANALYTICS_STORE_RELEASE.md).

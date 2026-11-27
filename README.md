@@ -1,115 +1,41 @@
 # CoffeePeek
 
-Кроссплатформенное приложение экосистемы specialty-кофе для Android и iOS: лента кофеен, карта, профиль, чек-ины и отзывы.
+Приложение для поиска кофеен и обжарщиков, кофейных чекинов, подборок и домашней полки. Android использует Compose Multiplatform, iOS — нативные SwiftUI/UIKit-экраны поверх общих Kotlin-контрактов и сессий.
 
-**Стек:** Kotlin · Jetpack Compose (Compose Multiplatform) · Ktor · Koin · Room
+Документация сверена с исходниками `develop` 27 ноября 2026 года. Состояние опубликованной сборки определяется её коммитом и результатом доставки, а не этой датой.
 
----
+## Начало работы
 
-## Возможности
+1. Установите Android SDK 37 и JDK для Gradle: Android CI использует JetBrains Runtime 21, релизные и iOS-задачи — JDK 17. JVM target проекта — 17; версии инструментов закреплены в Gradle wrapper и каталоге зависимостей.
+2. Скопируйте [local.properties.example](local.properties.example) в игнорируемый `local.properties` и задайте путь SDK и API URL.
+3. Соберите локальное окружение с поддельными данными:
 
-- Регистрация и вход (email/пароль, Google Sign-In)
-- Лента кофеен с пагинацией
-- Карта OpenStreetMap на MapLibre
-- Карточка кофейни: фото, контакты, расписание, отзывы
-- Избранное, чек-ины (публичные и приватные), создание и редактирование отзывов
-- Профиль: аватар, статистика, тема оформления
-- Добавление кофейни (многошаговая форма с модерацией)
-- Community — в разработке (empty state)
-
----
-
-## Быстрый старт
-
-### Требования
-
-- **JDK 17** (обязательно; JDK 24/26 ломают сборку Gradle)
-- Android Studio с SDK **37**
-- Для iOS: macOS, Xcode **27** и iOS Simulator runtime
-- Git
-
-### Настройка
-
-```bash
-git clone <repository-url>
-cd CoffeePeek-Android
-cp local.properties.example local.properties
+```shell
+./gradlew :composeApp:assembleDirectSandbox --max-workers=6
 ```
 
-Заполните `local.properties` (подробнее в [local.properties.example](./local.properties.example)):
+В PowerShell используйте `./gradlew.bat`. Сборка не устанавливает приложение. Для запуска выберите вариант и согласованное устройство по [инструкции Android](composeApp/ANDROID_RUN_MODES.md). `directDebug` обращается к настроенному backend; `directSandbox` работает локально без INTERNET.
 
-| Ключ | Назначение |
-|------|------------|
-| `sdk.dir` | Путь к Android SDK |
-| `API_BASE_URL` | URL backend API |
-| `GOOGLE_WEB_CLIENT_ID` | Google Sign-In (опционально) |
+Для iOS нужны macOS, Xcode 27 и runtime симулятора. Откройте `iosApp/iosApp.xcodeproj`, схему `iosApp`; настройка конфигурации, SDK и подписи — в [IOS_SETUP.md](docs/IOS_SETUP.md).
 
-Полная инструкция для контрибьюторов: **[CONTRIBUTING.md](./CONTRIBUTING.md)**
+## Устройство проекта
 
-### Android: сборка и запуск
+| Каталог | Ответственность |
+| --- | --- |
+| `composeApp/` | запуск, корневой DI, маршруты и платформенные адаптеры |
+| `feature/<name>/` | обычно `api/domain/data/impl`; Favorites сохраняет только server-backed `domain/data` |
+| `core/` | общая инфраструктура и дизайн-система |
+| `iosApp/` | Xcode-проект, lifecycle, конфигурация и интеграция iOS |
+| `iosXtool/CoffeePeek/Sources/CoffeePeek/` | Swift-экраны, используемые также Xcode-проектом |
+| `build-logic/`, `buildSrc/`, `tools/` | Gradle-конвенции, проверки и доставка |
 
-```bash
-./gradlew :composeApp:assembleDirectDebug
-```
+Подробности: [структура](docs/PROJECT_STRUCTURE.md), [архитектура](ARCHITECTURE.md), [правила работы](AGENTS.md), [участие в проекте](CONTRIBUTING.md). Каталог `modules/` удалён; текущие границы и остаточные задачи описаны в [плане выхода из legacy](feature/LEGACY_EXIT_PLAN.md).
 
-Или Run `composeApp` из Android Studio на эмуляторе/устройстве.
+## Конфигурация и доставка
 
-### iOS: сборка и запуск
+- Android: API и ключи из окружения сборки / `local.properties`; версии и варианты — в `composeApp/build.gradle.kts`.
+- iOS: общие параметры из `iosApp/Configuration/Shared.xcconfig`, локальные — из игнорируемого `Local.xcconfig`.
+- Android Release публикуется из `main`; `develop` доставляет отдельный Debug в Firebase. TestFlight настраивается отдельным workflow.
+- Открытые ошибки и планы ведутся в [GitHub Issues](https://github.com/CoffeePeek/coffeepeek-cross-mobile/issues).
 
-```bash
-open iosApp/iosApp.xcodeproj
-```
-
-В Xcode выберите схему `iosApp`, любой iPhone Simulator и нажмите `Run` (`⌘R`).
-Подробная настройка Xcode, Google Sign-In, подписи и запуск на реальном iPhone описаны в **[docs/IOS_SETUP.md](./docs/IOS_SETUP.md)**.
-
----
-
-## Структура проекта
-
-```
-CoffeePeek-Android/
-├── composeApp/              UI, ViewModel, навигация, тема, Koin
-│   └── src/
-│       ├── commonMain/      Compose UI и общая логика
-│       ├── androidMain/     MapLibre, Google Auth, Android-специфика
-│       └── iosMain/         MapLibre bridge, Keychain, PhotosUI, CoreLocation
-├── iosApp/                  SwiftUI-оболочка и Xcode-проект
-├── core/                    сеть, сессия, база данных, медиа, дизайн-система
-├── feature/                 по модулю api/domain/data/impl на каждую фичу
-├── CONTRIBUTING.md          гайд для разработчиков
-├── LOG_ISSUES.md            известные баги из logcat-анализа
-└── local.properties.example шаблон секретов
-```
-
-**Архитектура:** `feature/impl (Screen → ViewModel) → feature/domain.Repository → feature/data → core/network → API`
-
-**DI:** Koin (`composeApp/.../di/KoinApp.kt`, модули фич в `composeApp/.../di/*`)
-
-**Навигация:** `composeApp/.../ui/Navigator.kt`
-
----
-
-## Конфигурация
-
-- **API URL Android:** `local.properties` → `BuildConfig.API_BASE_URL`
-- **API URL iOS:** `iosApp/Configuration/Shared.xcconfig` или локальный `Local.xcconfig`
-- **Версия приложения:** Android — `1.1.1.N`, где `N` равен `versionCode`; iOS — `MARKETING_VERSION` из `iosApp/Configuration/Shared.xcconfig`. Номер сборки — `BUILD_NUMBER_OFFSET +` число коммитов `HEAD` (сдвиг сейчас `1000`). Production — только `main`; серверная политика обновлений меняется вручную через админку.
-- **Application ID:** `com.coffeepeek`
-
----
-
-## Известные проблемы
-
-Список открытых багов и приоритетов: [LOG_ISSUES.md](./LOG_ISSUES.md)
-
----
-
-## Полезные ссылки
-
-- [docs/PROJECT_STRUCTURE.md](./docs/PROJECT_STRUCTURE.md) — как устроен репозиторий: общий код, Android, iOS, что своё у каждой платформы
-- [docs/ANALYTICS.md](./docs/ANALYTICS.md) — PostHog, согласие, события и проверки Android/iOS
-- [CONTRIBUTING.md](./CONTRIBUTING.md) — онбординг, стиль кода, PR
-- [docs/FIREBASE_CD.md](./docs/FIREBASE_CD.md) — настройка CD через Firebase App Distribution (без Play Console)
-- [docs/ANDROID_APK_CD.md](./docs/ANDROID_APK_CD.md) — публикация stable и versioned APK на VPS
-- [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/)
+Полный [указатель документации](docs/README.md) содержит руководства фич, проверки, аналитику и релизы. Ключи, персональные данные, локальные логи и снимки экранов в репозиторий не добавляются.

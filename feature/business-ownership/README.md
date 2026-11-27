@@ -1,64 +1,75 @@
-Current flow and evidence contract: [FLOW_UPDATE.md](FLOW_UPDATE.md).
-Historical implementation notes below predate this correction.
+# Представительство и бизнес-режим
 
-# Business ownership: Android and iOS
+Сверено с `develop` `8cdc15f9` — 2026-11-27.
 
-Base checkout: develop 2016c84f, updated before implementation as requested.
-This feature is isolated from the other open migration checkpoints; their heads and worktrees are unchanged.
-Contract: backend PR #364, docs/business-ownership-api.md at b6b2c33.
+## Владение и entry points
 
-Owns user claims/history, current owned businesses, profile editing and profile galleries.
-The new api/domain/data/impl modules enforce the same boundaries as roasters: api exposes
-only the shared screen entry and platform image/picker slots; domain owns models, account
-and repository/upload ports; data hides HTTP DTOs and maps Result failures; impl contains
-shared MVI and Compose UI. Composition adapts the existing session and Media uploader.
-Packages alone cannot prevent UI from importing HTTP DTOs or platform/legacy code.
-Domain depends on coroutines only; data on domain/core-network/Ktor/serialization;
-impl on its api/domain, presentation/design-system and lifecycle. Only application
-composition consumes the factories. No other feature internals are imported.
+`api` задаёт `BusinessOwnershipEntry`, session/access state и platform slots;
+`domain` — claims, owned businesses, draft/rules и repository/media ports;
+`data` — owner HTTP, private evidence и DTO; `impl` — `OwnershipAccess`, MVI,
+Android Compose и native presentation sessions. Composition собирает сессию,
+Media uploader, permissions, navigation и public-profile invalidation.
+Shop/Roaster используют только app-supplied API, а не ownership internals.
 
-Both root navigators and Android/iOS profile entry points must reach the same entry.
-Ordinary authenticated User accounts can apply; no global Owner/Roaster role is required.
-Approval/rejection stays in the web administration interface. No document uploads,
-employees, email verification, notifications or automatic account-deletion revocation.
+Android использует feature UI. На iOS business tab, overview/history, claim,
+editor, owner toolbar и QR используют SwiftUI/UIKit через общие Kotlin-сессии.
+Нативный toolbar возвращает feature-owned claim controller напрямую; старый
+Compose claim host не является его fallback. Другая форма — обычный полный
+ownership destination — сохраняет собственный store и lifecycle.
 
-Verification plan: contract tests for user-scoped endpoints, slug submissions, paging,
-If-Match, gallery Media IDs/URLs and preservation of untouched sections; ViewModel tests
-for validation, duplicate mutations, conflicts, revocation and session changes. Build the
-Android directSandbox variant and its runtime DEX checks. Common UI uses paired previews;
-no automated UI/instrumented/screenshot tests. Manual Sandbox/device checks require an
-available, verified device. Native iOS compilation and contract tests use macOS CI;
-Linux Android assembly is not evidence of native iOS/device acceptance.
+## Доступ, mode switch и профиль
 
-New UI strings use feature Compose resources (Russian matches the current client locale).
-Profile saves retain the original city identity, schedules and catalog associations unless
-explicitly edited; unknown/public slugs are never sent in UUID fields.
+- Обычный авторизованный User может отправить claim. Approval/rejection выполняет
+  веб-администрация. Старый Approved claim не доказывает текущее право доступа.
+- Non-owner кофейни может предложить изменения через модерацию или заявить
+  представительство загруженного public slug. Non-owner обжарщика получает
+  representative action. Confirmed owner открывает direct editor.
+- Owner writes используют UUID endpoint и `If-Match`. Public slug из owner-list
+  сопоставляется editor UUID; raw slug нельзя отправлять как UUID.
+- Business mode доступен при текущих owned businesses. Он показывает две вкладки:
+  Business и Settings; возврат в personal mode сохраняет доступы аккаунта.
+- `OwnershipAccess` сериализует refresh/switch одним mutex. Switch захватывает
+  requesting account, reset epoch и целевой mode до ожидания lock; очередной
+  callback прежнего аккаунта не переключает его преемника. Duplicate switches
+  подавляются. Cancellation не превращается в обычную ошибку.
+- Logout/account replacement/reset отзывают локальные grants/mode. Успешный ответ
+  без owned businesses выключает mode. Временный сбой refresh сохраняет прежнее
+  известное состояние до следующей проверки; он не даёт новых серверных прав.
+  Port с identity strings не доказывает защиту от ненаблюдённого same-ID ABA.
+- Business tab — список shops/roasters с pull-to-refresh; пустая roaster section
+  скрыта. Отсутствующие rating/open/catalog значения не придумываются.
+- Profile editor сохраняет untouched city identity, schedules и catalog associations.
+  После успешной записи `ProfileSaved` инвалидирует public details независимо
+  от кратковременного saved message.
 
-## Verification record — 2026-10-28
+## Claim, media и QR
 
-Local checks on this feature tree:
-- 26 ownership unit/contract tests (domain 5, data 9, presentation 12), no failures/errors/skips.
-- 60 affected Profile tests and 4 new application navigation/Sandbox HTTP tests, no failures/errors/skips.
-- Shared ownership Compose/KMP metadata compilation, Direct Sandbox and Direct Debug APKs,
-  packaged DEX guards and Sandbox isolation passed.
-- Build-only work: no app was installed/launched, no real account, camera, consent, analytics
-  or production-backend actions were performed. ADB inventory had no connected devices.
-  Studio MCP/preview diagnostics are unavailable in this session.
+Claim sheet содержит contact, explanation и до трёх private evidence photos
+по 5 MiB. Evidence upload/read использует отдельный owner-authorized путь,
+а не public gallery. Native и Compose сохраняют dirty/discard/busy правила,
+guest sign-in, account-version guards и cancellation. Отменённый или старый
+photo callback не изменяет текущую заявку. Contacts/evidence/bytes не становятся
+analytics properties.
 
-Retained failures/retries: initial shared UI compilation exposed missing loading descriptions,
-then the explicit BackHandler dependency/experimental opt-in. Android compilation passed
-once corrected. Metadata compilation separately caught the JVM-only no-arg cancellation
-constructor; it now supplies a common message and metadata compilation passed. An initial
-attempt named a nonexistent Sandbox unit-test task; the existing Direct Debug unit task
-already includes Sandbox backend sources and is the executed integration-test path.
+Для owned shop с public slug доступен check-in QR: PNG 1024 px с белой рамкой
+и существующая system share adaptation. Link не содержит account identifier.
+Application navigation сохраняет выбранную кофейню через auth и открывает form
+один раз; Cancel очищает continuation. QR не отправляет чекин автоматически.
 
-Android UI light/dark/font/window/accessibility/modal/native picker/back checks remain
-manual device gates. Native iOS simulator app build and execution of shared contract tests
-are delegated to the existing macOS workflow; until a successful run is recorded, native iOS
-build/runtime acceptance is unverified. Live API acceptance also remains open and needs
-backend #364 plus migration 20261028141439_AddBusinessOwnershipClaims.
+## Источники и проверка
 
-Profile editing covers name/about/contact links/address/coordinates and profile galleries.
-Existing city identity, schedules and catalog associations are preserved; this UI does not
-add controls to replace those fields. Raw claim evidence/contact is neither persisted nor
-sent as analytics properties. Native navigation restores only the optional public type/slug.
+[API](api/src/), [rules/repository ports](domain/src/), [transport](data/src/),
+[presentation и unit contracts](impl/src/),
+[нативные screens](../../iosXtool/CoffeePeek/Sources/CoffeePeek/).
+
+Регрессии покрывают access vs claim history, account replacement, serialized
+mode switches, UUID/slug mapping, revisions, private media, partial saves,
+ProfileSaved и QR links. Изменения проверяются relevant unit/contracts,
+Android assembly/packaged DEX и macOS native build/tests; CI selection находится
+в [ios-verify.yml](../../.github/workflows/ios-verify.yml).
+
+Ручные gates: mode/back/app links, native dirty/busy swipe dismissal,
+Photos return/cancel, QR scanning/share, themes/large text/VoiceOver и safe-account
+claim/approval/direct-save/conflict acceptance. Sandbox не подтверждает private
+media authorization или production migrations. Эти gates заново не выполнялись
+при обновлении документации; завершённые rollout records доступны в Git history.

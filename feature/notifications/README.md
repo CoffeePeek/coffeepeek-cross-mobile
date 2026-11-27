@@ -1,146 +1,76 @@
-# Notifications
+# Уведомления
 
-Layout: `api` (feature interface, immutable inbox state, `PushDevicePlatform`, `NotificationAccount` port), `domain`
-(models and repository interface), `data` (Ktor transport, DTOs stay internal), `impl` (the presenter and
-`createNotificationFeature`). The composition root adapts its session storage to `NotificationAccount`
-(`composeApp/.../di/notifications/SessionNotificationAccount.kt`); the feature has no dependency on the legacy modules.
+Сверено с `develop` `8cdc15f9` — 2026-11-27.
 
-Owns notification history, unread state, the account push switch, device registration,
-post-check-in permission coordination and foreground activity reporting.
-The application composition consumes `api` and supplies the authenticated HTTP client,
-session repository and native device port. Domain has no platform or transport imports;
-DTOs and HTTP endpoints stay internal to data. Shared presentation coordinates session
-changes; platform SDKs remain in Android/iOS application boundaries. Application DI
-wires successful shop/home creation callbacks to the feature API. Automatic permission
-requests respect a previous denial. Explicit enabling from the notification panel
-requests authorization or opens OS settings after a denial. Foreground push receipts
-refresh the history, including when a previous request is still in flight.
-No other feature may depend on internals. A separate module follows the existing
-author-blocking feature boundary and prevents native Firebase dependencies leaking into
-the shared business code. The legacy modules have no dependency on this feature.
+## Владение и представление
 
-The public API exposes immutable presentation state and actions. Domain models,
-repositories, transport DTOs and the presenter implementation remain internal.
-Android's Compose renderer lives in notifications/impl and uses core/design-system;
-composeApp owns its root navigation adapter and native intent handoff. The remaining
-legacy shared renderer serves iOS. Android/shared and native iOS root composition pass
-the bell into the community header through a Composable slot; the community feature
-does not import notification implementation or require its DI binding in isolation.
-Account/session changes clear the inbox and fence
-late responses; login and foreground entry never overwrite saved push preferences.
+`api` предоставляет `NotificationFeature`, immutable inbox state, destination,
+account/city и native device ports; `domain` — модели/repository contracts;
+`data` — Ktor transport/внутренние DTO; `impl` — presenter и platform UI sessions.
+Composition адаптирует существующие session/current city, navigation и native
+FCM/APNs providers. Firebase SDK не является зависимостью feature domain.
 
-The bell on the community feed opens a light/dark bottom sheet with date groups,
-read/unread rows and pagination; the push preference lives in Settings. Android's
-migrated panel and iOS's transitional panel mark a row read after it has been mostly
-visible for two continuous seconds while the app is resumed. Leaving the viewport
-or backgrounding the app resets the timer, and several visible rows are written in
-sequence. The history works with push disabled or OS authorization denied. Supported
-types are ShopApproved,
-ShopRejected, RoasterApproved, RoasterRejected, CheckInModeration, CorrectionModeration,
-NewShop, Inactivity and General; unknown future types display as General.
+Feature владеет history/unread, account push switch, device registration,
+post-check-in permission coordination и foreground reporting. Android bell
+открывает Compose bottom sheet. На iOS bell/inbox — SwiftUI/native sheet с
+NavigationStack, large detent и тем же Kotlin owner; старый transitional Compose
+inbox больше не описывает активный путь. Settings использует ту же feature.
 
-Android rows with supported entity metadata remain actionable after reading. The API
-resolves an owned notification through GET /api/v1/me/notifications/{id}/destination;
-transport DTOs and entity identifiers stay inside the feature. Its public destination
-contract distinguishes published shop slugs from correction/submission IDs. Application
-composition resolves contributions and owns cross-feature routing. Native push taps
-wait for root/session readiness and discard another account's or generation's result.
-Errors retain the sheet for retry. Deploy the additive Account endpoint before this client.
+## History, permission и destinations
 
-## Visible-read panel verification — 2026-11-02
+- History доступна при выключенном push и denied OS authorization. Login и
+  foreground не перезаписывают сохранённое push preference.
+- Автоматическая permission opportunity уважает предыдущий denial; explicit
+  enable запрашивает разрешение либо предлагает OS settings по существующей policy.
+- Строка отмечается прочитанной после двух непрерывных секунд достаточной
+  видимости в активном приложении. iOS требует не менее половины строки.
+  Viewport exit/background сбрасывают таймер; receipts отправляются последовательно.
+- Account/session changes очищают inbox и отсекают поздние read/navigation replies.
+  Несколько foreground receipts не теряются за уже выполняющимся refresh.
+- Поддерживаются ShopApproved/Rejected, RoasterApproved/Rejected,
+  CheckInModeration, CorrectionModeration, NewShop, Inactivity и General;
+  неизвестный future type отображается как General.
+- Actionable rows остаются такими после read. Feature читает owned destination
+  через `GET /api/v1/me/notifications/{id}/destination`, различая public shop slug
+  и submission/change ID. Composition разрешает contributions и cross-feature routes.
+  Push open ждёт root/session readiness; ошибка сохраняет inbox для retry.
 
-- Source: `codex/migration-notifications-visible-read-develop` based on `origin/develop` at `4ff207f40`. Android variant: `directSandbox` (`com.coffeepeek.sandbox`). No device was selected, and no APK was installed.
-- `:feature:notifications:impl:testDebugUnitTest`: 34 tests passed, 0 failed, no retries. This includes multiple simultaneous read receipts and an account change during a pending write.
-- `:composeApp:assembleDirectSandbox`: passed with `--max-workers=6`. Sandbox isolation and packaged DEX runtime-class checks passed.
-- Paired light/dark previews remain beside both row and sheet implementations; the row previews use a long message. IDE preview rendering and manual light/dark, large text, accessibility, scroll, back and modal checks were not run. iOS compilation and live backend acceptance remain unverified.
+## Аудитория выбранного города
 
-## Selected city audience — issue #412
+`NotificationCity` пассивно читает текущий город, выбранный пользователем или
+автоматикой приложения. Отсутствие первого emission означает loading;
+`NotificationCitySelection(null)` — разрешённое пустое значение. Adapter не
+запрашивает GPS/permission и не загружает второй каталог.
 
-`NotificationCity` is a narrow application-supplied port over the existing current city.
-It emits resolved selections only: absence of an initial emission means loading, while
-`NotificationCitySelection(null)` means a genuinely empty resolved selection. The shared
-`CityPreference` publishes this replay after its existing manual/automatic resolution;
-Settings and Discovery keep the same selection rules and persistence. The composition
-adapter does not load a catalog, request coordinates or ask for location permission.
-Both Android and native iOS receive the same common Kotlin synchronization.
+Для signed-in аккаунта `PUT /api/v1/me/notifications/city` отправляет обязательный
+nullable `citySlug`, включая explicit JSON null. Успех — HTTP 204; 404/503 и
+другие rejected ответы сохраняют failure для retry на foreground/новом выборе.
+Sync не зависит от push enabled, permission или provider availability.
 
-The signed-in account sends `PUT /api/v1/me/notifications/city` with the required nullable
-`citySlug` field. Explicit null is serialized; only HTTP 204 is accepted. An unavailable
-endpoint or a rejected city remains a failure and is retried on foreground entry or the
-next selection. City synchronization works with push disabled, no OS permission or an
-unavailable provider, and does not change the saved push/category preference.
+Collector принадлежит account generation; queued city selections conflated к
+последней. Отдельный city-write mutex сериализует запросы между generations:
+даже noncancellable старый write завершается раньше нового. Account повторно
+проверяется внутри lock. Inbox/device/login не ждут city synchronization.
+Server отвечает за recipients и queued-delivery revalidation; клиентский фильтр
+не может ограничивать background delivery. Контракт companion:
+[backend #381](https://github.com/CoffeePeek/coffeepeek-backend/pull/381).
 
-A collector belongs to the notification account generation and is canceled on account
-change or logout. Pending city changes conflate to the latest value. A separate city-write
-mutex serializes requests across generations: if an old transport ignores cancellation,
-it finishes before the current generation writes its latest city. The current account is
-checked after taking that mutex. Inbox loads, device registration and login do not wait
-for it. Existing analytics events, exposure ownership and native Firebase transport stay
-unchanged; no new telemetry or provider requests are introduced.
+## Источники и проверка
 
-Backend companion: [coffeepeek-backend#381](https://github.com/CoffeePeek/coffeepeek-backend/pull/381).
-Apply its Account migration and deploy the Account city contract/consumers before updated
-Shops producers and this client. The server owns recipient filtering and queued-delivery
-checks; a foreground-only client filter cannot enforce background notification delivery.
-Older device/push contracts are preserved.
+[Публичные contracts](api/src/), [HTTP](data/src/), [presenter и tests](impl/src/),
+[app adapters](../../composeApp/src/),
+[native screens/provider](../../iosXtool/CoffeePeek/Sources/CoffeePeek/).
 
-Verification plan: execute notification data/presenter unit contracts, passive composition
-adapter and Sandbox backend regressions; build DirectSandbox including DEX/runtime-class
-and manifest isolation checks; run `verifyFunctionBodyLimits`. Cover loading versus empty,
-automatic/manual changes, HTTP 404/503, cancellation, A→B→A with a noncancellable old write,
-latest-city completion order, and unchanged push controls. No UI/instrumented tests,
-phone deployment, real accounts, production analytics or live FCM/APNs calls are planned.
+Unit/contracts проверяют permission timing, read visibility/account guards,
+navigation failure, registration, city loading vs empty, explicit null, retries,
+latest-city order и noncancellable A→B→A. Android assembly/packaged DEX и
+затронутые suites проверяются отдельно от macOS Swift/Native job в
+[ios-verify.yml](../../.github/workflows/ios-verify.yml).
 
-### City sync verification — 2026-11-26
-
-Source: `codex/migration-412-selected-city-sync`, fast-forwarded from the initial worktree
-base `43dfcc43f` to the published reconciliation parent `a030f9ac39c3b74f22086345ad196e198f116eb3`
-before verification. No root checkout files were changed.
-
-- Notification data: 7 executed tests in 2 suites; notification impl: 42 in 5 suites.
-- Application DirectDebug non-UI unit tests: 744 executed tests in 168 suites, including
-  the passive CityPreference adapter and Sandbox city transport. Total: 793 cases in
-  175 suites, zero failures/errors/skips. Data tests executed in the first attempt and
-  remained up-to-date in the successful retry; no failed test case was retried.
-- The first new presenter-test compilation failed because expected nullable pairs needed
-  explicit generic types. This fixture-only error was corrected before the passing run.
-- `verifyFunctionBodyLimits` passed with 125 recorded entries and zero new violations.
-- `assembleDirectSandbox`, Sandbox manifest isolation and packaged DEX runtime-class checks
-  passed. Built APK: `com.coffeepeek.sandbox`, version `1.2.2.3387-sandbox`, code 3387.
-  No device was selected and no APK was installed or launched.
-- Existing Compose Preview deprecation, experimental-test opt-in and native symbol stripping
-  warnings remain. No new UI/resources or Gradle dependencies were introduced.
-
-Shared tests prove loading does not clear a server city, resolved null serializes explicitly,
-failed/404 requests are retried, and NonCancellable old minsk completion precedes the current
-brest write after A→B→A. The city mutex is separate from device synchronization, while account
-and notification-generation guards remain in force. This change adds no analytics events.
-
-Native macOS/iOS compilation, manual UI review, real backend persistence and FCM/APNs delivery
-were not exercised locally. Sandbox and in-memory contracts do not certify those gates.
-No UI/instrumented/screenshot test, real-account write, live push, merge or deployment ran.
-
-### Combined release checkpoint — 2026-11-26
-
-For the owner-requested develop merge and TestFlight release, this branch now follows
-collections checkpoint `2effe0c65212f2ece502c9e8ead817950adc6a6d`. That parent repairs
-the native profile factory argument mapping exposed by failed iOS run 45887439805;
-the original failure is retained in the native exit plan. The notification definitions
-move together into the existing notifications composition package, preserving their
-dependencies and singleton lifetime. Generated function-limit debt shrinks only the
-Koin appModule entry from 70 to 66; no baseline entry is added or increased.
-
-At local merge `29a678edc` plus this DI extraction, Windows/JDK 17 with
-`--max-workers=6` passed the combined gate: notification data 7 cases, notification
-impl 42, collections impl 110, profile impl 110 and application unit 751. The retained
-reports contain 1020 cases across 193 suites, zero failures/errors/skips; the 751 app
-cases executed in this invocation, while unchanged feature tasks reused valid cached
-or up-to-date results. DirectSandbox assembly, isolation and packaged DEX checks passed
-(com.coffeepeek.sandbox, 1.2.2.3395-sandbox / 3395), with no installation or app run.
-Function limits passed before regeneration; its generated diff contains only the
-appModule reduction. The second limit verification also passed: 125 recorded, zero new.
-
-The server companion #381 was owner-approved for main and merged as `3c1ea2368b`.
-Its production deployment and the combined mobile iOS gate remain release gates.
-The owner explicitly requested waiting for the exact new iOS 2.0 build to finish
-Apple processing; the older successful 2.0 (3257) is not acceptance for these fixes.
+Ручные gates: paging/visible-read, background/swipe dismissal, ru/be, themes,
+large text/screen reader, OS permission/settings и реальная FCM/APNs доставка
+в foreground/background/terminated states. Для live пушей нужен согласованный
+тестовый аккаунт; fake backend не доказывает server audience/deployment.
+Документационное обновление эти gates заново не выполняло. Исторические CI,
+release и failed-attempt records доступны в Git history; они не обозначают
+текущую последнюю TestFlight-сборку.

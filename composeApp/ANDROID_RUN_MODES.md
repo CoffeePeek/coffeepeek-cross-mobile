@@ -1,5 +1,7 @@
 # Android: what to build and run
 
+Reviewed against variants/manifests on 2026-11-27. This guide does not claim a new installation or device check.
+
 ## Choose the environment first
 
 | Purpose | Build Variant | Package / launcher | Data and backend |
@@ -130,53 +132,4 @@ analytics, backend persistence or iOS readiness. See [Sandbox coverage](SANDBOX.
 The agent-authored feature/design-system UI suites and test-only hosts were
 removed on 2026-10-20 at the user's request; earlier recorded runs are historical.
 Other contributors' application UI tests and database instrumentation remain.
-See [removal scope](../feature/UI_TEST_REMOVAL.md).
-
-## Debug identity verification — 2026-11-13
-
-Source: `497814408` plus the working-tree Debug identity changes; Android version
-`1.2.0.2945-debug` / code `2945`. No device was installed or launched.
-
-- `assembleDirectDebug`, `assemblePlayDebug`, `assembleDirectSandbox`: passed,
-  including packaged DEX runtime-class checks and Sandbox isolation.
-- Merged manifests and APK metadata confirm separate package/provider authorities,
-  the Debug label/icon, and no Debug icon assets in Sandbox. Release retains
-  `com.coffeepeek` and its original launcher resources.
-- `AppUpdateAdaptersTest`: 3 executed, 0 failures; release tooling: 29 executed,
-  0 failures. Function body limits: 0 new violations. Workflow YAML and embedded
-  Python parsed; synthetic Firebase configs accepted one Debug client and rejected
-  production-only and duplicate Debug clients.
-- Initial build failed while packing a locked Kotlin cache; the no-build-cache
-  retry passed Direct Debug/Sandbox but hit an inaccessible unit-test cache.
-  Removing only that generated task cache allowed the final unit/Play checks to
-  pass. Existing preview deprecations and unrelated coroutine opt-in warnings remain.
-- Local adaptive-icon preview checked with a round launcher mask; packaged color
-  is `#FFD4A84B`, with one foreground/background for light/dark and one label for
-  every locale. Device launcher/theme review, Firebase registration/secret setup,
-  distribution signing, push and live-backend checks remain unverified.
-
-The Debug-only foreground is `src/debug/res/drawable-nodpi/ic_launcher_debug_foreground.png`.
-It was edited with built-in `image_gen`; Android draws the exact gold background
-separately. The final edit prompt was:
-
-> Precise background removal for an Android adaptive launcher icon foreground. Edit target is the existing CoffeePeek icon provided. REMOVE ONLY the white background, including inside the cup handle, making the entire backdrop genuinely transparent, including the outer padding. Keep the ivory coffee cup and olive-green bean mascot with both eyes and hands and coffee exactly unchanged in design, placement, scale, lighting and color. Preserve soft contact shadow with partial alpha only, no white matte. Do not enlarge, recenter or redesign the subject: it should occupy the central roughly 58% of the square width, like the original, for adaptive icon safe zone. Output a square RGBA transparent PNG with the original large margins. No gold backdrop; the app draws an exact #D4A84B background as a separate layer. No text, no other elements.
-
-## Launcher artwork — 2026-11-19
-
-The supplied square artwork replaces the production launcher icons on Android and
-iOS in both appearances. Android includes all five bitmap densities, round icons,
-adaptive layers and the Play Store image. The adaptive artwork occupies the
-central 72 dp of each 108 dp layer, with edge pixels extended into the outer
-padding. Debug displays the same artwork inside a gold ring.
-
-The iOS AppIcon catalog contains opaque 1024×1024 RGB PNGs for its default and
-dark entries. Both launchers use that catalog. Local mask previews cover round
-Android icons and rounded iOS icons against light and dark surfaces.
-
-Verified on Windows from `3e17370b8` with this patch, using
-`--max-workers=6`. `verifyFunctionBodyLimits` and `assembleDirectDebug`
-passed, including packaged runtime-class verification. The APK is
-`com.coffeepeek.debug`, version `1.2.1.3157-debug`, with 36 DEX files.
-All 31 packaged launcher bitmaps match their source pixels. The iOS catalog
-references and image dimensions/opacity passed local validation. Device launcher
-rendering and Xcode asset compilation remain unverified.
+Current policy: [verification flow](../docs/VERIFICATION_FLOW.md).
