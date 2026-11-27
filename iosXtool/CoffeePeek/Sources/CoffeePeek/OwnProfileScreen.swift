@@ -169,15 +169,10 @@ private struct OwnProfileScreen: View {
         case .checkIns:
             checkInsTab
         case .collections:
-            VStack(alignment: .leading, spacing: 8) {
-                Text(model.strings[OwnProfileTab.collections.rawValue])
-                    .font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
-                    .padding(.horizontal, 16)
-                if let collections = model.collections {
-                    OwnProfileEmbedded(controller: collections, fitsContent: true)
-                }
+            if let collections = model.collections {
+                OwnProfileEmbedded(controller: collections, fitsContent: true)
+                    .tint(CoffeePeekNativeStyle.foreground)
             }
-            .tint(CoffeePeekNativeStyle.foreground)
         case .shelf:
             if let shelf = model.shelf {
                 OwnProfileEmbedded(controller: shelf)
@@ -207,12 +202,7 @@ private struct OwnProfileFloatingSectionControl: View {
 private func ownProfileFloatingControlsPreview(barHeight: CGFloat) -> some View {
     let strings = OwnProfileStrings(languageTag: "ru")
     return ScrollView {
-        VStack(spacing: 20) {
-            Text(strings[OwnProfileTab.collections.rawValue]).font(.title2)
-            ForEach(0..<4) { _ in
-                RoundedRectangle(cornerRadius: 16).fill(CoffeePeekNativeStyle.surfaceVariant).frame(height: 80)
-            }
-        }.padding(16)
+        ownProfileCollectionsPreview(strings: strings).padding(16)
     }
     .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) {
         OwnProfileFloatingSectionControl(symbol: "chevron.right",
@@ -224,6 +214,18 @@ private func ownProfileFloatingControlsPreview(barHeight: CGFloat) -> some View 
             .background(CoffeePeekNativeStyle.surfaceVariant)
     }
     .background(CoffeePeekNativeStyle.background).foregroundStyle(CoffeePeekNativeStyle.foreground)
+}
+
+@MainActor
+private func ownProfileCollectionsPreview(strings: OwnProfileStrings) -> some View {
+    VStack(spacing: 12) {
+        OwnProfileTabs(selection: .collections, strings: strings, select: { _ in }, equalWidth: true)
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+            ForEach(0..<4) { _ in
+                RoundedRectangle(cornerRadius: 16).fill(CoffeePeekNativeStyle.surfaceVariant).aspectRatio(1, contentMode: .fit)
+            }
+        }
+    }
 }
 
 #Preview("Floating profile controls light") {

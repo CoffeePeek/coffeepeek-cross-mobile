@@ -33,7 +33,6 @@ import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileLoadingSkeleton
-import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
 import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileState
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -79,11 +78,7 @@ private fun OwnProfileFallbackContent(
         stateKey = "own:${profile.email}",
         checkIns = {},
         collections = {
-            slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster) {
-                Box(Modifier.padding(horizontal = 16.dp)) {
-                    ProfileSectionHeading(stringResource(Res.string.profile_section_favorites))
-                }
-            }
+            slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster) {}
         },
         shelf = { OwnProfileFallbackShelf(callbacks.editProfile) },
         onOpenCollections = callbacks.openFavorites,

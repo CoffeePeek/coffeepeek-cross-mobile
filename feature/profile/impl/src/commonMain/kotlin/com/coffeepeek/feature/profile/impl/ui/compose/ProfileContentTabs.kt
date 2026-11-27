@@ -3,6 +3,8 @@ package com.coffeepeek.feature.profile.impl.ui.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.ui.Alignment
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileCollectionsButton
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -126,7 +130,7 @@ private fun ProfileTabHeader(
 private fun ProfileContentTabsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface {
         ProfileContentTabs("preview", { Text(stringResource(Res.string.profile_section_check_ins)) },
-            { Text(stringResource(Res.string.profile_section_favorites)) },
+            { ProfileCollectionsPreviewCards() },
             shelf = {}, modifier = Modifier.size(320.dp, 600.dp), ownerShelf = OwnProfileShelf(
                 content = { modifier, header ->
                     Column(modifier.verticalScroll(rememberScrollState())) {
@@ -150,8 +154,23 @@ private fun ProfileCollectionsPanePreview(dark: Boolean) = CoffeePeekTheme(darkT
         ProfileTabPane(ProfileContentTab.Collections, rememberScrollState(), Modifier.size(320.dp, 600.dp),
             bottomPadding = 100.dp, ownerShelf = null, ownerHistory = null, checkInsList = null, onOpenCollections = {},
             header = { ProfileTabHeader(ProfileContentTab.Collections, {}, {}) }, checkIns = {}, shelf = {},
-            collections = { Text(stringResource(Res.string.profile_section_favorites), Modifier.padding(16.dp)) })
+            collections = { ProfileCollectionsPreviewCards() })
     }
 }
+
+@Composable
+private fun ProfileCollectionsPreviewCards() {
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        repeat(2) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                repeat(2) {
+                    Surface(Modifier.weight(1f).aspectRatio(1f), shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant) {}
+                }
+            }
+        }
+    }
+}
+
 @Preview @Composable private fun ProfileCollectionsPaneLightPreview() = ProfileCollectionsPanePreview(false)
 @Preview @Composable private fun ProfileCollectionsPaneDarkPreview() = ProfileCollectionsPanePreview(true)

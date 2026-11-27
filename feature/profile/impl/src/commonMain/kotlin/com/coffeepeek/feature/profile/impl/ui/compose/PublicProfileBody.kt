@@ -1,7 +1,6 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,7 +32,6 @@ import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileCheckInCalendar
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileLoadingSkeleton
-import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
@@ -140,17 +138,8 @@ private fun PublicProfileRefreshErrors(state: PublicProfileState, viewingOwn: Bo
 @Composable
 private fun PublicProfileCollections(profile: PublicProfile, viewingOwn: Boolean, slots: ProfileSlots, own: OwnProfileExtras?) {
     when {
-        own != null -> own.favoritesPreview {
-            Box(Modifier.padding(horizontal = 16.dp)) {
-                ProfileSectionHeading(stringResource(Res.string.profile_section_favorites))
-            }
-        }
-        viewingOwn -> Column {
-            Box(Modifier.padding(horizontal = 16.dp)) {
-                ProfileSectionHeading(stringResource(Res.string.profile_section_favorites))
-            }
-            slots.ownerCollection()
-        }
+        own != null -> own.favoritesPreview {}
+        viewingOwn -> slots.ownerCollection()
         else -> slots.featuredCollection(profile.slug)
     }
 }
