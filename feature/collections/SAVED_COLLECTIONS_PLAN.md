@@ -642,3 +642,32 @@ run, device test, live account write, UI/instrumented/screenshot test or preview
 render has run for this follow-up at authoring time. Manual Sandbox/native
 checks of new/edit success, cancel/failure and retained profile sections remain
 separate gates.
+
+Windows verification on 2026-11-27, portable Temurin JDK 17.0.20.1+1/Android SDK,
+`--max-workers=6`: runtime checkpoint `632353d32` passed
+`:feature:collections:impl:testDebugUnitTest` (7 suites/110 cases),
+`:feature:profile:impl:testDebugUnitTest` (10 suites/110 cases),
+`:feature:profile:impl:lintDebug` (zero reported issues),
+`verifyFunctionBodyLimits` (125 recorded, zero new; baseline unchanged), and
+`:composeApp:assembleDirectSandbox`, `:composeApp:verifyDirectSandboxIsolation`,
+`:composeApp:verifyDirectSandboxRuntimeClasses`. The compiled fake light/dark
+previews include the requested Collections section; they were not rendered.
+APK `com.coffeepeek.sandbox`, Direct Sandbox `1.2.2.3438-sandbox`/3438,
+SHA-256 `e52aa5b0d10652fe74beb82b7a6a45e4a044cea8a088394df6ad7bd3389f825d`;
+no deployment or app launch occurred.
+
+The first full `:composeApp:testDirectDebugUnitTest` run at `632353d32` executed
+763 cases with two failures in the new test fixture: `runCurrent` does not wait
+for Navigator's real Default-dispatcher tab selection. Both failures expected
+ProfileTab before that asynchronous setter had executed. The original report
+and log are retained locally. Test-only checkpoint `bb08fbe20` subscribes before
+dispatch and awaits the actual SelectTab event before assertions/cleanup,
+without changing production dispatchers, adding sleeps or weakening assertions.
+Only the affected full application unit task was rerun: 170 suites/763 cases,
+including all ten new return contracts, zero failures/errors/skips (1m 2s).
+Together with the unchanged feature suites this verifies 983 cases. Other passed
+gates were not repeated after the fixture-only change. Existing AGP/KMP, Preview
+and unrelated discovery test opt-in warnings remain; no changed-file lint issue
+or new function-body debt was reported. Kotlin/Native and Swift compilation,
+manual Sandbox/native UI, accessibility and real-backend acceptance remain
+unverified locally. No UI/instrumented/screenshot test or live write was used.
