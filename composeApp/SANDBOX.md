@@ -8,6 +8,8 @@ For choosing between Sandbox and live Debug, Android Studio launch steps and
 explicit-device commands, see [Android run modes](ANDROID_RUN_MODES.md). Sandbox
 is the default for safe development tests; ordinary Debug is not a fake backend.
 
+Reviewed against Sandbox sources on 2026-11-27. Historical device results are not current acceptance.
+
 Build/select `directSandbox` in Android Studio, or run:
 
 ```shell
@@ -55,7 +57,7 @@ package, so install only the preferred one. Normal debug/release IDs are unchang
 - Manifest removes INTERNET, CAMERA, location, storage, phone and APK-install permissions; production app links
   and MainActivity are absent. Provider authorities use the Sandbox package.
 - API URL is `.invalid`; OAuth/analytics configuration is blank/disabled.
-- All three legacy API/plain/upload clients have MockEngine only; feature
+- ApiClients uses the injected MockEngine factory for all HTTP clients; feature
   factories receive these same clients. Kamel's default independent HTTP fetcher
   is excluded; both ordinary URL and protected-image requests use the mock client.
   Foreign hosts and unimplemented endpoints
@@ -80,7 +82,7 @@ server's revision semantics beyond a change counter. Local login is not tied to
 block state (blocks reset with the fixtures).
 
 Root destinations are the existing application routes. Route availability does
-not imply every remote contract is emulated: moderation submissions, password
+not imply every remote contract is emulated: moderation decisions, password
 recovery email delivery, follow/account-deletion lifecycle and update delivery
 are not complete fixtures yet; unsupported calls fail rather than pretending to
 save. Local email/password login does not store or transmit either field. OAuth
@@ -90,18 +92,9 @@ Synthetic success/error responses are not evidence of server contract acceptance
 production persistence, permissions, live analytics, moderation or iOS readiness.
 
 Keep test credentials, private images and device logs out of this folder/repository.
-Verification/build identities and outstanding acceptance checks are recorded in
-`composeApp/SANDBOX_PLAN.md`. The earlier calendar-only checkpoint remains
-recorded in `feature/home-check-in/MIGRATION_PLAN.md`.
-
-Historical calendar-only check on 2026-10-18: Pixel 7, Direct Sandbox 1.0.650-sandbox, alongside the
-unchanged ordinary CoffeePeek 1.0.648. Local create (original + cutout), edit,
-delete, history invalidation, calendar indicators, photo viewer/Back, light/dark,
-offline/500 and failed save/upload were exercised. This is manual fake-transport
-acceptance, not a run against the live API. Each Android unit variant passes
-441 cases, including nine Sandbox transport cases (also cancellation); build
-logic passes four DEX-scanner cases. IDE source inspection requires Gradle Sync
-to import the new variant/source set; no clean IDE inspection is claimed yet.
+Current test layers and remaining manual/live gates are in
+[VERIFICATION_FLOW.md](../docs/VERIFICATION_FLOW.md) and each feature README.
+Completed checkpoint logs remain in Git history; they do not certify a fresh build.
 
 ## Contributions fixtures
 

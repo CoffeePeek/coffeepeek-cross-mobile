@@ -1,160 +1,46 @@
-# Contributing to CoffeePeek
+# Участие в CoffeePeek
 
-Спасибо, что хотите помочь с проектом. Это **Kotlin Multiplatform-приложение** на Compose Multiplatform для Android и iOS.
+Перед изменениями прочитайте [AGENTS.md](AGENTS.md) и [ARCHITECTURE.md](ARCHITECTURE.md). Они задают границы модулей и правила проверки. Актуальные руководства собраны в [указателе](docs/README.md).
 
-## Быстрый старт
+## Подготовка
 
-### Требования
+- Используйте Gradle wrapper проекта. JVM target — 17; Android CI запускается на JetBrains Runtime 21, release/iOS CI — на JDK 17. Android compile SDK — 37, min SDK — 31, target SDK — 36; источник — `Config.kt` и файл сборки приложения.
+- Создайте `local.properties` по [шаблону](local.properties.example). Он не коммитится. API URL встраивается при сборке. Debug использует настоящий настроенный backend.
+- Для iOS следуйте [IOS_SETUP.md](docs/IOS_SETUP.md): Xcode 27, iOS 17+, схема `iosApp`. Общие Swift-исходники находятся в `iosXtool`.
+- Версии библиотек закреплены в `gradle/libs.versions.toml`, Gradle — в `gradle/wrapper/gradle-wrapper.properties`.
 
-| Инструмент | Версия |
-|------------|--------|
-| JDK | **17** |
-| Android Studio | с SDK **37** |
-| Xcode | **27** для iOS-сборки |
-| Git | актуальная |
+## Ветки и PR
 
-> **Важно:** сборка на JDK 24/26 может падать с ошибкой `java.lang.IllegalArgumentException: 26.0.1`. Используйте JDK 17 для Gradle и IDE.
+Продолжайте текущий открытый checkpoint миграции; когда открытого родителя нет, используйте актуальную интеграционную ветку `develop`. Агентские ветки начинаются с `codex/migration-`. Независимые задачи оформляйте отдельными PR. Для стека укажите родителя и показывайте только свой diff; после слияния родителя проверьте базу, достижимость коммитов и итоговый diff. Слияние в закрытую ветку родителя само по себе не доставляет исправление в `develop` или `main`.
 
-### Клонирование
+Не перезаписывайте чужие изменения и не удаляйте занятые worktree или ветки с уникальной работой. Небольшое исправление существующего родителя может остаться в его PR; новую фичу не добавляйте в завершённый checkpoint.
 
-```bash
-git clone <repository-url>
-cd CoffeePeek-Android
+В описании PR укажите проблему, итоговое поведение, выполненные проверки и оставшиеся ограничения. Для задач Project #6 добавьте `Project-Issue: #номер` согласно [правилам проекта](tools/project-status/README.md). Фактический merge и публикацию подтверждайте отдельно.
+
+## Код и ресурсы
+
+- Выберите владельца в `feature/<name>`; DTO/HTTP/DAO находятся в `data`, бизнес-контракты — в `domain`, UI/ViewModel — в `impl`. Между фичами используйте только `api`; корневые адаптеры и DI принадлежат `composeApp`.
+- Повторно используйте `core/design-system` и префикс `CoffeePeek`. Новые `Cp`/`App`-алиасы и универсальные `utils`-модули не добавляйте.
+- Строки и accessibility-текст храните в ресурсах владельца. Проверьте фактические локали; русский `values` и белорусский `values-be` нужно поддерживать согласованно.
+- Для нового MVI используйте `core/presentation/MviViewModel`, явные Result-ошибки и отмену coroutine. Не подавляйте `CancellationException`.
+- Лимиты тела: 40 строк для Composable, 20 для обычной функции. `verifyFunctionBodyLimits` проверяет новые/выросшие нарушения. Baseline не расширяется вручную.
+- Превью с поддельным состоянием располагаются рядом с компонентом; в shared UI нужны светлое и тёмное.
+
+## Проверки
+
+Составьте план под затронутое поведение. Запускайте Gradle последовательно с `--max-workers=6`; не запускайте конкурентные сборки.
+
+```shell
+./gradlew verifyFunctionBodyLimits --max-workers=6
+./gradlew :composeApp:assembleDirectSandbox --max-workers=6
 ```
 
-### Локальная конфигурация
+Добавьте релевантные unit/контрактные тесты и lint затронутых модулей. Интеграционный срез должен собирать Android-приложение с packaged DEX-проверкой; для нативного изменения нужны Kotlin/Native и Xcode-проверки по iOS workflow. Выборочные Native-фильтры CI должны включать новые тесты: компиляция теста не доказывает его выполнение.
 
-1. Скопируйте шаблон секретов:
+UI проверяется превью и вручную в явно выбранном Sandbox. Не создавайте и не запускайте автоматические UI/Compose instrumentation/screenshot-тесты и тестовые Activity. Существующие чужие тесты не удаляйте. Точное разделение сборки, fake-окружения и live-интеграции — в [ANDROID_RUN_MODES.md](composeApp/ANDROID_RUN_MODES.md) и [VERIFICATION_FLOW.md](docs/VERIFICATION_FLOW.md).
 
-   ```bash
-   cp local.properties.example local.properties
-   ```
+Для чисто документального изменения проверяйте ссылки, упомянутые пути, команды и соответствие исходникам; оно не требует установки приложения. Не выдавайте сборку/повтор/cached-результат за новую ручную проверку. Сохраняйте исходный сбой при описании последующего успешного запуска.
 
-2. Заполните `local.properties`:
-   - `sdk.dir` — путь к Android SDK (Studio часто добавляет сама)
-   - `API_BASE_URL` — URL backend (уточните у команды)
-   - `GOOGLE_WEB_CLIENT_ID` — опционально, для Google Sign-In
+## Секреты и данные
 
-   В шаблоне указан публичный API `https://api.coffeepeek.by/`. Старый
-   Railway-адрес больше не обслуживает приложение (`404 Application not found`).
-   Для проверки операций записи используйте согласованное QA-окружение и
-   тестовый аккаунт. После изменения URL пересоберите и установите APK:
-   значение встраивается в Android `BuildConfig`, а не читается на устройстве
-   из `local.properties`.
-
-3. Получите у команды:
-   - тестовый аккаунт на API
-   - ключи, если dev-окружение отличается от дефолтного
-
-**Никогда не коммитьте `local.properties`** — файл в `.gitignore`.
-
-### Сборка
-
-```bash
-./gradlew :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug
-```
-
-Для локальной установки используйте
-`composeApp/build/outputs/apk/direct/debug/composeApp-direct-debug.apk`.
-`Direct` поддерживает обновление APK, `Play` — распространение через Google Play.
-Debug-сборки автоматически проверяют определения стартовых классов в DEX;
-подробнее: [диагностика упаковки APK](build-logic/ANDROID_RUNTIME_PACKAGING.md).
-
----
-
-## Архитектура
-
-```
-composeApp/           запуск, корневой DI (Koin), конфигурация, корневая навигация
-core/                 сеть (Ktor, сессия токенов), база данных, медиа, дизайн-система
-feature/<имя>/        api, domain, data, impl: экраны, ViewModel, репозитории и строки фичи
-```
-
-**Поток:** `Screen` → `ViewModel` → `domain.Repository` → `data` (внутри фичи, поверх `core/network`) → API.
-
-**Ключевые точки входа:**
-
-| Что | Где |
-|-----|-----|
-| Koin, модули приложения | `composeApp/.../di/KoinApp.kt` |
-| Транспорт | `composeApp/.../di/TransportModule.kt` (`core/network`) |
-| Навигация | `composeApp/.../ui/Navigator.kt` |
-| Base URL | `AppConfig` / `Constants.BASE_URL` |
-| Android Application | `FPApplication.kt` |
-
-**Исходники приложения:**
-
-- `composeApp/src/commonMain/` — UI и логика
-- `composeApp/src/androidMain/` — MapLibre, Google Auth, manifest, ресурсы
-- `composeApp/src/iosMain/` — MapKit, Google Auth bridge, PhotosUI, CoreLocation
-- `iosApp/` — SwiftUI entry point, Xcode project и iOS-конфигурация
-
----
-
-## Как вносить изменения
-
-### Ветки
-
-1. Создайте ветку от актуальной `main` (или `dev` — уточните у мейнтейнера).
-2. Именование: `feature/краткое-описание`, `fix/краткое-описание`.
-
-### Стиль кода
-
-- Следуйте существующим паттернам в соседних файлах.
-- UI: Compose Material 3, цвета из `CpColor` / `MaterialTheme`, отступы `CpDimens`.
-- Строки для UI — в `composeApp/src/commonMain/composeResources/values/strings.xml`.
-- Новый API: DTO в `network`, интерфейс в `domain`, реализация в `data`, регистрация в `DataModule` + `KoinApp`.
-- Общий код размещайте в `commonMain`; платформенные API — в соответствующих `androidMain`/`iosMain` actual-реализациях.
-- Минимальный diff: не рефакторить несвязанный код в том же PR.
-
-### Коммиты
-
-Короткое сообщение на русском или английском, по смыслу изменения:
-
-```
-fix: парсинг ошибки при создании чек-ина
-feat: публичный чек-ин с обязательным комментарием
-```
-
-### Pull Request
-
-В описании PR укажите:
-
-1. **Что сделано** и зачем.
-2. **Как проверить** (шаги ручного теста).
-3. **Скриншоты** — для UI-изменений.
-4. **Известные ограничения** — если есть зависимость от бэкенда.
-
-Перед отправкой:
-
-- [ ] Direct/Play debug-сборки и проверки runtime-классов проходят
-- [ ] `xcodebuild` или Run схемы `iosApp` проходит для iOS-изменений
-- [ ] Проверен основной сценарий (логин → лента / карта / профиль)
-- [ ] Нет секретов и `local.properties` в коммите
-
----
-
-## Отладка
-
-- В `KoinApp.kt` включён `debug = true` для HTTP — в logcat видны cURL-запросы (`CoffeePeekClient`).
-- Известные проблемы и баги из продакшен-логов: [`LOG_ISSUES.md`](LOG_ISSUES.md).
-
----
-
-## Модули и ответственность
-
-| Задача | Куда класть код |
-|--------|-----------------|
-| Новый экран и его ViewModel | `feature/<имя>/impl` |
-| REST endpoint и маппинг DTO | `feature/<имя>/data` |
-| Бизнес-контракт | `feature/<имя>/domain` (порты для других фич — `api`) |
-| Строки | `feature/<имя>/impl/src/commonMain/composeResources` (`values` — русский, `values-be` — белорусский) |
-| Локальная БД | `core/database` |
-| Android API (MapLibre, picker) | `composeApp/.../androidMain/` |
-| iOS API (MapKit, PhotosUI) | `composeApp/.../iosMain/` |
-
----
-
-## Вопросы
-
-Если чего-то нет в репозитории (ключи, staging URL, процесс ревью) — спросите мейнтейнера или откройте issue в трекере команды.
+Не коммитьте `local.properties`, локальные xcconfig, credentials, Google/Firebase-конфигурацию, токены, личные фото и полные логи. Debug и Sandbox — разные пакеты и окружения. Операции с реальным аккаунтом требуют согласованного безопасного сценария; сборка APK не разрешает его установку, logout или очистку данных.

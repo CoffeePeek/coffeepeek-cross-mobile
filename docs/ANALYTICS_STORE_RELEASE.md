@@ -1,137 +1,39 @@
-# PostHog: сведения для публикации в сторах
+# Аналитика: сведения перед публикацией в сторах
 
-Проверено по официальным инструкциям Apple/Google 15.10.2026. Это дополнение
-для внедрённой аналитики, а не полный аудит данных CoffeePeek. Существующие
-авторизация, фото, чекины, геолокация и другие сервисы также учитываются в формах.
+Сверено с клиентскими исходниками 27.11.2026. Это фактическая памятка к [мобильному контракту](ANALYTICS.md), а не подтверждение настройки PostHog Cloud, опубликованной политики или заполненных форм Apple/Google.
 
-## Что меняется для релиза
+## Что делает клиент
 
-Новые ключи App Store Connect, Google Play, provisioning capabilities и разрешение
-на IDFA для PostHog не нужны. EU host задан в коде, project token поступает из
-конфигурации release-сборки (`POSTHOG_PROJECT_TOKEN`), см. [ANALYTICS.md](ANALYTICS.md).
-В этой версии Release сбор включается после входа и успешной загрузки включённой
-настройки аккаунта. Начальное серверное значение — `true`; галочка регистрации
-предустановлена, пользователь может отключить её или переключатель на странице
-Настройки → Политика использования. Явный серверный отказ сохраняется при входе
-и переустановке. Debug по умолчанию выключен; Sandbox не отправляет события.
-Это настройка аналитики с возможностью отключения, а не запись о явном согласии.
-Сначала требуется backend-миграция и API, затем клиент. Публичная политика и формы
-магазинов не обновляются изменением этого репозитория; перед публикацией сверить
-их с новым поведением.
-Push в `develop` запускает Android workflow. Сборка iOS и загрузка в
-TestFlight запускаются только из `main`, в том числе при ручном запуске.
-На PR с изменениями iOS/KMP-кода в `main`/`develop` выполняются Xcode-сборка
-симулятора и не-UI тесты совместимости ViewModel; эта проверка не публикует приложение.
-Загрузка в TestFlight не является публикацией версии в публичном App Store.
-Актуальные статусы смотреть в GitHub Actions; успешность push не доказывает
-успешность сборки или загрузки. Google Play Data safety и App Store App Privacy
-не обновляются этими workflows автоматически.
+- Один PostHog KMP SDK, EU ingest, build-time project ingestion token. Management keys в приложение не входят.
+- Сбор возможен после входа и успешной загрузки включённой account preference. Backend default `true` и предустановленная галочка регистрации не являются доказательством явно данного согласия.
+- Гость, неизвестная preference, revoke и background не разрешают сбор. Debug требует явного opt-in и настроенного token; Sandbox не отправляет события.
+- Identify использует внутренний backend user ID; schema разрешает только заданные события/свойства. Текст поиска/форм, фото, tokens, headers и точные координаты в свойства аналитики не включаются.
+- Replay/autocapture/automatic events/error tracking отключены; native wrapper может делать служебные config requests после разрешённого setup. Клиентские фильтры не скрывают сетевой IP от сервера.
+- Локальная очередь ограничена foreground-сеансом и очищается при background/revoke/account switch. Это не срок хранения уже доставленных событий в облаке.
 
-## App Store Connect → CoffeePeek → App Privacy
+## Что сверить с владельцем релиза
 
-Ниже — соответствие фактических данных выбранным категориям. Цель для добавления
-аналитики — **Analytics**, **Linked to the user = Yes**, **Used for tracking = No**.
-Связь с пользователем существует: SDK использует псевдонимный ID, а после входа
-получает backend user ID. Отсутствие email не означает анонимность.
+| Данные реализации | Разделы для сверки в формах |
+| --- | --- |
+| Backend user ID / SDK installation identifiers | User ID, Device ID / Device or other IDs |
+| Экраны и разрешённые действия | Product Interaction / App interactions |
+| Счётчики и длительности | Usage Data / App activity |
+| API latency, безопасные error category и HTTP status | Performance Data / Diagnostics |
+| Возможное серверное GeoIP/IP-enrichment | Location — только по фактической конфигурации облака |
 
-| Категория Apple | Почему нужна |
-|---|---|
-| Identifiers → User ID | Backend ID для identify и псевдонимная identity |
-| Identifiers → Device ID | Сохраняемый случайный идентификатор установки SDK; не IDFA/рекламный ID |
-| Usage Data → Product Interaction | Экраны, нажатия, поиск без текста, показы и действия функций |
-| Usage Data → Other Usage Data | Категории сценариев, счётчики и длительность заполнения формы |
-| Diagnostics → Performance Data | Измеренная длительность логических API-запросов |
-| Diagnostics → Other Diagnostic Data | Категории ошибок и HTTP status без exception/response content |
+Связь аналитики с account ID сохраняется даже без email. Отдельно учтите остальные функции приложения: auth, пользовательские фото, чекины, пуши и координаты карты. Клиентский allowlist не является полной декларацией данных приложения.
 
-Нужно опубликовать обновлённые ответы и актуальный Privacy Policy URL.
-Обязательство включает данные интегрированных SDK и optional analytics.
-Описанные выше поля — вывод из реализации по
-[классификации Apple](https://developer.apple.com/app-store/app-privacy-details/);
-путь изменения описан в
-[Manage app privacy](https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy).
+Перед submission проверьте назначения, обязательность/optional, sharing/service-provider role, tracking и GeoIP по текущим правилам и реальной конфигурации. Не копируйте старые ответы автоматически:
+[Apple App Privacy](https://developer.apple.com/app-store/app-privacy-details/),
+[управление App Privacy](https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy),
+[Apple privacy/tracking](https://developer.apple.com/app-store/user-privacy-and-data-use/),
+[Google Data safety](https://support.google.com/googleplay/android-developer/answer/10787469?hl=en),
+[PostHog privacy](https://posthog.com/docs/privacy/data-storage).
 
-Для данной аналитики **ATT-запрос не требуется**: нет доступа к IDFA, рекламного
-профилирования или объединения с данными чужих приложений для рекламы.
-Связь web и mobile одного CoffeePeek через собственный account ID сама по себе
-не является рекламным tracking. Это утверждение относится к этой интеграции;
-другие SDK и будущие рекламные интеграции проверяются отдельно. Определение:
-[User Privacy and Data Use](https://developer.apple.com/app-store/user-privacy-and-data-use/).
+## Политика, архив и доставка
 
-## Google Play Console → App content → Data safety
+Сверьте опубликованный [Privacy Policy](https://coffeepeek.by/privacy), оператора/контакты, хранение, удаление и доступность opt-out. Выключение аналитики не удаляет доставленные ранее события; нельзя обещать такое удаление без действующего серверного процесса.
 
-| Тип Google | Добавляемая цель |
-|---|---|
-| Personal info → User IDs | Analytics |
-| Device or other IDs | Analytics |
-| App activity → App interactions | Analytics |
-| App info and performance → Diagnostics | Analytics: latency и безопасные категории ошибок |
+На macOS проверьте SwiftPM resolution, подписанный Release archive, privacy resources всех SDK, required-reason declarations и Xcode Privacy Report. Generic SDK manifest не заменяет описание фактического identify. Native hooks и beforeSend/revoke нужно проверять отдельно от compile.
 
-Для этого сбора: **Collected = Yes**, обработка не ephemeral; пользователь может
-отказаться, поэтому добавляемая аналитика optional. Для уже существующего типа
-нельзя выбирать optional, если другой функционал требует его от каких-либо
-пользователей. Аналитические запросы используют HTTPS; ответ об encrypted in
-transit для всего приложения требует учёта остальных сетевых интеграций.
-
-Для **Shared** действует исключение service provider: передачу PostHog можно не
-помечать sharing, если он обрабатывает эти данные только от имени CoffeePeek по
-соответствующим условиям/DPA. Сам факт использования стороннего облака не
-позволяет автоматически выбрать ни Yes, ни No для всех данных приложения.
-Проверьте роль провайдера и включённые интеграции/экспорты проекта.
-Основание: [официальная инструкция Google](https://support.google.com/googleplay/android-developer/answer/10787469?hl=en),
-[PostHog DPA](https://posthog.com/dpa).
-
-## Геолокация и настройки облачного проекта
-
-Клиентский фильтр удаляет координаты и `$ip` из свойств событий. Это не скрывает
-сетевой IP от сервера. PostHog может дополнительно обогащать события геоданными
-на сервере. Доступ к фактическим настройкам EU-проекта этой задачей не проверен.
-
-Перед заполнением форм проверьте GeoIP, сохранение IP и transformations в
-PostHog. Если используется примерная геолокация по IP, добавьте **Coarse Location**
-в Apple / **Approximate location** в Google с целью Analytics. При сохранении
-более точного местоположения выберите соответствующую точную категорию. Либо
-отключите это обогащение и подтвердите результат на доставленных событиях.
-Удаление `$ip` из клиентского payload не доказывает отсутствие GeoIP.
-См. [PostHog GeoIP](https://posthog.com/docs/cdp/transformations/template-geoip),
-[управление хранением](https://posthog.com/docs/privacy/data-storage).
-
-Точный GPS для карты и загрузка пользовательских фото не добавлены в PostHog,
-но их существующая передача backend учитывается отдельно в декларации приложения.
-
-## Политика конфиденциальности
-
-Обновить [опубликованную политику CoffeePeek](https://coffeepeek.by/privacy),
-на которую уже ссылается приложение, и проверить её URL в обоих сторах.
-Можно использовать такой фактический текст как основу:
-
-> При включённой аналитике CoffeePeek использует PostHog Cloud EU для анализа работы
-> приложения и улучшения функций. Мы отправляем сведения об экранах и действиях,
-> технические категории ошибок, время выполнения запросов и псевдонимные
-> идентификаторы. После входа события связываются с внутренним ID аккаунта.
-> Поисковые запросы, заметки, фотографии и точные координаты не включаются в
-> события PostHog приложением. Отказ не ограничивает функции CoffeePeek.
-> Вы можете изменить решение в настройках приложения.
-
-Дополнить его реальными сведениями оператора, контактами, условиями хранения и
-удаления, а также GeoIP/IP-практикой проекта. Срок хранения в PostHog не задаётся
-TTL локальной очереди: он определяется отдельно. Отзыв согласия удаляет локальную
-очередь и останавливает будущий сбор, но не удаляет ранее доставленные события.
-Не обещайте автоматическое удаление из облака при выключении переключателя.
-Для запросов на удаление нужен действующий процесс удаления данных PostHog,
-включая связанные identity. Новая автоматизация серверного удаления этой задачей
-не добавлена.
-
-## Проверка перед iOS submission
-
-PostHog iOS 3.64.1 содержит
-[собственный PrivacyInfo.xcprivacy](https://github.com/PostHog/posthog-ios/blob/3.64.1/PostHog/Resources/PrivacyInfo.xcprivacy).
-Он не заполняет App Privacy в App Store Connect и не заменяет сведения о
-фактическом использовании identify приложением. Его generic declaration не
-следует копировать как доказательство отсутствия связи с пользователем.
-
-На macOS проверить SwiftPM resolution, Release archive, присутствие privacy
-resources/required-reason declarations в архиве и итоговый Xcode Privacy Report;
-устранить расхождения для всех SDK и собственного кода. На Windows проверены
-только KLIB для iOS, полная сборка/архив не выполнялась. После сборки проверить
-доставку разрешённых событий, отказ и отзыв на устройстве. Консоли сторов и
-публичная политика автоматически не изменены.
+PR iOS verification компилирует/исполняет выбранные контракты без публикации. TestFlight обычно запускается из `main`; workflow также содержит явное ручное исключение для `codex/ios-native`. Upload, Apple processing и доступность тестировщикам — отдельные состояния. Ни workflow, ни обновление этого Markdown не публикуют ответы App Privacy/Data safety и не изменяют публичную политику автоматически. Точные настройки — в [iOS setup](IOS_SETUP.md) и [release guides](GOOGLE_PLAY_CD.md).

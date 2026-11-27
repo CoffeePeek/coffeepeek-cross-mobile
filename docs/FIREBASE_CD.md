@@ -1,5 +1,7 @@
 # Firebase App Distribution
 
+Сверено с workflow 27.11.2026. Наличие инструкции не подтверждает настройку реальных secrets или успешную доставку.
+
 Job `publish_firebase` в `.github/workflows/android-apk.yml` доставляет release APK на каждый push в `main`. Используется тот же APK с production backend, который публикуется на сайте; отдельной Firebase-сборки нет.
 
 Workflow `.github/workflows/android-firebase-develop.yml` дополнительно собирает
@@ -43,11 +45,3 @@ Sandbox хранят данные раздельно; production-обновле�
 новый package ID в Firebase и заполнить `FIREBASE_GOOGLE_SERVICES_JSON_DEBUG`.
 
 Сборка и подпись описаны в [GOOGLE_PLAY_CD.md](GOOGLE_PLAY_CD.md). Отдельный workflow `Android CI` проверяет PR в `main` и `develop` без публикации и release secrets.
-
-Проверка исправления workflow, 2026-11-14: Windows, `74f9a71a0` плюс изменения
-конфигурации; 51 тест релизных скриптов прошёл без ошибок и пропусков. Сборки
-Direct/Play Debug, обе проверки packaged DEX и лимитов функций прошли за 1м45с
-с `--max-workers=6`. Firebase-регрессии используют синтетические JSON; реальные
-CI-секреты проверяются в следующем `Android Release`. Устройства не использованы,
-APK не установлен. Android Release до исправления падал на отсутствии клиента
-`com.coffeepeek.debug` в общем production JSON.

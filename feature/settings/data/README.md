@@ -1,5 +1,8 @@
 # Settings data
 
+Reviewed against `develop` on 2026-11-27. The owning feature and account/SDK
+integration contract are in [Settings](../README.md).
+
 Owns account analytics preference HTTP calls and the durable account-scoped pending choice.
 Depends on settings/domain and core network, session and database infrastructure.
 Application composition calls the factory; feature UI consumes domain/API contracts only.
@@ -12,3 +15,6 @@ for the account restored at startup, with onlyIfUnset so a newer server decision
 Guest legacy settings cannot be attributed to a future account and are removed.
 Failed writes stay pending for that account and are retried on the next load. No settled
 local default can enable analytics after an unsuccessful server read.
+
+`AnalyticsPreferencesTest` covers these contracts with fake transport/storage.
+This documentation review did not execute tests or verify live persistence.

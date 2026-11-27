@@ -53,7 +53,7 @@ The agreed target for migrated business features is separate api/domain/data/imp
 Gradle boundaries under singular feature/. Create these incrementally for the
 feature being migrated, not empty modules for every future screen. UI packages
 live inside impl; composition assembles data via narrow factories. Favorites
-Koin assembly and its temporary legacy bridge live in composeApp/androidMain.
+Koin assembly and server-state adapters live in composeApp common/platform composition.
 Put root Koin assembly and platform/legacy bridges in composeApp, grouped
 by feature; only extract a separate integration module for a demonstrated need.
 This does not require every core infrastructure module to have a domain/data
@@ -63,7 +63,7 @@ Current main uses server-backed favorites (shops, roasters and drinks). Android
 composition adapts that same server source into the migrated feature. Never
 restore the retired local writer, upload old local rows automatically, or interpret
 logout/clear-cache as deleting server favorites. Older local-foundation tests are
-not evidence of active production wiring. Check feature/MAIN_SYNC_AUDIT.md before
+not evidence of active production wiring. Check feature/favorites/README.md and feature/LEGACY_EXIT_PLAN.md before
 using older roadmap/product assumptions.
 
 - `api` is public by necessity, not by default. Keep routes, entry points, and
