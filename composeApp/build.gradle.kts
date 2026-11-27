@@ -72,6 +72,10 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
+            implementation(project(module.feature.attribution.api))
+            implementation(project(module.feature.attribution.domain))
+            implementation(project(module.feature.attribution.data))
+            implementation(project(module.feature.attribution.impl))
             implementation(project(module.feature.homePreparation.impl))
             implementation(project(module.feature.homePreparation.data))
             implementation(project(module.feature.homePreparation.domain))

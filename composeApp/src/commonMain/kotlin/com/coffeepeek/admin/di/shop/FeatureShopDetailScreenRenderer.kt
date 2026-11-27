@@ -177,8 +177,7 @@ internal class FeatureShopDetailScreenRenderer(
     }
 
     private suspend fun share(effect: ShopDetailEffect.ShareShop, session: ShopBrowsingHostSession) {
-        val text = getString(Res.string.shop_share_named, effect.title, "https://coffeepeek.by${effect.canonicalPath}")
-        if (session.lease.isCurrent()) ShareHelper.shareText(text)
+        if (session.lease.isCurrent()) com.coffeepeek.admin.di.attribution.AppAttribution.shareAction(effect.canonicalPath, "shop_header", effect.title)
     }
 }
 

@@ -1,0 +1,36 @@
+name: Attribution Kotlin Native contract
+
+on:
+  pull_request:
+    branches: [main, develop, 'codex/migration-version-2-0-0']
+    paths:
+      - '.github/workflows/attribution-kmp.yml'
+      - 'feature/attribution/**'
+      - 'core/network/**'
+      - 'core/session/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: attribution-kmp-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-data:
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-37.0 build-tools;36.0.0'
+          log-accepted-android-sdk-licenses: 'false'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Compile the actual iOS transport and storage
+        run: ./gradlew :feature:attribution:data:compileKotlinIosSimulatorArm64 --max-workers=6 --console=plain

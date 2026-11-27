@@ -8,6 +8,13 @@ object Modules {
     val feature = Feature
 
     object Feature {
+        val attribution = Attribution
+        object Attribution {
+            const val api = ":feature:attribution:api"
+            const val domain = ":feature:attribution:domain"
+            const val data = ":feature:attribution:data"
+            const val impl = ":feature:attribution:impl"
+        }
         val collections = Collections
         object Collections {
             const val api = ":feature:collections:api"
@@ -183,6 +190,10 @@ object Modules {
 
     val all: List<String> = listOf(
         composeApp,
+        feature.attribution.api,
+        feature.attribution.domain,
+        feature.attribution.data,
+        feature.attribution.impl,
         feature.businessOwnership.api,
         feature.businessOwnership.domain,
         feature.businessOwnership.data,

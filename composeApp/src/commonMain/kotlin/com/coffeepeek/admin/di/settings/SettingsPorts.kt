@@ -108,7 +108,7 @@ internal class AppUpdateCheckPort(private val updates: AppUpdateController) : Up
 
 internal class AppSettingsExternalActions(
     private val openUrl: (String) -> Unit = { OpenInBrowser.openInBrowser(it) },
-    private val shareText: (String) -> Unit = { ShareHelper.shareText(it) },
+    private val shareText: (String) -> Unit = { com.coffeepeek.admin.di.attribution.AppAttribution.shareTextAction(it, "settings") },
     private val reviewUrl: String? = appReviewUrl(AppConfig.updatePlatform, AppConfig.updateChannel),
 ) : SettingsExternalActions {
     override val canRateApp: Boolean = reviewUrl != null

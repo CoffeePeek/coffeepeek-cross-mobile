@@ -7,14 +7,14 @@ import androidx.compose.ui.Modifier
 interface RoasterScreenAnalytics {
     /** Reports the detail page once it is [loaded] and actually visible. */
     @Composable
-    fun TrackDetail(loaded: Boolean)
+    fun TrackDetail(loaded: Boolean, canonicalPath: String? = null)
 
     @Composable
     fun exposure(modifier: Modifier, section: RoasterExposure): Modifier
 
     companion object {
         val None: RoasterScreenAnalytics = object : RoasterScreenAnalytics {
-            @Composable override fun TrackDetail(loaded: Boolean) = Unit
+            @Composable override fun TrackDetail(loaded: Boolean, canonicalPath: String?) = Unit
             @Composable override fun exposure(modifier: Modifier, section: RoasterExposure) = modifier
         }
     }

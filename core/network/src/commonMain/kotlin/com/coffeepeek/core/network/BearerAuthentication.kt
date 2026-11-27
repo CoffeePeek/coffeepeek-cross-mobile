@@ -24,11 +24,13 @@ internal fun HttpClientConfig<*>.configureBearerAuthentication(
         on(Send) { request ->
             val credentials = if (request.url.build().isSameOrigin(origin)) rotation.credentials() else null
             credentials?.let { request.setBearer(it.tokens) }
+            request.requireCurrentAuthorization()
             val first = proceed(request)
             if (credentials == null || !first.response.isRejectionOf(origin, credentials.tokens)) return@on first
             val updated = rotation.refresh(credentials) ?: return@on first
             onAuthRetry(first.response)
             request.setBearer(updated)
+            request.requireCurrentAuthorization()
             proceed(request)
         }
     })

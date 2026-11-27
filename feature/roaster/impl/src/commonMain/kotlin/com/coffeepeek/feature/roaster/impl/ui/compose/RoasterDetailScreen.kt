@@ -103,7 +103,7 @@ internal fun RoasterDetailScreenContent(
     onFavoriteFeedback: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    screen.TrackDetail(loaded = state.details != null)
+    screen.TrackDetail(loaded = state.details != null, canonicalPath = state.details?.address?.canonicalPath)
     val snackbar = remember { SnackbarHostState() }
     val message = state.message?.text()
     LaunchedEffect(message) {
