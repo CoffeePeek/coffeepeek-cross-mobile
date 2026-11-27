@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -35,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.Role
@@ -46,7 +48,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTonalButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.profile.api.ProfileImage
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.impl.resources.*
@@ -114,9 +119,18 @@ private fun ProfileAvatar(nickname: String, avatarUrl: String?, image: ProfileIm
 private fun ProfileFollowButton(nickname: String, isFollowing: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val description = stringResource(if (isFollowing) Res.string.profile_unfollow_description else Res.string.profile_follow_description,
         nickname.trimStart('@'))
-    com.coffeepeek.core.designsystem.component.CoffeePeekButton(
-        text = stringResource(if (isFollowing) Res.string.profile_following else Res.string.profile_follow),
-        onClick = onClick, enabled = enabled, modifier = Modifier.semantics { contentDescription = description })
+    val modifier = Modifier.semantics { contentDescription = description }
+    if (isFollowing) {
+        CoffeePeekTonalButton(onClick, modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
+            enabled = enabled, colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = Color.Transparent, disabledContainerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            )) {
+            Text(stringResource(Res.string.profile_following), style = MaterialTheme.typography.bodyMedium)
+        }
+    } else {
+        CoffeePeekButton(stringResource(Res.string.profile_follow), onClick, modifier, enabled = enabled)
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -153,12 +167,13 @@ private fun ProfileStat(count: Int, label: String, modifier: Modifier, onClick: 
 
 @Composable
 private fun ProfileHeaderPreview(dark: Boolean, own: Boolean = true, width: Dp = 390.dp,
-    roasters: Int = 3, fontScale: Float = 1f) = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme(darkTheme = dark) {
+    roasters: Int = 3, fontScale: Float = 1f, following: Boolean = false) = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme(darkTheme = dark) {
     val density = LocalDensity.current
     CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
         Surface(Modifier.width(width), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.padding(16.dp)) {
                 PublicProfileHeader("Arsen", null, "Фоткаю, пью, варю… Ладно, шучу, не варю", { _, _, _ -> },
+                    isFollowing = following,
                     stats = PublicProfileStats(19, 27, roasters, 1),
                     onShopsClick = if (own) ({}) else null, onRoastersClick = if (own) ({}) else null,
                     onFollowersClick = {}, followingCount = 4, onFollowingClick = {},
@@ -172,6 +187,8 @@ private fun ProfileHeaderPreview(dark: Boolean, own: Boolean = true, width: Dp =
 @Preview @Composable private fun ProfileHeaderDarkPreview() = ProfileHeaderPreview(true)
 @Preview @Composable private fun PublicProfileHeaderLightPreview() = ProfileHeaderPreview(false, false)
 @Preview @Composable private fun PublicProfileHeaderDarkPreview() = ProfileHeaderPreview(true, false)
+@Preview @Composable private fun PublicProfileFollowingLightPreview() = ProfileHeaderPreview(false, own = false, following = true)
+@Preview @Composable private fun PublicProfileFollowingDarkPreview() = ProfileHeaderPreview(true, own = false, following = true)
 @Preview @Composable private fun ProfileHeaderNarrowLightPreview() = ProfileHeaderPreview(false, width = 320.dp)
 @Preview @Composable private fun ProfileHeaderNarrowDarkPreview() = ProfileHeaderPreview(true, width = 320.dp)
 @Preview @Composable private fun ProfileHeaderNoRoastersLightPreview() = ProfileHeaderPreview(false, roasters = 0)

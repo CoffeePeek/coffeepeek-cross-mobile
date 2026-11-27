@@ -27,3 +27,6 @@
 "profile_week_error" = "Не ўдалося загрузіць актыўнасць";
 "profile_week_loading" = "Загрузка актыўнасці…";
 "profile_week_open" = "Адкрыць чэкіны";
+"profile_unfollow_title" = "Адпісацца?";
+"profile_unfollow_message" = "Вы хочаце адпісацца ад «%1$@»?";
+"profile_unfollow_action" = "Адпісацца";

@@ -50,6 +50,13 @@ private struct PublicProfileScreen: View {
         .sheet(isPresented: model.connectionsPresented) {
             PublicProfileConnectionsSheet(model: model)
         }
+        .confirmationDialog(model.strings["profile_unfollow_title"], isPresented: model.unfollowPresented,
+                            titleVisibility: .visible, presenting: model.unfollowTarget) { target in
+            Button(model.strings["profile_unfollow_action"], role: .destructive) { model.confirmUnfollow(target) }
+            Button(model.strings["profile_cancel"], role: .cancel) { model.cancelUnfollow() }
+        } message: { target in
+            Text(String(format: model.strings["profile_unfollow_message"], target.name))
+        }
     }
 
     private var toolbar: some View {
@@ -148,14 +155,28 @@ private struct PublicProfileScreen: View {
 
     private var follow: some View {
         VStack(alignment: .leading, spacing: 6) {
-            CoffeePeekNativeActionButton(title: model.strings[model.state.following ? "profile_following" : "profile_follow"],
-                enabled: model.state.followEnabled) { model.profile?.toggleFollow() }
+            if model.state.following { subscribedButton }
+            else {
+                CoffeePeekNativeActionButton(title: model.strings["profile_follow"],
+                    enabled: model.state.followEnabled, action: model.requestFollow)
+            }
             if model.state.followFailed {
-                OwnProfileRetry(message: model.strings["profile_follow_failed"], strings: model.strings) {
-                    model.profile?.toggleFollow()
-                }
+                OwnProfileRetry(message: model.strings["profile_follow_failed"], strings: model.strings,
+                    retry: model.requestFollow)
             }
         }
+    }
+
+    private var subscribedButton: some View {
+        Button(action: model.requestFollow) {
+            Text(model.strings["profile_following"]).fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 12).padding(.vertical, 12)
+                .frame(maxWidth: .infinity, minHeight: 48).contentShape(Capsule())
+        }.buttonStyle(.plain).font(CoffeePeekNativeStyle.font(15, relativeTo: .subheadline))
+            .foregroundStyle(CoffeePeekNativeStyle.foreground)
+            .background(CoffeePeekNativeStyle.surface, in: Capsule())
+            .overlay { Capsule().strokeBorder(CoffeePeekNativeStyle.border).allowsHitTesting(false) }
+            .disabled(!model.state.followEnabled)
     }
 
     @ViewBuilder
@@ -177,6 +198,12 @@ private struct PublicProfileScreen: View {
     }
 }
 
+fileprivate struct PublicProfileUnfollowTarget {
+    let slug: String
+    let revision: Int64
+    let name: String
+}
+
 @MainActor
 final class PublicProfileModel: ObservableObject {
     let profile: IosPublicProfile?
@@ -186,6 +213,7 @@ final class PublicProfileModel: ObservableObject {
     @Published private(set) var selected: OwnProfileTab = .checkIns
     @Published private(set) var slot: UIViewController?
     @Published var viewer: IosPhotoViewer?
+    @Published fileprivate private(set) var unfollowTarget: PublicProfileUnfollowTarget?
     private var observation: IosOwnProfileObservation?
 
     init(profile: IosPublicProfile) {
@@ -215,6 +243,37 @@ final class PublicProfileModel: ObservableObject {
         Binding(get: { self.state.connections.open }, set: { if !$0 { self.profile?.closeConnections() } })
     }
 
+    var unfollowPresented: Binding<Bool> {
+        Binding(get: { self.unfollowTarget != nil }, set: { if !$0 { self.cancelUnfollow() } })
+    }
+
+    func requestFollow() {
+        let current = profile?.current() ?? state
+        guard current.active, !current.own, current.identity != nil,
+              current.blockedName == nil, current.followEnabled,
+              current.slug == state.slug, current.visibilityRevision == state.visibilityRevision,
+              current.following == state.following else { return }
+        if current.following {
+            guard current.signedIn, let slug = current.slug, let identity = current.identity else { return }
+            unfollowTarget = PublicProfileUnfollowTarget(slug: slug, revision: current.visibilityRevision, name: identity.name)
+        } else { profile?.toggleFollow() }
+    }
+
+    func cancelUnfollow() { unfollowTarget = nil }
+
+    fileprivate func confirmUnfollow(_ target: PublicProfileUnfollowTarget) {
+        cancelUnfollow()
+        let current = profile?.current() ?? state
+        guard canUnfollow(target, in: current) else { return }
+        profile?.toggleFollow()
+    }
+
+    private func canUnfollow(_ target: PublicProfileUnfollowTarget, in current: IosPublicProfileState) -> Bool {
+        current.active && current.signedIn && !current.own && current.following && current.followEnabled &&
+            current.blockedName == nil && current.slug == target.slug && current.visibilityRevision == target.revision &&
+            current.identity?.name == target.name
+    }
+
     func observe() {
         guard observation == nil, let profile else { return }
         update(profile.current())
@@ -224,6 +283,7 @@ final class PublicProfileModel: ObservableObject {
     }
 
     func stop() {
+        cancelUnfollow()
         guard viewer == nil else { return }
         observation?.cancel()
         observation = nil
@@ -262,6 +322,7 @@ final class PublicProfileModel: ObservableObject {
             viewer = nil
             if state.connections.open { profile?.closeConnections() }
         }
+        if let target = unfollowTarget, !canUnfollow(target, in: next) { cancelUnfollow() }
         state = next
         if slotChanged { updateSlot() }
     }
@@ -278,7 +339,8 @@ final class PublicProfileModel: ObservableObject {
 
 @MainActor
 private func publicProfilePreview(language: String, checkInsOnly: Bool = false,
-                                  pendingLike: Bool = false, failedLike: Bool = false) -> some View {
+                                  pendingLike: Bool = false, failedLike: Bool = false, following: Bool = false,
+                                  confirmingUnfollow: Bool = false) -> some View {
     let identity = IosOwnProfileIdentity(name: "CoffeePeek", about: "Кофе и прогулки", avatar: nil, checkIns: 6, shops: 2,
         roasters: 1, followers: 11, canOpenFollowers: true, following: KotlinInt(int: 4))
     let activity = IosPublicProfileActivity(days: [
@@ -292,9 +354,11 @@ private func publicProfilePreview(language: String, checkInsOnly: Bool = false,
         pendingLikeIds: pendingLike ? [row.id] : [], likeErrorIds: failedLike ? [row.id] : [])
     let connections = IosPublicProfileConnections(open: false, followers: true, loading: false, failed: false, more: false, people: [])
     let state = IosPublicProfileState(active: true, loading: false, errorKey: nil, refreshFailed: false, visibilityRevision: 0,
-        blockedName: nil, identity: identity, slug: "coffeepeek", own: false, signedIn: true, following: false, followEnabled: true,
+        blockedName: nil, identity: identity, slug: "coffeepeek", own: false, signedIn: true, following: following, followEnabled: true,
         followFailed: false, canShare: true, activity: activity, checkIns: rows, connections: connections)
-    return PublicProfileScreen(model: PublicProfileModel(preview: state, language: language, checkInsOnly: checkInsOnly))
+    let model = PublicProfileModel(preview: state, language: language, checkInsOnly: checkInsOnly)
+    if confirmingUnfollow { model.requestFollow() }
+    return PublicProfileScreen(model: model)
 }
 
 #Preview("Public profile light") {
@@ -303,6 +367,14 @@ private func publicProfilePreview(language: String, checkInsOnly: Bool = false,
 
 #Preview("Public profile dark") {
     publicProfilePreview(language: "be").preferredColorScheme(.dark)
+}
+
+#Preview("Following light") {
+    publicProfilePreview(language: "ru", following: true).preferredColorScheme(.light)
+}
+
+#Preview("Following dark") {
+    publicProfilePreview(language: "be", following: true).preferredColorScheme(.dark)
 }
 
 #Preview("Public check-ins light") {
@@ -327,4 +399,12 @@ private func publicProfilePreview(language: String, checkInsOnly: Bool = false,
 
 #Preview("Public reaction failure dark") {
     publicProfilePreview(language: "be", failedLike: true).preferredColorScheme(.dark)
+}
+
+#Preview("Unfollow confirmation light") {
+    publicProfilePreview(language: "ru", following: true, confirmingUnfollow: true).preferredColorScheme(.light)
+}
+
+#Preview("Unfollow confirmation dark") {
+    publicProfilePreview(language: "be", following: true, confirmingUnfollow: true).preferredColorScheme(.dark)
 }
