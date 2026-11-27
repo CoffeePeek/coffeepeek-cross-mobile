@@ -8,9 +8,9 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CancellationException
 import kotlin.time.Clock
 
-fun createAttributionFeature(clients: ApiClients, sessions: SessionReader, directory: String, platformContext: Any?): AttributionFeature {
+fun createAttributionFeature(clients: ApiClients, sessions: SessionReader, directory: String, platformContext: Any?, permissionDenied: () -> Unit = {}): AttributionFeature {
     val engine = AttributionEngine(AttributionHttpBackend(clients.plainClient, sessions, clients.client), platformStore(directory),
-        AttributionClock({ Clock.System.now().toEpochMilliseconds() }, ::randomKey), platformInstallChannel(platformContext), platformInstallSource(platformContext))
+        AttributionClock({ Clock.System.now().toEpochMilliseconds() }, ::randomKey), platformInstallChannel(platformContext), platformInstallSource(platformContext), permissionDenied)
     return DefaultAttributionFeature(engine)
 }
 

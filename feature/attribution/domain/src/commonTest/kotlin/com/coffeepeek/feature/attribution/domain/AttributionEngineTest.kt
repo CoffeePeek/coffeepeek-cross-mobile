@@ -5,6 +5,19 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 
 class AttributionEngineTest {
+    @Test fun authoritativeDenialFromVisibleStopsDeliveryAndErasesAccountEvidence() = runTest {
+        val fixture = Fixture()
+        fixture.engine.sync(fixture.permit())
+        fixture.backend.touchFailure = AttributionFailure(403, "ANALYTICS_NOT_PERMITTED")
+        assertFailsWith<AttributionFailure> { fixture.engine.visible("/") }
+        assertEquals(1, fixture.permissionDenials)
+        assertFalse(fixture.current)
+        assertNull(fixture.store.state.evidence)
+        assertNull(fixture.store.state.installationId)
+        fixture.engine.visible("/")
+        assertEquals(1, fixture.backend.touchAttempts.size)
+    }
+
     @Test fun lateObserverQueuedForRevokeIsNotReusedAfterForegroundRecovery() = runTest {
         val fixture = Fixture()
         fixture.backend.afterTouch = { fixture.current = false }
@@ -225,10 +238,11 @@ private class Fixture {
     var current = true
     var source: String? = null
     var sourceReads = 0
+    var permissionDenials = 0
     val store = MemoryStore()
     val backend = FakeBackend { time }
     val engine = AttributionEngine(backend, store, AttributionClock({ time }, { "id-${++sequence}" }), "unknown",
-        AttributionInstallSource { sourceReads++; source })
+        AttributionInstallSource { sourceReads++; source }, { permissionDenials++; current = false })
     fun permit(account: String = "recipient") = AttributionIdentity(account, account, "sdk-session", "android", "2.0.0", "development") { current }
     suspend fun ready() {
         engine.visible("/")

@@ -7,10 +7,27 @@ import kotlinx.coroutines.test.*
 import kotlin.test.*
 
 class AttributionIdentityLeaseTest {
+    @Test fun authoritativeDenialStopsSdkBeforePreferenceReload() = runTest {
+        val preferences = MemoryConsent(AnalyticsConsent.Accepted)
+        val sdk = LeaseTransport()
+        val service = AnalyticsService(AnalyticsContext("test", "1.0", "development"), preferences, sdk, backgroundScope, true)
+        service.setForeground(true)
+        service.syncIdentity("recipient")
+        val lease = assertNotNull(service.attributionIdentity())
+        preferences.consent = AnalyticsConsent.Declined
+        service.invalidatePermission()
+        assertFalse(service.isAttributionLeaseCurrent(lease.revision))
+        service.restoreConsent()
+        assertFalse(service.state.value.ready)
+        assertEquals(AnalyticsConsent.Declined, service.state.value.consent)
+    }
+
     @Test fun revokedLeaseCannotReviveAfterNewOptInOrForegroundRun() = runTest {
         val service = readyService()
         val sessions = LeaseSessions()
         val old = assertNotNull(permittedIdentity(service, sessions))
+        assertEquals("1.0", old.appVersion)
+        assertEquals("development", old.environment)
         assertTrue(old.isCurrent())
         service.setConsent(AnalyticsConsent.Declined)
         service.setConsent(AnalyticsConsent.Accepted)

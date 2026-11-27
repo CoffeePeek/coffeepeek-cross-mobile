@@ -15,6 +15,7 @@ class AttributionEngine(
     private val clock: AttributionClock,
     private val installChannel: String,
     private val installSource: AttributionInstallSource = AttributionInstallSource { null },
+    private val permissionDenied: () -> Unit = {},
 ) {
     private val lock = Mutex()
     private var state: AttributionLocalState? = null
@@ -137,11 +138,12 @@ class AttributionEngine(
     }
 
     private suspend fun reject(error: AttributionFailure) {
+        if (error.status == 403 && error.code == "ANALYTICS_NOT_PERMITTED") permissionDenied()
         when {
             error.code in setOf("OBSERVER_EXPIRED", "OBSERVER_INVALID", "ATTRIBUTION_RECEIPT_EXPIRED") -> expireObserver()
             error.status == 403 || error.code in setOf("OBSERVER_REVOKED", "OBSERVER_ACCOUNT_MISMATCH", "ATTRIBUTION_ALREADY_CLAIMED") -> {
                 identity = null
-                clearLocked(error.status == 403, true)
+                withContext(NonCancellable) { clearLocked(error.status == 403, true) }
             }
             error.status in 400..499 && error.status != 429 -> suppressed = true
         }

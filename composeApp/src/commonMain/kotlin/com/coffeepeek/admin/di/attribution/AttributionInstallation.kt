@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 internal fun installAttribution(service: AnalyticsService, gateway: ApiClients, sessions: SessionReader, scope: CoroutineScope) {
-    val feature = createAttributionFeature(gateway, sessions, "${Locator.appFilesRootPath}/acquisition", Locator.platformContext)
+    val feature = createAttributionFeature(gateway, sessions, "${Locator.appFilesRootPath}/acquisition", Locator.platformContext, service::invalidatePermission)
     AppAttribution.feature = feature
     AppAttribution.actionScope = scope
     AppAttribution.sessions = sessions
@@ -63,7 +63,7 @@ internal fun permittedIdentity(service: AnalyticsService, sessions: SessionReade
     val session = sessions.peekSession()?.takeIf { it.userId == state.userId } ?: return null
     val generation = sessions.accountGeneration()
     return AttributionIdentity(requireNotNull(session.userId), sdk.distinctId, sdk.sessionId, AppConfig.updatePlatform,
-        AppConfig.versionName.take(64), if (AppConfig.isDebug) "development" else "production") {
+        sdk.appVersion, sdk.environment) {
         val current = service.state.value
         service.isAttributionLeaseCurrent(sdk.revision) && current.consentRevision == state.consentRevision &&
             current.generation == state.generation && current.ready && current.foreground &&
