@@ -21,10 +21,7 @@ struct CheckInNativeStrings {
 enum CheckInNativeFormStyle {
     case standard, home
 
-    static let homeOutline = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark ? UIColor(red: 61 / 255, green: 47 / 255, blue: 40 / 255, alpha: 1) :
-            UIColor(red: 231 / 255, green: 229 / 255, blue: 228 / 255, alpha: 1)
-    })
+    static let homeOutline = CoffeePeekNativeStyle.adaptive(0xE7E5E4, 0x3D2F28)
 }
 
 struct CheckInNativeField<Content: View>: View {
