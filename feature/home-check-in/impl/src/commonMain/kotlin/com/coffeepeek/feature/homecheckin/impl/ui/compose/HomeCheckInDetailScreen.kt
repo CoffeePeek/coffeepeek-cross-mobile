@@ -16,11 +16,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.impl.resources.*
@@ -82,8 +82,9 @@ internal fun HomeCheckInDetailScreenContent(
     if (state.isClosed || state.isAccessRevoked) return
     val entry = state.entry
     val enabled = !state.isLoading && !state.isDeleting && !state.showDeleteConfirmation
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(start = CoffeePeekDimens.spacing5,
+            end = CoffeePeekDimens.spacing5, top = CoffeePeekDimens.spacing1, bottom = CoffeePeekDimens.spacing6),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing5)) {
         if (state.isLoading || state.isDeleting || state.loadIssue != null || state.deleteIssue != null) item(key = "status") {
             HomeCheckInDetailStatus(state.isLoading, state.isDeleting, state.deleteIssue ?: state.loadIssue,
                 state.deleteIssue != null, { onAction(HomeCheckInDetailAction.Reload) }, Modifier.fillMaxWidth())
@@ -91,8 +92,8 @@ internal fun HomeCheckInDetailScreenContent(
         if (entry != null) {
             item(key = "heading") { HomeCheckInHeading(entry, formatPreparedAt(entry.preparedOn, entry.preparedAtUtc)) }
             notice?.let { message -> item(key = "notice") {
-                Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)) {
-                    Text(message, Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.bodyMedium)
+                Surface(shape = RoundedCornerShape(CoffeePeekDimens.radiusLg), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)) {
+                    Text(message, Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing3), style = MaterialTheme.typography.bodyMedium)
                 }
             } }
             item(key = "recipe") { HomeCheckInRecipeCard(entry, entry.brewMethodCode?.let(formatBrewMethod)) }
@@ -104,7 +105,7 @@ internal fun HomeCheckInDetailScreenContent(
                 }
             }
             entry.text?.takeIf(String::isNotBlank)?.let { note -> item(key = "note") {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
                     Text(stringResource(Res.string.home_check_in_note), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     Text(note, style = MaterialTheme.typography.bodyLarge)
                 }

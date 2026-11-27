@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.component.CoffeePeekRatingSize
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.impl.resources.*
 
@@ -26,12 +27,14 @@ import com.coffeepeek.feature.homecheckin.impl.resources.*
 internal fun HomeCheckInEditorRating(
     rating: Int?, enabled: Boolean, artwork: @Composable (Modifier) -> Unit, onRate: (Int) -> Unit,
 ) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(CoffeePeekDimens.radiusMd)
     Row(Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
-        .border(1.dp, MaterialTheme.colorScheme.outline, shape).padding(horizontal = 8.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        artwork(Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)))
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        .border(1.dp, MaterialTheme.colorScheme.outline, shape).padding(horizontal = CoffeePeekDimens.spacing2,
+            vertical = CoffeePeekDimens.spacing3),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+        artwork(Modifier.size(56.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusSm)))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
             Text(stringResource(Res.string.home_check_in_taste_question), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
             CoffeePeekRating((rating ?: 0).toDouble(), size = CoffeePeekRatingSize.Large,
                 onRatingChange = onRate, enabled = enabled,

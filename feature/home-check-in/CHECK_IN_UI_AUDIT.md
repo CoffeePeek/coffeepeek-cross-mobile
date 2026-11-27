@@ -115,3 +115,41 @@ from Discovery and shelf, history editing and cafe creation:
 Android Direct Sandbox has the equivalent keyboard/footer/date regression gate.
 Physical-device visuals, full iOS linking and live-backend/release acceptance
 remain unverified at this checkpoint.
+
+## PR #416 integration readiness — 2026-11-27
+
+Verification plan before the readiness patch: keep the owner-approved primary
+report submit button and quiet cancel action, home detail edit/delete pair and
+shop delivery-unconfirmed actions, with all existing callbacks and sending /
+access guards. Keep spacing in existing CoffeePeekDimens tokens without changing
+feature ownership, resources, navigation or analytics. Scope is Community, Home
+Check-In and Shop impl presentation; no module/dependency/API change is needed.
+
+The stack is prepared from original f5228722f plus ready PR #415 head 11f357df2,
+which contains current develop 36fd1f38a. The merge is clean; the own feature diff
+remains the original eight UI files. PR #416 has an existing owner approval and
+no unresolved inline review threads. Report send/cancel still dispatch the same
+CommunityAction intents and both remain disabled during sending. Existing paired
+previews cover home editor/detail/recipe/rating/saved and shop unconfirmed states;
+add report-sending light/dark previews so the changed disabled actions compile.
+
+Root owns execution: run existing Community, Home Check-In, Shop and Content
+Report impl unit/contract tests; function-body checks; Direct Sandbox assembly
+with packaged DEX runtime-class/isolation checks; affected lint and common iOS
+compilation on its selected runner. This preparation runs no Gradle, device,
+automated UI/instrumented/screenshot test, account write or production analytics.
+Previews are fake and are not claimed rendered. Small windows, large text,
+keyboard, paired actions and back/cancel remain manual acceptance gates.
+
+Root verification, 2026-11-27 (Windows/JDK 17), integration source 8f21275fc:
+Selected JVM reports contain 318 passing cases across 31 suites: Community 88,
+Home Check-In 99, Shop 118 and Content Report 13, zero failures/errors/skips.
+Affected Community/Home Check-In/Shop lint reports have zero issues. Function
+limits passed (125 recorded, zero new), and Direct Sandbox assembly, packaged
+runtime classes and isolation passed. Logs distinguish executed from cached
+unit tasks. No device, preview rendering, live account or UI/instrumented test
+ran. Native/macOS compilation remains a separate remote gate on the final head.
+All four selected JVM tasks executed in this run (not cached/up-to-date).
+Sandbox artifact identity: com.coffeepeek.sandbox, 1.2.2.3409-sandbox / 3409,
+from the integration source above plus its working patch. Existing compiler
+Preview/expect-actual deprecations remain; affected lint reports are clean.

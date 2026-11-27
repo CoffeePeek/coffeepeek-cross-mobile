@@ -22,6 +22,7 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparation
 import com.coffeepeek.feature.homecheckin.impl.resources.*
@@ -29,14 +30,15 @@ import com.coffeepeek.feature.homecheckin.impl.ui.compose.previewHomePreparation
 
 @Composable
 internal fun HomeCheckInRecipeCard(entry: HomePreparation, methodLabel: String?) {
-    Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp)),
+    Surface(shape = RoundedCornerShape(CoffeePeekDimens.radiusXl), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
+        Column(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4),
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+                Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.surface, RoundedCornerShape(CoffeePeekDimens.radiusLg)),
                     contentAlignment = Alignment.Center) {
                     CoffeePeekCoffeeIcon(null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
                 }
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
                     Text(stringResource(Res.string.home_check_in_method), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(homeRecipeMethodLabel(entry, methodLabel),
@@ -48,7 +50,8 @@ internal fun HomeCheckInRecipeCard(entry: HomePreparation, methodLabel: String?)
             }
             if (entry.doseGrams != null || entry.brewDurationSeconds != null) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
+                    verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
                     entry.doseGrams?.let { dose ->
                         val number = (if ('.' in dose) dose.trimEnd('0').trimEnd('.') else dose).replace('.', ',')
                         RecipeMetric(stringResource(Res.string.home_check_in_dose), stringResource(Res.string.home_check_in_grams, number))
@@ -64,7 +67,7 @@ internal fun HomeCheckInRecipeCard(entry: HomePreparation, methodLabel: String?)
 
 @Composable
 private fun RecipeMetric(label: String, value: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
     }
