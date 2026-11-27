@@ -100,8 +100,8 @@
     <string name="profile_edit_username_label">Імя карыстальніка</string>
     <string name="profile_edit_username_placeholder">Ваша імя</string>
     <string name="profile_edit_username_empty">Імя не можа быць пустым</string>
-    <string name="profile_edit_username_short">Мінімум 2 сімвалы</string>
-    <string name="profile_edit_username_long">Максімум 64 сімвалы</string>
+    <string name="profile_edit_username_short">Мінімум 3 сімвалы</string>
+    <string name="profile_edit_username_long">Максімум 30 сімвалаў</string>
     <string name="profile_edit_about_label">Пра сябе</string>
     <string name="profile_edit_about_placeholder">Раскажыце крыху пра сябе…</string>
     <string name="profile_edit_about_long">Максімум 600 сімвалаў</string>

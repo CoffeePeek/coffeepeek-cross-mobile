@@ -77,12 +77,13 @@ enum CoffeePeekNativeStyle {
         Color(red: Double((hex >> 16) & 255) / 255, green: Double((hex >> 8) & 255) / 255, blue: Double(hex & 255) / 255)
     }
 
-    private static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
+    static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
         Color(uiColor: adaptiveUIColor(light, dark))
     }
 
-    private static func adaptiveUIColor(_ light: UInt32, _ dark: UInt32) -> UIColor {
-        UIColor { traits in
+    private nonisolated static func adaptiveUIColor(_ light: UInt32, _ dark: UInt32) -> UIColor {
+        // SwiftUI can resolve dynamic colors on its background render thread.
+        UIColor { @Sendable traits in
             let hex = traits.userInterfaceStyle == .dark ? dark : light
             return UIColor(red: CGFloat((hex >> 16) & 255) / 255, green: CGFloat((hex >> 8) & 255) / 255,
                            blue: CGFloat(hex & 255) / 255, alpha: 1)

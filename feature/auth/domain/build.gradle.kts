@@ -7,5 +7,6 @@ plugins {
 android.namespace = "com.coffeepeek.feature.auth.domain"
 
 dependencies {
+    implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlin.test)
 }

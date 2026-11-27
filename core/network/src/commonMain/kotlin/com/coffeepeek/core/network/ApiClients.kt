@@ -59,6 +59,11 @@ class ApiClients(
         override suspend fun refresh(refreshToken: String): Result<SessionTokens> = exchange(refreshToken)
     }
     private val coordinator = SessionRefreshCoordinator(session)
+    /** Explicit claim synchronization shares rotation with all authenticated transports. */
+    suspend fun refreshCredentials(): Boolean {
+        val credentials = coordinator.credentials() ?: return false
+        return coordinator.refresh(credentials) != null
+    }
     private val markAuthRetry: (io.ktor.client.statement.HttpResponse) -> Unit =
         { it.call.request.attributes.getOrNull(logicalRequestKey)?.authRetried = true }
 

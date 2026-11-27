@@ -466,7 +466,7 @@ private fun RootNavHost(
             message = errorMessage ?: "",
             onDismiss = { ErrorHandler.clearError() }
         )
-        NavigationContent(vm, state, loading)
+        UsernameSelectionNavigation(state) { NavigationContent(vm, state, loading) }
     }
 
     @Composable

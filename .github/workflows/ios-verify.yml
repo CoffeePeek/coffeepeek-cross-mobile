@@ -219,6 +219,8 @@ jobs:
             --tests 'com.coffeepeek.admin.location.LocationPermissionRequestTest' \
             --tests 'com.coffeepeek.admin.location.PermittedUserLocationTest' \
             --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
+            --tests 'com.coffeepeek.admin.ui.UsernameSelectionNavigationTest' \
+            --tests 'com.coffeepeek.admin.di.collections.UsernameSelectionPickerTest' \
             --tests 'com.coffeepeek.admin.ui.CollectionProfileReturnTest' \
             --tests 'com.coffeepeek.admin.ui.NativeRootNavigationModelTest' \
             --tests 'com.coffeepeek.admin.ui.NativeRootNavigationCommandTest' \

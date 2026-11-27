@@ -82,9 +82,9 @@ class SandboxApplicationBackendTest {
     @Test fun migratedOwnProfileReadsAndEditsShareOneCacheInTheLocalBackend() = runTest { fixture { _, client ->
         val data = com.coffeepeek.feature.profile.data.repository.createProfileAccountData(client.client, client.uploadClient, LocalSandboxSession(), backgroundScope)
         assertEquals("Sandbox", data.accounts.loadOwnProfile(false).getOrThrow().userName)
-        data.edit.updateUsername("Local Tester").getOrThrow()
+        data.edit.updateUsername("Local_Tester").getOrThrow()
         data.edit.updateAbout("Local biography").getOrThrow()
-        assertEquals("Local Tester", data.accounts.cachedOwnProfile()?.userName)
+        assertEquals("Local_Tester", data.accounts.cachedOwnProfile()?.userName)
         assertEquals("Local biography", data.accounts.loadOwnProfile(false).getOrThrow().about)
         assertEquals("sandbox", data.accounts.cachedOwnProfile()?.address?.slug)
         assertNull(data.deletion.existingRequest().getOrThrow())

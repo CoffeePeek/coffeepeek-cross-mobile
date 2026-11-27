@@ -56,13 +56,13 @@ private fun IosAuthDestinations.fullScreenLogin() = login(
     back = Navigator::closeAuth,
     onForgotPassword = { email -> Navigator.navigate(Navigator.Screen.ForgotPassword(email)) },
     onRegister = { Navigator.navigate(Navigator.Screen.Register) },
-    onSignedIn = { Navigator.navigate(Navigator.Screen.Main) },
+    onSignedIn = {},
 )
 
 private fun IosAuthDestinations.fullScreenRegister() = registration(
     back = Navigator::closeAuth,
     onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
-    onSignedIn = { Navigator.navigate(Navigator.Screen.Main) },
+    onSignedIn = {},
 )
 
 internal fun IosAuthDestinations.shopCheckInSignIn(

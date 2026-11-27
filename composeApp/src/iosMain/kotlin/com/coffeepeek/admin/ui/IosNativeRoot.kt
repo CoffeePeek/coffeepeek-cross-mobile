@@ -16,6 +16,7 @@ import com.coffeepeek.admin.settings.AppLanguagePreference
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer
 import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.feature.auth.api.UsernameSelectionGate
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry
@@ -40,6 +41,7 @@ class IosNativeRoot internal constructor(private val dependencies: Koin, private
 ) {
     internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val sessions = dependencies.get<SessionReader>()
+    private val usernameSelection = dependencies.get<UsernameSelectionGate>()
     private val language = dependencies.get<AppLanguagePreference>()
     private val ownership = dependencies.get<BusinessOwnershipEntry>()
     private val authors = dependencies.get<AuthorBlockingPresenter>()
@@ -65,6 +67,7 @@ class IosNativeRoot internal constructor(private val dependencies: Koin, private
         observeNavigation()
         observeDeferredLogin()
         observeSession()
+        observeUsernameSelection()
         observeEnvironment()
         observeForeground()
         val createVisible = combine(output, foreground) { state, active -> state.ready && active &&
@@ -142,13 +145,21 @@ class IosNativeRoot internal constructor(private val dependencies: Koin, private
     private fun observeSession() {
         sessionJob?.cancel()
         sessionJob = scope.launch {
-            try { sessions.observeRootNavigationSession().collect {
+            try { sessions.observeReadyRootNavigationSession(usernameSelection).collect {
                 lifecycle.accept(it)
                 sessionReady.value = true
             } }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { failSession() }
         }
+    }
+    private fun observeUsernameSelection() {
+        scope.launch { usernameSelection.state.collect { setup ->
+            if (setup.blocksApp) {
+                output.update { it.copy(ready = false) }
+                signalReady()
+            }
+        } }
     }
     private fun failSession() {
         sessionReady.value = false
@@ -165,6 +176,9 @@ class IosNativeRoot internal constructor(private val dependencies: Koin, private
     private fun observeEnvironment() {
         scope.launch { combine(lifecycle.state, ownership.accountSwitchState, language.selection, ThemeManager.ready, sessionReady) {
             state, business, language, theme, session -> RootEnvironment(state, business.businessMode, language != null && theme && session)
+        }.combine(usernameSelection.state) { environment, setup ->
+            environment.copy(ready = environment.ready && !setup.blocksApp &&
+                environment.state.session == sessions.currentRootNavigationSession())
         }.collect { environment ->
             if (environment.ready && environment.state.session != null) install(environment)
         } }

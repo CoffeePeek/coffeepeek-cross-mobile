@@ -135,8 +135,8 @@
     <string name="profile_edit_username_label">Имя пользователя</string>
     <string name="profile_edit_username_placeholder">Ваше имя</string>
     <string name="profile_edit_username_empty">Имя не может быть пустым</string>
-    <string name="profile_edit_username_short">Минимум 2 символа</string>
-    <string name="profile_edit_username_long">Максимум 64 символа</string>
+    <string name="profile_edit_username_short">Минимум 3 символа</string>
+    <string name="profile_edit_username_long">Максимум 30 символов</string>
     <string name="profile_edit_about_label">О себе</string>
     <string name="profile_edit_about_placeholder">Расскажите немного о себе…</string>
     <string name="profile_edit_about_long">Максимум 600 символов</string>

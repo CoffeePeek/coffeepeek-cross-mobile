@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.collections
 
 import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.feature.auth.api.UsernameSelectionGate
 import com.coffeepeek.feature.collections.api.CollectionTarget
 import com.coffeepeek.feature.collections.api.CollectionTargetKind
 import kotlinx.coroutines.CoroutineScope
@@ -9,26 +10,32 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 /** App-owned delivery of a successful heart action to the root sheet, never a favorite writer. */
-internal class CollectionPickerRequests(private val sessions: SessionReader, private val scope: CoroutineScope) : CollectionPickerPrompts {
+internal class CollectionPickerRequests(private val sessions: SessionReader, private val scope: CoroutineScope,
+    private val usernameSelection: UsernameSelectionGate? = null,
+    private val markNow: () -> TimeMark = TimeSource.Monotonic::markNow,
+) : CollectionPickerPrompts {
     internal data class Request(val lease: CollectionPickerLease, val target: CollectionTarget)
     private val lock = CollectionPickerLock()
     private var owner = activeOwner()
     private var accountGeneration = sessions.accountGeneration()
     private var generation = 0L
     private var afterAuth: Pair<CollectionTarget, TimeMark>? = null
+    private var waitingLogin: Pair<String, Long>? = null
     private val pending = MutableStateFlow<Request?>(null)
     private var expiry: Job? = null
     val state = pending.asStateFlow()
 
     init {
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            sessions.observeSession().collect {
+            combine(sessions.observeSession(), usernameSelection?.state ?: flowOf(null)) { _, _ -> Unit }.collect {
                 updateAccount()
                 resumeAfterAuth()
             }
@@ -44,15 +51,17 @@ internal class CollectionPickerRequests(private val sessions: SessionReader, pri
             added(lease(active), target)
             return true
         }
-        lock.withLock { afterAuth = target to TimeSource.Monotonic.markNow() }
+        lock.withLock { afterAuth = target to markNow() }
         if (activeOwner() != null) { resumeAfterAuth(); return true }
         return false
     }
 
     private fun resumeAfterAuth() {
         val active = activeOwner() ?: return
-        val target = lock.withLock { afterAuth.also { afterAuth = null } }
-            ?.takeIf { it.second.elapsedNow() < 10.minutes }?.first ?: return
+        val target = lock.withLock {
+            afterAuth?.takeIf { waitingLogin != null || it.second.elapsedNow() < 10.minutes }
+                ?.first.also { afterAuth = null }
+        } ?: return
         added(lease(active), target)
     }
 
@@ -88,6 +97,7 @@ internal class CollectionPickerRequests(private val sessions: SessionReader, pri
     }
 
     private fun updateAccount(current: String? = activeOwner()) = lock.withLock {
+        guardWaitingLogin()
         val currentGeneration = sessions.accountGeneration()
         if (current != owner || currentGeneration != accountGeneration) {
             owner = current
@@ -98,5 +108,17 @@ internal class CollectionPickerRequests(private val sessions: SessionReader, pri
         }
     }
 
-    private fun activeOwner() = sessions.peekSession()?.takeIf(sessions::isActiveSession)?.userId?.takeIf(String::isNotBlank)
+    private fun activeOwner(): String? {
+        val id = sessions.peekSession()?.takeIf(sessions::isActiveSession)?.userId?.takeIf(String::isNotBlank) ?: return null
+        return id.takeIf { usernameSelection == null || usernameSelection.state.value.readyFor(id, sessions.accountGeneration()) }
+    }
+
+    private fun guardWaitingLogin() {
+        if (afterAuth == null) { waitingLogin = null; return }
+        val current = sessions.peekSession()?.takeIf(sessions::isActiveSession)?.userId?.let { it to sessions.accountGeneration() }
+        if (waitingLogin != null && waitingLogin != current) afterAuth = null
+        if (waitingLogin == null && current != null && afterAuth?.second?.elapsedNow()?.let { it >= 10.minutes } == true)
+            afterAuth = null
+        waitingLogin = current
+    }
 }

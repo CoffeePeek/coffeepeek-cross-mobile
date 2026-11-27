@@ -10,8 +10,8 @@
 "profile_edit_username_label" = "Імя карыстальніка";
 "profile_edit_username_placeholder" = "Ваша імя";
 "profile_edit_username_empty" = "Імя не можа быць пустым";
-"profile_edit_username_short" = "Мінімум 2 сімвалы";
-"profile_edit_username_long" = "Максімум 64 сімвалы";
+"profile_edit_username_short" = "Мінімум 3 сімвалы";
+"profile_edit_username_long" = "Максімум 30 сімвалаў";
 "profile_edit_about_label" = "Пра сябе";
 "profile_edit_about_placeholder" = "Раскажыце крыху пра сябе…";
 "profile_edit_about_long" = "Максімум 600 сімвалаў";
