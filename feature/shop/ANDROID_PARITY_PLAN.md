@@ -1054,3 +1054,39 @@ Shared native note, toolbar and switch fixes also cover this form. See
 [the check-in UI audit](../home-check-in/CHECK_IN_UI_AUDIT.md) for source coverage,
 108 passing Shop impl tests, Android/iOS-library compilation and outstanding
 device acceptance. No persistence, analytics or domain contracts changed.
+
+## PR #415 integration readiness — 2026-11-27
+
+Verification plan before the readiness patch: preserve expansion/collapse, button
+semantics, shared motion preference and current neutral theme treatment. Scope is
+Shop impl presentation only, with no domain/data/DI/API/analytics change. Compile
+the existing fake light/dark previews for both collapsed and expanded states;
+run Shop impl unit tests, function-body checks and Direct Sandbox assembly with
+packaged DEX runtime-class and isolation checks. Root coordinates these checks;
+this preparation step runs no Gradle, device, UI/instrumentation or live account
+operation. Device rendering, pressed ripple, large text and native visual review
+remain explicit manual gates.
+
+The original review requested removal of the green cast (issue comment
+7104401619). Author follow-up 7162099936 and commit 3796783 already replaced
+Surface's implicit content-color resolution with onSurface at 60% for the label
+and onSurface at 4% for the inset fill. Inspection confirms both explicit colors,
+clip-before-click ordering, existing Button role/onClickLabel and resources.
+No new runtime color or layout change is needed. The readiness patch completes
+theme/state preview pairs and merges current develop 36fd1f38a into the original
+PR ancestry; this also inherits the existing checksum-verified ONNX mirror,
+without weakening TLS or introducing a new dependency.
+
+The prior CHANGES_REQUESTED review has no inline review threads. It is not
+represented here as a new human approval or dismissed review. The owner has
+explicitly authorized fixing and merging the ordered stack; final review,
+immutable-head checks and the actual merge remain root's responsibility.
+
+Root verification, 2026-11-27 (Windows/JDK 17), source 11f357df2:
+Shop impl executed 118 tests across 12 suites, zero failures/errors/skips;
+affected Android lint reported zero issues. Function-body verification passed
+(125 recorded, zero new), with no baseline change. Direct Sandbox assembly,
+packaged runtime-class verification and isolation passed. Artifact identity:
+com.coffeepeek.sandbox, 1.2.2.3404-sandbox / 3404. No device install/launch or
+preview rendering ran. Manual ripple/theme/large-text checks remain unverified;
+macOS compilation and Native contracts are separate CI gates.
