@@ -39,7 +39,7 @@ private suspend fun reconcileAttribution(service: AnalyticsService, sessions: Se
         val revoked = state.consent == AnalyticsConsent.Declined && state.restored
         if (changed || revoked) feature.clearAccount(revoked)
         val permit = permittedIdentity(service, sessions)
-        if (permit == null) feature.pause() else maintainAttribution(permit)
+        if (permit == null) feature.pause() else maintainAttribution(service, sessions)
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (_: Exception) {
@@ -47,8 +47,9 @@ private suspend fun reconcileAttribution(service: AnalyticsService, sessions: Se
     }
 }
 
-private suspend fun maintainAttribution(identity: AttributionIdentity) {
-    while (identity.isCurrent()) {
+private suspend fun maintainAttribution(service: AnalyticsService, sessions: SessionReader) {
+    while (true) {
+        val identity = permittedIdentity(service, sessions) ?: return
         try { AppAttribution.feature?.sync(identity) }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { /* Retry permitted work on the next foreground interval. */ }

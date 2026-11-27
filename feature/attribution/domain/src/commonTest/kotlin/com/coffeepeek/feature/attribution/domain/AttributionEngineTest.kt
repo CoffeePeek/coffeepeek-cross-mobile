@@ -5,6 +5,49 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 
 class AttributionEngineTest {
+    @Test fun lateObserverQueuedForRevokeIsNotReusedAfterForegroundRecovery() = runTest {
+        val fixture = Fixture()
+        fixture.backend.afterTouch = { fixture.current = false }
+        fixture.ready()
+        fixture.engine.sync(fixture.permit().copy(isCurrent = { true }, sessionId = "new-session"))
+        assertEquals(2, fixture.backend.touchAttempts.map { it.id }.distinct().size)
+        assertEquals(listOf("observer-1"), fixture.backend.revoked)
+        assertEquals("observer-2", fixture.store.state.evidence?.observerToken)
+        assertTrue(fixture.store.state.installationConfirmed)
+    }
+
+    @Test fun touchRetryKeepsOriginalSdkSessionWithFreshPermission() = runTest { retrySession("touch") }
+    @Test fun claimRetryKeepsOriginalSdkSessionWithFreshPermission() = runTest { retrySession("claim") }
+    @Test fun installationRetryKeepsOriginalSdkSessionWithFreshPermission() = runTest { retrySession("installation") }
+
+    private suspend fun retrySession(stage: String) {
+        val fixture = Fixture()
+        fixture.backend.touchFailure = if (stage == "touch") AttributionFailure(503, null) else null
+        fixture.backend.failClaim = stage == "claim"
+        fixture.backend.failInstallation = stage == "installation"
+        assertFailsWith<AttributionFailure> { fixture.ready() }
+        fixture.engine.pause()
+        fixture.current = false
+        fixture.engine.sync(fixture.permit().copy(sessionId = "new-session", isCurrent = { true }))
+        val sessions = when (stage) {
+            "touch" -> fixture.backend.touchAttempts.map { it.identity.sessionId }
+            "claim" -> fixture.backend.claimSessions
+            else -> fixture.backend.installationSessions
+        }
+        assertEquals(listOf("sdk-session", "sdk-session"), sessions)
+        assertTrue(fixture.store.state.installationConfirmed)
+    }
+
+    @Test fun installationRetryKeepsFirstReceiptWhenAnotherLinkIsOpened() = runTest {
+        val fixture = Fixture()
+        fixture.backend.failInstallation = true
+        assertFailsWith<AttributionFailure> { fixture.ready() }
+        fixture.engine.open(CODE)
+        fixture.engine.visible("/coffees/test")
+        assertEquals(listOf("receipt-1", "receipt-1"), fixture.backend.installationReceipts)
+        assertEquals(1, fixture.backend.installations.distinct().size)
+    }
+
     @Test fun expiredReceiptIsErasedEvenWhileCollectionIsPaused() = runTest {
         val fixture = Fixture()
         fixture.backend.failRevoke = true
@@ -210,11 +253,15 @@ private class FakeBackend(private val now: () -> Long) : AttributionBackend {
     var touchFailure: AttributionFailure? = null
     var shareObserver: String? = null
     val observations = mutableListOf<AttributionObservation>()
+    val touchAttempts = mutableListOf<AttributionObservation>()
     val observers = mutableListOf<String?>()
     val claimKeys = mutableListOf<String>()
     val claimedReceipts = mutableListOf<String>()
+    val claimSessions = mutableListOf<String?>()
     val installations = mutableListOf<String>()
     val installationKeys = mutableListOf<String>()
+    val installationSessions = mutableListOf<String?>()
+    val installationReceipts = mutableListOf<String>()
     val revoked = mutableListOf<String>()
     override suspend fun enabled() = enabled
     override suspend fun resolve(code: String): AttributionResolution {
@@ -222,19 +269,26 @@ private class FakeBackend(private val now: () -> Long) : AttributionBackend {
         return AttributionResolution("/coffees/test", true)
     }
     override suspend fun touch(observation: AttributionObservation, observer: String?): AttributionEvidence {
+        check(observation.identity.isCurrent())
+        touchAttempts += observation
         if (cancelTouch) throw CancellationException()
         touchFailure?.let { touchFailure = null; throw it }
         observations += observation
         observers += observer
         afterTouch()
-        return AttributionEvidence("observer-${observations.size}", now() + DAY, "receipt", now() + 30 * DAY, observation.identity.accountId)
+        return AttributionEvidence("observer-${observations.size}", now() + DAY, "receipt-${observations.size}", now() + 30 * DAY, observation.identity.accountId)
     }
     override suspend fun claim(evidence: AttributionEvidence, identity: AttributionIdentity, key: String) {
+        check(identity.isCurrent())
+        claimSessions += identity.sessionId
         claimKeys += key
         claimedReceipts += evidence.receipt
         if (failClaim) { failClaim = false; throw AttributionFailure(503, null) }
     }
     override suspend fun installation(id: String, channel: String, evidence: AttributionEvidence, identity: AttributionIdentity, key: String) {
+        check(identity.isCurrent())
+        installationSessions += identity.sessionId
+        installationReceipts += evidence.receipt
         installations += id
         installationKeys += key
         if (failInstallation) { failInstallation = false; throw AttributionFailure(503, null) }

@@ -26,7 +26,10 @@ class AttributionEngine(
     private var observed = false
     private var acceptedObservation: String? = null
     private var claimKey: String? = null
+    private var claimIdentity: AttributionIdentity? = null
     private var installationKey: String? = null
+    private var installationIdentity: AttributionIdentity? = null
+    private var installationEvidence: AttributionEvidence? = null
     private var suppressed = false
     private var lastOpen: Pair<String, Long>? = null
     private var lastPath: String? = null
@@ -100,6 +103,7 @@ class AttributionEngine(
         visiblePath = null
         observation = null
         claimKey = null
+        claimIdentity = null
         observed = false
         acceptedObservation = null
         recoveryEvidence = null
@@ -146,7 +150,8 @@ class AttributionEngine(
     private suspend fun observe(permit: AttributionIdentity) {
         prepareRecovery(permit)
         if (observed) return
-        val pending = observation ?: AttributionObservation(clock.uuid(), entry, permit).also { observation = it }
+        val frozen = observation ?: AttributionObservation(clock.uuid(), entry, permit).also { observation = it }
+        val pending = frozen.copy(identity = frozen.identity.copy(isCurrent = permit.isCurrent))
         val evidence = if (acceptedObservation == pending.id) requireNotNull(state?.evidence)
             else acceptTouch(pending, permit)
         if (!permit.isCurrent()) return
@@ -158,6 +163,7 @@ class AttributionEngine(
         val fresh = backend.touch(pending, currentEvidence(permit)?.observerToken)
         val evidence = recoveryEvidence?.let { fresh.copy(receipt = it.receipt, receiptExpiresAt = it.receiptExpiresAt) } ?: fresh
         if (!permit.isCurrent()) {
+            abandonLateTouch(pending.id, fresh.observerToken)
             retainLateRevocation(evidence.observerToken)
             return evidence
         }
@@ -165,6 +171,12 @@ class AttributionEngine(
         store.save(requireNotNull(state))
         acceptedObservation = pending.id
         return evidence
+    }
+
+    private fun abandonLateTouch(id: String, token: String) {
+        if (observation?.id == id) observation = null
+        if (state?.evidence?.observerToken == token) state = state?.copy(evidence = null)
+        if (installationEvidence?.observerToken == token) resetInstallationRetry()
     }
 
     private fun prepareRecovery(permit: AttributionIdentity) {
@@ -175,6 +187,9 @@ class AttributionEngine(
         observation = null
         acceptedObservation = null
         claimKey = null
+        claimIdentity = null
+        installationKey = null
+        installationIdentity = null
         observed = false
         entry = AttributionEntry.Unknown
     }
@@ -192,23 +207,42 @@ class AttributionEngine(
     private suspend fun attach(evidence: AttributionEvidence, permit: AttributionIdentity) {
         if (!permit.isCurrent()) return
         val key = claimKey ?: clock.uuid().also { claimKey = it }
-        backend.claim(evidence, permit, key)
+        val frozen = claimIdentity ?: permit.also { claimIdentity = it }
+        backend.claim(evidence, frozen.copy(isCurrent = permit.isCurrent), key)
         recoveryEvidence = null
     }
 
     private suspend fun reportInstallation(permit: AttributionIdentity) {
         val current = requireNotNull(state)
         if (current.installationConfirmed || !permit.isCurrent()) return
-        val evidence = currentEvidence(permit) ?: return
+        val evidence = installationProof(currentEvidence(permit) ?: return)
         val id = current.installationId ?: clock.uuid().also {
             state = current.copy(installationId = it)
             store.save(requireNotNull(state))
         }
         val key = installationKey ?: clock.uuid().also { installationKey = it }
-        backend.installation(id, installChannel, evidence, permit, key)
+        val frozen = installationIdentity ?: permit.also { installationIdentity = it }
+        backend.installation(id, installChannel, evidence, frozen.copy(isCurrent = permit.isCurrent), key)
         if (!permit.isCurrent()) return
         state = requireNotNull(state).copy(installationConfirmed = true)
         store.save(requireNotNull(state))
+        resetInstallationRetry()
+    }
+
+    private fun installationProof(current: AttributionEvidence): AttributionEvidence {
+        val original = installationEvidence?.takeIf { it.receiptExpiresAt > clock.now() } ?: current
+        if (original.observerToken != current.observerToken) {
+            installationKey = null
+            installationIdentity = null
+        }
+        return current.copy(receipt = original.receipt, receiptExpiresAt = original.receiptExpiresAt)
+            .also { installationEvidence = it }
+    }
+
+    private fun resetInstallationRetry() {
+        installationKey = null
+        installationIdentity = null
+        installationEvidence = null
     }
 
     private fun currentEvidence(permit: AttributionIdentity): AttributionEvidence? = state?.evidence?.takeIf {
@@ -220,6 +254,8 @@ class AttributionEngine(
         recoveryEvidence = null
         observation = null
         claimKey = null
+        claimIdentity = null
+        resetInstallationRetry()
         observed = false
         acceptedObservation = null
         entry = AttributionEntry.Unknown
@@ -238,7 +274,8 @@ class AttributionEngine(
         if (resetInstallation) state = requireNotNull(state).copy(installationId = null, installationConfirmed = false, referrerRead = false)
         observation = null
         claimKey = null
-        installationKey = null
+        claimIdentity = null
+        resetInstallationRetry()
         if (clearFunctional) {
             resetEntry(AttributionEntry.Unknown, null)
             lastOpen = null

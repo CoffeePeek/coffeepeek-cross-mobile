@@ -23,6 +23,7 @@ internal object AppAttribution {
     fun open(link: String): Boolean {
         val url = runCatching { Url(link) }.getOrNull() ?: return false
         if (url.protocol.name !in setOf("http", "https") || !url.host.equals("coffeepeek.by", true)) return false
+        if (appLinkScreen(link) == null) return false
         pending.value = link
         return true
     }
@@ -62,13 +63,12 @@ internal fun AttributionAppLinks() {
     val code = if (url.segments.size == 2 && url.segments[0] == "l") url.segments[1] else url.parameters.getAll("cp_link")?.singleOrNull()
     if (code != null) {
         com.coffeepeek.feature.attribution.impl.AttributionLinkResolver(code, AppAttribution.feature,
-            onResolved = { path -> openResolvedLink(path, code); AppAttribution.pending.compareAndSet(value, null) },
+            onResolved = { path -> if (AppAttribution.pending.compareAndSet(value, null)) openResolvedLink(path, code) },
             onDismiss = { AppAttribution.pending.compareAndSet(value, null) })
         return
     }
     LaunchedEffect(link) {
-        appLinkScreen(value)?.let(Navigator::openAppLink)
-        AppAttribution.pending.compareAndSet(value, null)
+        if (AppAttribution.pending.compareAndSet(value, null)) appLinkScreen(value)?.let(Navigator::openAppLink)
     }
 }
 
