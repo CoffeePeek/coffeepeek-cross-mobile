@@ -526,7 +526,25 @@ class SearchViewModelTest {
         location.flow.value = here; runCurrent()
         vm.send(SearchAction.LocationDenied, SearchAction.LocationGranted, scope = this)
         assertEquals(listOf(Triple("discovery", false, GeolocationOutcome.Available), Triple("discovery", false, GeolocationOutcome.Unavailable)), analytics.geolocations)
-        assertEquals(1, location.refreshes)
+        assertEquals(2, location.refreshes)
+    }
+
+    @Test fun losingPermissionDropsCachedDistanceAndNearbyCanRequestAgain() = runTest(dispatcher) {
+        val vm = model()
+        location.flow.value = here
+        runCurrent()
+        vm.send(SearchAction.ToggleNearby, SearchAction.LocationPermanentlyDenied, scope = this)
+        assertEquals(2, location.refreshes)
+        location.flow.value = null
+        runCurrent()
+        assertNull(vm.now.userLocation)
+        assertFalse(vm.now.canUseNearby)
+        assertFalse(vm.now.filters.nearbyOnly)
+        assertNull(repository.queries.last().origin)
+        assertEquals("minsk", repository.queries.last().filters.cityId)
+        vm.send(SearchAction.ToggleNearby, scope = this)
+        assertTrue(vm.now.nearbyRequested)
+        assertEquals(1, vm.now.locationPermissionRequest)
     }
 
     @Test fun aNewPositionWithoutNearbyKeepsTheShownShops() = runTest(dispatcher) {

@@ -3,9 +3,14 @@ package com.coffeepeek.admin.location
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlin.math.PI
 import kotlin.math.asin
 import kotlin.math.cos
@@ -19,13 +24,24 @@ private const val EARTH_RADIUS_METERS = 6_371_000.0
 @Composable
 internal fun rememberPermittedUserLocation(refreshKey: Int = 0): GeoPoint? {
     var location by remember { mutableStateOf<GeoPoint?>(null) }
-    LaunchedEffect(refreshKey) {
+    var resumeKey by remember { mutableIntStateOf(0) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { resumeKey++ }
+    LaunchedEffect(refreshKey, resumeKey) {
         location = null
-        if (PlatformLocation.hasPermission()) {
-            location = PlatformLocation.getLastKnownLocation()
-        }
+        location = readPermittedUserLocation()
     }
     return location
+}
+
+/** Check on both sides of the suspend point so a revoked or cancelled read cannot restore stale distance. */
+internal suspend fun readPermittedUserLocation(
+    hasPermission: () -> Boolean = PlatformLocation::hasPermission,
+    readLocation: suspend () -> GeoPoint? = PlatformLocation::getLastKnownLocation,
+): GeoPoint? {
+    if (!hasPermission()) return null
+    val point = readLocation()
+    currentCoroutineContext().ensureActive()
+    return point.takeIf { hasPermission() }
 }
 
 internal fun distanceToShopMeters(userLocation: GeoPoint?, latitude: Double?, longitude: Double?): Double? {

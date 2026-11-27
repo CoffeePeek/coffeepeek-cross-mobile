@@ -216,6 +216,8 @@ jobs:
             --tests 'com.coffeepeek.admin.di.community.IosCommunityMessageTest' \
             --tests 'com.coffeepeek.admin.di.discovery.IosDiscoveryAccountTest' \
             --tests 'com.coffeepeek.admin.di.discovery.IosDiscoveryLocationRequestsTest' \
+            --tests 'com.coffeepeek.admin.location.LocationPermissionRequestTest' \
+            --tests 'com.coffeepeek.admin.location.PermittedUserLocationTest' \
             --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
             --tests 'com.coffeepeek.admin.ui.CollectionProfileReturnTest' \
             --tests 'com.coffeepeek.admin.ui.NativeRootNavigationModelTest' \
@@ -287,6 +289,7 @@ jobs:
             --tests 'com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosIntentsTest' \
             --tests 'com.coffeepeek.feature.discovery.impl.ui.DiscoveryIdleTest' \
             --tests 'com.coffeepeek.feature.discovery.impl.SearchViewModelTest' \
+            --tests 'com.coffeepeek.feature.discovery.impl.MapViewModelTest' \
             > "$RUNNER_TEMP/ios-discovery-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-discovery-tests.log"
               exit 1

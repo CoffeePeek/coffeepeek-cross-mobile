@@ -320,6 +320,19 @@ class MapViewModelTest {
         assertEquals(before + 1, viewportRequests().size); assertEquals(moved.expandedForPrefetch(), viewportRequests().last().first)
     }
 
+    @Test fun aRevokedPositionIsRemovedFromMapDistancesAndTheReaderIsRechecked() = runTest(dispatcher) {
+        val vm = model()
+        location.flow.value = here
+        runCurrent()
+        assertEquals(here, vm.now.userLocation)
+        vm.send(MapAction.LocationPermanentlyDenied, scope = this)
+        assertEquals(1, location.refreshes)
+        location.flow.value = null
+        runCurrent()
+        assertNull(vm.now.userLocation)
+        assertNull(vm.now.criteria.origin)
+    }
+
     @Test fun myLocationIsAskedFoundAndReportedWithItsTrigger() = runTest(dispatcher) {
         val vm = model()
         vm.send(MapAction.LocationDenied, scope = this)
