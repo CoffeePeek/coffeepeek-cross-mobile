@@ -14,10 +14,11 @@ feature's writer or the application's root navigation.
   caller can reveal the Check-ins tab. The caller owns its header and navigation.
 - Its current app adapter is `FeatureProfileActivityRenderer`, which constructs
   `createProfileHistoryEntry` and exposes one calendar/list scope. The old
-  `ProfileActivityEntry` and standalone `VisitedPlaces`/`HomeCheckIns` destinations
-  are absent from the current public API/root route model. Do not copy their
-  activation instructions from retired plans. Public profile calendars must not
-  receive private readers.
+  `ProfileActivityEntry` and a standalone `HomeCheckIns` destination are absent.
+  Android retains serializable `VisitedPlaces` only for restored older tasks:
+  it returns to Main and opens Profile check-ins; fresh navigation does not use
+  it. Do not restore the old standalone UI from retired plans. Public profile
+  calendars must not receive private readers.
 - Home detail/editor overlays delegate to [Home check-ins](../home-check-in/README.md).
   iOS route adapters supply native detail/edit presentation over those existing
   shared contracts; they do not create a second Home store or writer.

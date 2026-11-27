@@ -54,6 +54,12 @@
 - Аналитика сохраняет событие/свойства, exposure owner и correlation, без новой службы SDK и без тестовых событий в production. См. [ANALYTICS.md](../docs/ANALYTICS.md).
 - Ресурсы и accessibility-тексты принадлежат владельцу; языки сверяются по фактическим `values`/`values-be` и native strings.
 
+## Совместимость восстановленного Android-стека
+
+Синхронизировано с изменением develop [179fd8aee](https://github.com/CoffeePeek/coffeepeek-cross-mobile/commit/179fd8aeec1efc412d491f4ab1d866b28b631ff3), 27.11.2026. В `Navigator` сохранён сериализуемый `Screen.VisitedPlaces` для задач Android, записанных до переноса истории в профиль. Когда восстановленный entry достигает RESUMED и остаётся текущим, root возвращается к `Main` и запрашивает Profile → Check-ins. Свежая навигация не использует этот маршрут; прежний отдельный бизнес-экран не восстановлен.
+
+`VisitedPlacesRouteTest` сохраняет serial identity и проверяет отсутствие route в fresh root navigation. В upstream-коммите зафиксированы 22 JVM-теста навигации, function limits, Direct Debug/Sandbox assembly с DEX/isolation и ручной Sandbox smoke. Это результаты исходного исправления, не повторный запуск документационного merge. Полное восстановление исходного сохранённого Activity bundle и реальный аккаунт вне Sandbox остаются непроверенными. Новую миграцию стека нельзя обосновывать удалением этого совместимого типа без проверки upgrade consumers.
+
 ## Что не подтверждено этим обновлением документации
 
 Ручная проверка устройств, production API, OAuth, пушей, store declarations и доставки не выполняется при редактировании Markdown. Новая дата документа не переаттестовывает старые тесты или релиз. Для каждого следующего изменения фиксируйте SHA/variant/device, executed/compiled/cached tests, исходные сбои и оставшиеся gates согласно [VERIFICATION_FLOW.md](../docs/VERIFICATION_FLOW.md).
