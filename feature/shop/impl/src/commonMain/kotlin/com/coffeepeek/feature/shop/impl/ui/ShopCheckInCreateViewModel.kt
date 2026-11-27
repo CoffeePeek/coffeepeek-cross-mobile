@@ -20,6 +20,8 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDraftSnapshot
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDraftStore
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -33,6 +35,8 @@ internal class ShopCheckInCreateViewModel(
 ) : MviViewModel<ShopCheckInFormState, ShopCheckInFormAction, ShopCheckInFormEvent>(
     ShopCheckInFormState(initial),
 ) {
+    private val draftWrites = Mutex()
+
     init {
         analytics.opened()
         onAction(ShopCheckInFormAction.Load)
@@ -47,42 +51,66 @@ internal class ShopCheckInCreateViewModel(
         when (action) {
             ShopCheckInFormAction.Load -> load()
             ShopCheckInFormAction.RetryDrinks -> loadDrinks()
-            is ShopCheckInFormAction.TextChanged -> edit { copy(text = action.value.take(1000)) }
-            is ShopCheckInFormAction.RatingChanged -> edit { copy(rating = action.rating) }
-            is ShopCheckInFormAction.VisitDateChanged -> edit { copy(visitedAtIso = action.isoTimestamp) }
-            is ShopCheckInFormAction.VisibilityChanged -> edit { copy(visibility = action.visibility) }
-            is ShopCheckInFormAction.DrinkChanged -> edit {
-                copy(drinkSlug = action.slug, customDrinkName = if (action.slug == "other") customDrinkName else null)
-            }
-            is ShopCheckInFormAction.CustomDrinkChanged -> edit {
-                if (drinkSlug == "other") copy(customDrinkName = action.value.take(100)) else this
-            }
-            is ShopCheckInFormAction.PhotosAdded -> edit {
-                copy(photos = appendPhotos(photos, action.photos))
-            }
-            is ShopCheckInFormAction.RemovePhoto -> edit {
-                copy(photos = photos.filterIndexed { index, _ -> index != action.index })
-            }
+            is ShopCheckInFormAction.TextChanged, is ShopCheckInFormAction.RatingChanged,
+            is ShopCheckInFormAction.VisitDateChanged, is ShopCheckInFormAction.VisibilityChanged,
+            is ShopCheckInFormAction.DrinkChanged,
+            is ShopCheckInFormAction.PhotosAdded, is ShopCheckInFormAction.RemovePhoto -> edit { changedInput(action) }
             is ShopCheckInFormAction.MovePhoto -> movePhoto(action.from, action.to)
             ShopCheckInFormAction.Submit -> submit()
-            ShopCheckInFormAction.Dismiss -> if (!currentState.isSubmitting && !currentState.isDiscarding) {
+            ShopCheckInFormAction.ChangeShop -> changeShop()
+            ShopCheckInFormAction.Discard -> discard()
+            ShopCheckInFormAction.HistoryChecked -> historyChecked()
+            else -> navigation(action)
+        }
+    }
+
+    private fun ShopCheckInCreateInput.changedInput(action: ShopCheckInFormAction): ShopCheckInCreateInput = when (action) {
+        is ShopCheckInFormAction.TextChanged -> copy(text = action.value.take(1000))
+        is ShopCheckInFormAction.RatingChanged -> copy(rating = action.rating)
+        is ShopCheckInFormAction.VisitDateChanged -> copy(visitedAtIso = action.isoTimestamp)
+        is ShopCheckInFormAction.VisibilityChanged -> copy(visibility = action.visibility)
+        is ShopCheckInFormAction.DrinkChanged -> if (action.slug == null || currentState.drinks.any { it.slug == action.slug })
+            copy(drinkSlug = action.slug, customDrinkName = null) else this
+        is ShopCheckInFormAction.PhotosAdded -> copy(photos = appendPhotos(photos, action.photos))
+        is ShopCheckInFormAction.RemovePhoto -> copy(photos = photos.filterIndexed { index, _ -> index != action.index })
+        else -> this
+    }
+
+    private suspend fun navigation(action: ShopCheckInFormAction) {
+        val state = currentState
+        if (state.isSubmitting || state.isDiscarding || state.isChangingShop) return
+        when (action) {
+            ShopCheckInFormAction.Dismiss -> {
                 analytics.cancelled()
                 sendEvent(ShopCheckInFormEvent.Dismiss)
             }
-            ShopCheckInFormAction.AskDiscard -> if (currentState.hasDraft && !currentState.submitted &&
-                !currentState.isSubmitting && !currentState.isDiscarding) {
-                updateState { copy(confirmDiscard = true) }
-            }
+            ShopCheckInFormAction.AskDiscard -> if (state.hasDraft && !state.submitted) updateState { copy(confirmDiscard = true) }
             ShopCheckInFormAction.CancelDiscard -> updateState { copy(confirmDiscard = false) }
-            ShopCheckInFormAction.Discard -> discard()
-            ShopCheckInFormAction.OpenHistory -> if (!currentState.isSubmitting) sendEvent(ShopCheckInFormEvent.OpenHistory)
-            ShopCheckInFormAction.GoToFeed -> if (currentState.submitted && !currentState.isSubmitting) sendEvent(ShopCheckInFormEvent.GoToFeed)
-            ShopCheckInFormAction.HistoryChecked -> {
-                if (!currentState.deliveryUnconfirmed || currentState.isSubmitting || currentState.submitted ||
-                    currentState.isDiscarding || currentState.confirmDiscard) return
-                val saved = saveDraft(currentState.input, unconfirmed = false)
-                updateState { copy(deliveryUnconfirmed = false, submitFailure = null, draftFailed = !saved) }
-            }
+            ShopCheckInFormAction.OpenHistory -> sendEvent(ShopCheckInFormEvent.OpenHistory)
+            ShopCheckInFormAction.GoToFeed -> if (state.submitted) sendEvent(ShopCheckInFormEvent.GoToFeed)
+            else -> Unit
+        }
+    }
+
+    private suspend fun historyChecked() {
+        val state = currentState
+        if (!state.deliveryUnconfirmed || state.isSubmitting || state.submitted || state.isDiscarding ||
+            state.confirmDiscard || state.isChangingShop) return
+        val saved = saveDraft(state.input, unconfirmed = false)
+        updateState { copy(deliveryUnconfirmed = false, submitFailure = null, draftFailed = !saved) }
+    }
+
+    private suspend fun changeShop() {
+        val state = currentState
+        if (state.isLoading || state.isSubmitting || state.isDiscarding || state.isChangingShop || state.submitted || state.confirmDiscard) return
+        updateState { copy(isChangingShop = true) }
+        var saved = false
+        try {
+            val needsSave = state.input != initial || state.hasDraft || state.deliveryUnconfirmed || draftWrites.isLocked
+            saved = !needsSave || saveDraft(currentState.input, currentState.deliveryUnconfirmed)
+            if (saved) sendEvent(ShopCheckInFormEvent.ChangeShop)
+        } finally {
+            if (!saved) updateState { copy(isChangingShop = false) }
         }
     }
 
@@ -104,7 +132,8 @@ internal class ShopCheckInCreateViewModel(
         try {
             val result = repository.getDrinkOptions()
             result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-            updateState { copy(drinks = result.getOrNull() ?: drinks, drinksFailed = result.isFailure) }
+            val options = result.getOrNull()?.filter { it.slug.isNotBlank() && it.slug != "other" }?.distinctBy { it.slug }
+            updateState { copy(drinks = options ?: drinks, drinksFailed = result.isFailure) }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
@@ -133,19 +162,19 @@ internal class ShopCheckInCreateViewModel(
     }
 
     private fun canEdit(): Boolean = !currentState.isLoading && !currentState.isSubmitting && !currentState.isDiscarding &&
-        !currentState.submitted && !currentState.deliveryUnconfirmed && !currentState.confirmDiscard
+        !currentState.submitted && !currentState.deliveryUnconfirmed && !currentState.confirmDiscard && !currentState.isChangingShop
 
     private suspend fun saveDraft(input: ShopCheckInCreateInput, unconfirmed: Boolean): Boolean {
-        val result = draftResult { drafts.save(ShopCheckInDraftSnapshot(input, unconfirmed)) }
+        val result = draftWrites.withLock { draftResult { drafts.save(ShopCheckInDraftSnapshot(input, unconfirmed)) } }
         updateState { copy(hasDraft = hasDraft || result.isSuccess,
             draftFailed = if (this.input == input) result.isFailure else draftFailed) }
         return result.isSuccess
     }
 
     private suspend fun discard() {
-        if (!currentState.confirmDiscard || currentState.isSubmitting || currentState.isDiscarding) return
+        if (!currentState.confirmDiscard || currentState.isSubmitting || currentState.isDiscarding || currentState.isChangingShop) return
         updateState { copy(confirmDiscard = false, isDiscarding = true) }
-        val result = draftResult { drafts.clear(initial.shopSlug) }
+        val result = draftWrites.withLock { draftResult { drafts.clear(initial.shopSlug) } }
         updateState { copy(isDiscarding = false, hasDraft = result.isFailure, draftFailed = result.isFailure) }
         if (result.isSuccess) {
             analytics.cancelled()
@@ -198,7 +227,7 @@ internal class ShopCheckInCreateViewModel(
     private suspend fun completeSubmission(input: ShopCheckInCreateInput) {
         analytics.saved(input.visibility == ShopCheckInVisibility.Public, input.photos.isNotEmpty())
         updateState { copy(submitted = true, deliveryUnconfirmed = false) }
-        val cleanup = draftResult { drafts.clear(initial.shopSlug) }
+        val cleanup = draftWrites.withLock { draftResult { drafts.clear(initial.shopSlug) } }
         updateState { copy(draftFailed = cleanup.isFailure) }
         sendEvent(ShopCheckInFormEvent.Submitted(input.visibility))
     }

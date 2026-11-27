@@ -10,8 +10,13 @@ import org.jetbrains.compose.resources.getSystemResourceEnvironment
 suspend fun nativeDiscoveryPickerTitle(): String =
     getString(getSystemResourceEnvironment(), Res.string.discovery_picker_title)
 
+@OptIn(org.jetbrains.compose.resources.ExperimentalResourceApi::class)
+suspend fun nativeDiscoveryPickerStepLabel(): String =
+    getString(getSystemResourceEnvironment(), Res.string.discovery_picker_step, 1, 3)
+
 internal suspend fun DiscoveryIosResources.discoveryIosLabels(picker: Boolean): Map<String, String> =
-    (mainLabels(picker) + mapLabels() + feedbackLabels()).mapValues { text(it.value) }
+    (mainLabels(picker) + mapLabels() + feedbackLabels()).mapValues { text(it.value) } +
+        if (picker) mapOf("step-label" to text(Res.string.discovery_picker_step, 1, 3)) else emptyMap()
 
 private fun mainLabels(picker: Boolean): Map<String, StringResource> = mapOf(
     "title" to Res.string.discovery_picker_title,

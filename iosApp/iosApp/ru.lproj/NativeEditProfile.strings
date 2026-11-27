@@ -10,8 +10,8 @@
 "profile_edit_username_label" = "Имя пользователя";
 "profile_edit_username_placeholder" = "Ваше имя";
 "profile_edit_username_empty" = "Имя не может быть пустым";
-"profile_edit_username_short" = "Минимум 2 символа";
-"profile_edit_username_long" = "Максимум 64 символа";
+"profile_edit_username_short" = "Минимум 3 символа";
+"profile_edit_username_long" = "Максимум 30 символов";
 "profile_edit_about_label" = "О себе";
 "profile_edit_about_placeholder" = "Расскажите немного о себе…";
 "profile_edit_about_long" = "Максимум 600 символов";

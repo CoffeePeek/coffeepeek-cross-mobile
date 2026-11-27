@@ -1,6 +1,6 @@
 # Авторизация
 
-Сверено с `develop` `8cdc15f9` — 2026-11-27.
+Сверено с `develop` `496980e71` и изменениями выбора ника — 2026-11-27.
 
 ## Владение и активные экраны
 
@@ -44,6 +44,79 @@ Android использует feature Compose. На iOS вход, регистр�
 стек меняется после завершения закрытия исходного контроллера.
 
 ## Где проверять
+
+### Выбор ника после Google и Apple
+
+`UsernameSelectionGate` разделяет действующую сессию и готовность профиля.
+На каждом login lifetime `GET /api/Users/me` проверяет `usernameSelectionRequired`;
+отсутствующее поле совместимо со старым сервером и означает `false`.
+При `true` Android Compose и native SwiftUI показывают обязательный экран с
+подтверждением текущего или нового ника. Выход из аккаунта доступен явно;
+Back/swipe не открывают основной интерфейс.
+
+`PUT /api/Users/me/username-selection` отправляет `{username}`. Первая явная
+установка не расходует лимит обычного переименования; подтверждение того же имени
+идемпотентно. Ошибки `USERNAME_TAKEN` и конфликт подтверждения обрабатываются
+отдельно; после конфликта клиент перечитывает профиль. Правила: 3–30 UTF-16
+символов, первая Unicode-буква, далее буквы, десятичные цифры, `.` и `_`.
+
+Перед `Ready` имя в JWT сверяется с профилем. Несовпадение вызывает существующий
+координированный refresh; сбой сохраняет блокировку. Это восстанавливает также
+сценарий, когда сервер уже сохранил ник, но ответ потерян или приложение закрыли.
+Own-profile cache и публичные snapshots инвалидируются через профильные API.
+Результаты старого аккаунта/login lifetime отбрасываются, включая A → B → A.
+
+Корневая навигация и продолжение QR/избранного ждут `Ready`. Сессия при этом не
+считается невалидной: она нужна для подтверждения и refresh. Таймер picker не
+стартует, пока пользователь выбирает ник; прежний guest TTL также приостанавливается
+для этого login lifetime. Выход отзывает отложенное избранное.
+Сами отложенные действия остаются в памяти, восстановление после process death
+этот checkpoint не добавляет. Смена существующего ника меняет ссылку профиля;
+экран предупреждает об этом, серверные aliases не добавляются.
+
+Sandbox имеет сценарий `UsernameSelectionRequired` (`authPolicy` launch extra).
+Запускать его нужно до создания account lifetime либо после повторного входа;
+он использует только локальный backend. Имя `taken` демонстрирует занятый ник.
+
+План проверок checkpoint: auth domain/data/impl и profile data/impl unit/contract
+tests; root continuation contracts; Debug/Sandbox assembly и DEX; ограничения
+размера функций; нативная компиляция и factory registration. Ручные OAuth,
+VoiceOver, клавиатура и темы требуют отдельной проверки на согласованном устройстве.
+
+Локальная проверка 2026-11-27, база `496980e71`, Windows, без установки приложения:
+auth domain/data/impl — 12/42/48; profile data/impl — 45/110; app — 779 unit/contract
+tests, все без failures/errors/skips (всего 1 036). Debug и Sandbox собраны,
+проверки DEX и Sandbox isolation прошли; новых нарушений 40/20 нет. Дополнительные
+5 native non-UI contracts прошли. Первые прогоны выявили отсутствующий import
+ресурса и старые фикстуры с пробелами в никах; они исправлены. Запуск Swift
+компилятора был запрещён sandbox; тот же прогон с разрешённым запуском прошёл.
+Полная локальная iOS сборка остановилась до компиляции: установленный xcross не
+содержит pinned SHA для Kotlin/Native 2.4.21. SwiftUI/Kotlin Native сборка остаётся
+за macOS CI; реальный OAuth, устройство, визуальные темы/клавиатура/VoiceOver
+локально не проверялись. Эти ограничения не заменяются успешной Android сборкой.
+
+Исправление iOS CI 27.11.2026 в [PR #455](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/455):
+`UsernameSelectionAccount.observe()` возвращает публичный `Flow`, но coroutines
+из-за отсутствующего KMP import попали только в Android `implementation`.
+Оба macOS job на `55b1d63d1` остановились в auth domain с unresolved
+`coroutines`/`Flow`. Зависимость теперь объявлена через commonMain `api`, как у
+других публичных Flow-контрактов. CI также исполняет auth domain/data/impl suites
+и общий `DiscoveryBindingsTest` на Native.
+
+Локальный исходный сбой повторён `compileCommonMainKotlinMetadata`; после исправления
+эта задача и `compileKotlinIosSimulatorArm64` прошли. Проверен KLIB manifest:
+Kotlin 2.4.21, `native_targets=ios_simulator_arm64`; это компиляция domain,
+не линковка/запуск полного приложения. Android auth suites: 12/42/48 тестов,
+без failures/errors/skips; Direct Debug assembly с DEX checks и function limits
+прошли. Все 45 tools/ios unit-проверок прошли после разрешённого запуска Swift/Bash;
+первый sandbox-прогон имел 9 ошибок запуска дочерних инструментов. Полные macOS
+build/test результаты фиксируются в PR; реальные OAuth и device gates остаются отдельно.
+
+Повторный macOS прогон на `6b57f0932` скомпилировал auth domain и Kotlin-исходники приложения,
+но Native test link выявил несовместимую Compose-заглушку `DiscoveryBindingsTest`.
+Общая проверка единой ленивой фабрики теперь не создаёт UI-объект; две проверки
+порядка разрешения с Compose-рендерером находятся в androidUnitTest. Все три
+DI-проверки сохраняются, Native selector общей проверки остаётся включённым.
 
 - [Общие модели и Android UI](impl/src/), [HTTP и токены](data/src/commonMain/),
   [контракты](domain/src/commonMain/).

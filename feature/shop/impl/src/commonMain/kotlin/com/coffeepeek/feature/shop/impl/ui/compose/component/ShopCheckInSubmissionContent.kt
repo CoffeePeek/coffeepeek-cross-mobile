@@ -2,66 +2,68 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
+import com.coffeepeek.core.designsystem.component.CoffeePeekCreationSuccess
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
-import com.coffeepeek.core.designsystem.component.CoffeePeekButton
-import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
 import com.coffeepeek.feature.shop.impl.resources.Res
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_sending
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_only_me
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_public
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_private
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_published
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_feed
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_cleanup_error
-import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_dismiss
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_feed
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_sending
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_private
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_public
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_published
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun ShopCheckInSubmissionContent(
-    submittedVisibility: ShopCheckInVisibility?, cleanupFailed: Boolean, onFeed: () -> Unit,
+    visibility: ShopCheckInVisibility, cleanupFailed: Boolean, onFeed: () -> Unit, onClose: () -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
-        horizontalAlignment = if (submittedVisibility == null) Alignment.CenterHorizontally else Alignment.Start) {
-        if (submittedVisibility == null) {
-            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
-            Text(stringResource(Res.string.shop_checkin_form_sending),
-                style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
-        } else {
-            Text(stringResource(if (submittedVisibility == ShopCheckInVisibility.Public)
-                Res.string.shop_checkin_form_success_published else Res.string.shop_checkin_form_success_only_me),
-                style = MaterialTheme.typography.headlineSmall)
-            Text(stringResource(if (submittedVisibility == ShopCheckInVisibility.Public)
-                Res.string.shop_checkin_form_success_public else Res.string.shop_checkin_form_success_private))
-            if (cleanupFailed) Text(stringResource(Res.string.shop_checkin_form_cleanup_error),
-                color = MaterialTheme.colorScheme.error)
-            CoffeePeekButton(stringResource(Res.string.shop_checkin_form_feed), onFeed)
-        }
+    CoffeePeekCreationSuccess(
+        title = stringResource(Res.string.shop_checkin_form_success_published),
+        message = stringResource(if (visibility == ShopCheckInVisibility.Public)
+            Res.string.shop_checkin_form_success_public else Res.string.shop_checkin_form_success_private),
+        buttonLabel = stringResource(Res.string.shop_checkin_form_feed),
+        closeLabel = stringResource(Res.string.shop_checkin_form_dismiss),
+        onClose = onClose,
+        onDone = onFeed,
+    ) {
+        if (cleanupFailed) Text(
+            stringResource(Res.string.shop_checkin_form_cleanup_error),
+            color = MaterialTheme.colorScheme.error,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+internal fun ShopCheckInSendingContent() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
+        CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
+        Text(stringResource(Res.string.shop_checkin_form_sending),
+            style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
     }
 }
 
 @Preview @Composable private fun ShopCheckInSubmissionLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopCheckInSubmissionContent(ShopCheckInVisibility.Public, false, {})
+    ShopCheckInSubmissionContent(ShopCheckInVisibility.Private, false, {}, {})
 }
 @Preview @Composable private fun ShopCheckInSubmissionDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopCheckInSubmissionContent(ShopCheckInVisibility.Public, false, {} )
+    ShopCheckInSubmissionContent(ShopCheckInVisibility.Public, true, {}, {})
 }
 @Preview @Composable private fun ShopCheckInSendingLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopCheckInSubmissionContent(null, false, {})
+    ShopCheckInSendingContent()
 }
 @Preview @Composable private fun ShopCheckInSendingDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopCheckInSubmissionContent(null, false, {})
+    ShopCheckInSendingContent()
 }

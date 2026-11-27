@@ -145,6 +145,7 @@ class NativeHomeCheckInSessionTest {
 
     private class Catalog : HomeCheckInEditorCatalog {
         override suspend fun brewMethods() = Result.success(listOf(HomeCheckInBrewMethod("v60", "V60")))
+        override suspend fun drinkOptions() = Result.success(emptyList<HomeCheckInDrinkOption>())
         override suspend fun searchBeans(query: String) = Result.success(emptyList<HomeCheckInBeanOption>())
     }
 

@@ -18,6 +18,7 @@ data class IosHomeCheckInDraft(
     val beanName: String?, val shelfBagId: String?, val showShelfBag: Boolean,
     val shelfBagCardUrl: String?, val photos: List<IosCheckInPhoto>, val existingPhotoUrls: List<String>,
     val customBeanName: String? = null,
+    val drinkSlug: String? = null,
 )
 
 data class IosHomeCheckInStatus(
@@ -31,6 +32,8 @@ data class IosHomeCheckInCatalog(
     val methods: List<IosHomeCheckInOption>, val beans: List<IosHomeCheckInOption>,
     val shelfBags: List<IosHomeCheckInOption>, val methodsLoading: Boolean, val beansLoading: Boolean,
     val methodsIssueKey: String?, val beansIssueKey: String?,
+    val drinks: List<IosHomeCheckInOption> = emptyList(), val drinksLoading: Boolean = false,
+    val drinksIssueKey: String? = null,
 )
 
 data class IosHomeCheckInOption(val id: String, val name: String?, val detail: String?, val imageUrl: String?)

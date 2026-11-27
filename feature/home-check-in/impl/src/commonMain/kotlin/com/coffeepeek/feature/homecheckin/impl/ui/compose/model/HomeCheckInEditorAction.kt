@@ -7,13 +7,14 @@ internal sealed interface HomeCheckInEditorAction {
     data object Initialize : HomeCheckInEditorAction
     data object RetryDetail : HomeCheckInEditorAction
     data object RetryMethods : HomeCheckInEditorAction
+    data object RetryDrinks : HomeCheckInEditorAction
     data class DateChosen(val civilDate: String, val preparedAt: String) : HomeCheckInEditorAction
     data class MethodChanged(val code: String?) : HomeCheckInEditorAction
     data class DoseChanged(val value: String) : HomeCheckInEditorAction
     data class DurationChanged(val seconds: Int?) : HomeCheckInEditorAction
     data class TasteRatingTapped(val score: Int) : HomeCheckInEditorAction
     data class NoteChanged(val value: String) : HomeCheckInEditorAction
-    data class DrinkNameChanged(val value: String) : HomeCheckInEditorAction
+    data class DrinkSelected(val slug: String?) : HomeCheckInEditorAction
     data class VisibilityChanged(val value: HomePreparationVisibility) : HomeCheckInEditorAction
     data object OpenBeanPicker : HomeCheckInEditorAction
     data object CloseBeanPicker : HomeCheckInEditorAction

@@ -43,12 +43,12 @@ class NativeShopCheckInSession(
     fun visitChanged(iso: String) = send(ShopCheckInFormAction.VisitDateChanged(iso))
     fun visibilityChanged(public: Boolean) = send(ShopCheckInFormAction.VisibilityChanged(if (public) ShopCheckInVisibility.Public else ShopCheckInVisibility.Private))
     fun drinkChanged(slug: String?) = send(ShopCheckInFormAction.DrinkChanged(slug))
-    fun customDrinkChanged(value: String) = send(ShopCheckInFormAction.CustomDrinkChanged(value))
     fun photosAdded(photos: List<ShopCheckInPhoto>) = send(ShopCheckInFormAction.PhotosAdded(photos))
     fun removePhoto(index: Int) = send(ShopCheckInFormAction.RemovePhoto(index))
     fun movePhoto(from: Int, to: Int) = send(ShopCheckInFormAction.MovePhoto(from, to))
     fun retryDrinks() = send(ShopCheckInFormAction.RetryDrinks)
     fun submit() = send(ShopCheckInFormAction.Submit)
+    fun changeShop() = send(ShopCheckInFormAction.ChangeShop)
     fun dismiss() = send(ShopCheckInFormAction.Dismiss)
     fun askDiscard() = send(ShopCheckInFormAction.AskDiscard)
     fun cancelDiscard() = send(ShopCheckInFormAction.CancelDiscard)
@@ -75,6 +75,7 @@ class NativeShopCheckInSnapshot internal constructor(state: ShopCheckInFormState
     val hasDraft = state.hasDraft
     val confirmDiscard = state.confirmDiscard
     val discarding = state.isDiscarding
+    val changingShop = state.isChangingShop
     val drinks = state.drinks
     val drinksLoading = state.drinksLoading
     val drinksFailed = state.drinksFailed
@@ -84,12 +85,13 @@ class NativeShopCheckInSnapshot internal constructor(state: ShopCheckInFormState
     val deliveryUnconfirmed = state.deliveryUnconfirmed
     val failure = state.submitFailure
     val validation = state.validationError
-    val editable = active && !loading && !submitting && !discarding && !submitted && !deliveryUnconfirmed && !confirmDiscard
+    val editable = active && !loading && !submitting && !discarding && !submitted && !deliveryUnconfirmed && !confirmDiscard && !changingShop
 }
 
-enum class NativeShopCheckInEvent { Dismiss, Submitted, OpenHistory, GoToFeed }
+enum class NativeShopCheckInEvent { ChangeShop, Dismiss, Submitted, OpenHistory, GoToFeed }
 
 private fun ShopCheckInFormEvent.nativeEvent() = when (this) {
+    ShopCheckInFormEvent.ChangeShop -> NativeShopCheckInEvent.ChangeShop
     ShopCheckInFormEvent.Dismiss -> NativeShopCheckInEvent.Dismiss
     is ShopCheckInFormEvent.Submitted -> NativeShopCheckInEvent.Submitted
     ShopCheckInFormEvent.OpenHistory -> NativeShopCheckInEvent.OpenHistory

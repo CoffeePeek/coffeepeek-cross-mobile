@@ -14,7 +14,7 @@ internal enum class SandboxUpdatePolicy { UpToDate, Available, Required, Failure
 internal enum class SandboxCities { Single, Several, Empty, Failure }
 
 /** How the account endpoints answer: everything works, or one chosen failure (offline and 5xx come from the scenario chips). */
-internal enum class SandboxAuthPolicy { Works, WrongPassword, EmailTaken, RegistrationFailure, RecoveryFailure }
+internal enum class SandboxAuthPolicy { Works, WrongPassword, EmailTaken, RegistrationFailure, RecoveryFailure, UsernameSelectionRequired }
 
 /**
  * What `GET /api/v1/feed` answers. `Single` (default) is one page with the visible public fixtures; the others add 45 generated posts of several authors
@@ -49,6 +49,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         initialFavorites = { owner -> if (isSandboxOwner(owner)) collectionFavorites() else JsonArray(emptyList()) },
         favoritesChanged = ::synchronizeCollectionFavorites)
     private var username = "Sandbox"
+    private var usernameConfirmed = false
     private var about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
     private var populated = true
     // Other authors' public visits live apart from the account's own rows, so history/calendar never include them.
@@ -84,6 +85,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         friendFollowing = false; deletionRequest = null
         if (populated) others += friendVisit()
         username = "Sandbox"
+        usernameConfirmed = false
         about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
         favorites.clear()
         collectionStore.reset()
@@ -147,13 +149,8 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         discoveryStore.handle(path, method, request, input)?.let { return it }
         authRoute(path, method, input)?.let { return it }
         if (path == "/api/users/me" && method == HttpMethod.Get) return ok(profile())
-        if (path == "/api/users/me/username" && method == HttpMethod.Patch) {
-            val requested = input["username"]?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
-            if (requested.length !in 2..64) return HttpStatusCode.BadRequest to failure("Имя должно быть от 2 до 64 символов")
-            if (requested.equals(FRIEND_NAME, ignoreCase = true)) return HttpStatusCode.Conflict to failure("Имя уже занято")
-            username = requested
-            return ok(buildJsonObject { put("username", username); put("address", address("sandbox", "/users/sandbox")) })
-        }
+        if (path == "/api/users/me/username" && method == HttpMethod.Patch) return selectUsername(input)
+        if (path == "/api/users/me/username-selection" && method == HttpMethod.Put) return selectUsername(input)
         if (path == "/api/users/me/about" && method == HttpMethod.Patch) {
             val requested = input["about"]?.jsonPrimitive?.contentOrNull.orEmpty()
             if (requested.length > 600) return HttpStatusCode.BadRequest to failure("Описание слишком длинное")
@@ -252,7 +249,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             SandboxCities.Several -> ok(JsonArray(listOf(city("minsk", "Минск"), city("brest", "Брест"), city("grodno", "Гродно"))))
         }
         if (path == "/api/v1/app-version" && method == HttpMethod.Get) return appVersion()
-        if (path == "/api/catalogs/drinks") return ok(drinks())
+        if (path == "/api/catalogs/drinks") return ok(checkInDrinks())
         if (path == "/api/menu/drinks") return ok(buildJsonObject { put("drinks", drinks()) })
         if (path == "/api/catalogs/brew-methods") return ok(JsonArray(listOf(catalog("hario-v60", "Hario V60"), catalog("aeropress", "AeroPress"))))
         if (path == "/api/catalogs/equipments") return ok(JsonArray(if (populated) listOf(catalog("espresso-machine", "Эспрессо-машина"), catalog("grinder", "Кофемолка")) else emptyList()))
@@ -453,6 +450,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         visit["moderationState"]?.jsonPrimitive?.content == "Approved"
 
     private fun profile() = buildJsonObject {
+        put("usernameSelectionRequired", authPolicy == SandboxAuthPolicy.UsernameSelectionRequired && !usernameConfirmed)
         put("authorId", SELF_ID); put("userName", username); put("email", "sandbox@example.invalid"); put("about", about)
         put("avatarUrl", "${SandboxBackend.BASE_URL}/media/sample"); put("checkInCount", visits.size)
         put("addedShopsCount", 0); put("addedRoastersCount", 0); put("followersCount", 0); put("isFollowing", false)
@@ -632,6 +630,21 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         } }
     }
     private fun drinks() = JsonArray(listOf(buildJsonObject { put("slug", "cappuccino"); put("nameRu", "Капучино"); put("nameEn", "Cappuccino"); put("category", "Coffee"); put("price", 8) }))
+    private fun checkInDrinks() = buildJsonArray {
+        val options = listOf(
+            Triple("espresso", "Эспрессо", "Espresso"),
+            Triple("americano", "Американо", "Americano"),
+            Triple("cappuccino", "Капучино", "Cappuccino"),
+            Triple("flat-white", "Флэт уайт", "Flat white"),
+            Triple("filter", "Фильтр-кофе", "Filter coffee"),
+            Triple("espresso-tonic", "Эспрессо-тоник", "Espresso tonic"),
+            Triple("hot-chocolate", "Горячий шоколад", "Hot chocolate"),
+            Triple("tea", "Чай", "Tea"),
+        )
+        options.forEach { (slug, nameRu, nameEn) ->
+            add(buildJsonObject { put("slug", slug); put("nameRu", nameRu); put("nameEn", nameEn) })
+        }
+    }
     private fun photo() = buildJsonObject { put("id", "sample"); put("url", "/media/sample"); put("fullUrl", "${SandboxBackend.BASE_URL}/media/sample") }
     private fun catalog(slug: String, name: String) = buildJsonObject { put("slug", slug); put("name", name); put("address", address(slug, "/catalog/$slug")) }
     private fun city(slug: String, name: String) = buildJsonObject {
@@ -671,7 +684,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             HttpMethod.Post -> if (authPolicy == SandboxAuthPolicy.WrongPassword) {
                 HttpStatusCode.Unauthorized to failure("Invalid credentials")
             } else issueNativeTokens()
-            HttpMethod.Put -> if (refresh != null && nativeRefreshTokens.remove(refresh)) issueNativeTokens()
+            HttpMethod.Put -> if (refresh != null && (nativeRefreshTokens.remove(refresh) || refresh == "sandbox-local-only")) issueNativeTokens()
                 else HttpStatusCode.Unauthorized to failure("Refresh rejected")
             HttpMethod.Delete -> {
                 refresh?.let(nativeRefreshTokens::remove)
@@ -695,7 +708,21 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     private fun accessToken(): String {
         val encoder = java.util.Base64.getUrlEncoder().withoutPadding()
         fun part(json: String) = encoder.encodeToString(json.toByteArray())
-        return "${part("""{"alg":"none"}""")}.${part("""{"sub":"11111111-1111-4111-8111-111111111111","exp":4102444800}""")}.sandbox"
+        val payload = buildJsonObject {
+            put("sub", "11111111-1111-4111-8111-111111111111"); put("exp", 4102444800); put("name", username)
+        }
+        return "${part("""{"alg":"none"}""")}.${part(payload.toString())}.sandbox"
+    }
+
+    private fun selectUsername(input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        val requested = input["username"]?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
+        if (!com.coffeepeek.feature.auth.domain.isValidSelectedUsername(requested))
+            return HttpStatusCode.BadRequest to failure("Invalid username")
+        if (requested.equals("taken", ignoreCase = true)) return HttpStatusCode.Conflict to failure("Username already exists.")
+        username = requested
+        usernameConfirmed = true
+        return ok(buildJsonObject { put("username", username); put("usernameSelectionRequired", false)
+            put("address", address("sandbox", "/users/sandbox")) })
     }
 
     private fun envelope(data: JsonElement, success: Boolean = true) = buildJsonObject { put("isSuccess", success); put("data", data) }

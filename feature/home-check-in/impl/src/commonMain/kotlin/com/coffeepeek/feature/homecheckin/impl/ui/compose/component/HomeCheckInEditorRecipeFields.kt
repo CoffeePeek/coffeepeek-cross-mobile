@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -128,13 +127,13 @@ private fun HomeCheckInRecipeDisclosure(expanded: Boolean, rotation: Float, enab
         contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing2),
         interactionSource = interactions,
     ) {
-        CoffeePeekIcon(CoffeePeekIcons.ChevronRight,
-            contentDescription = null, modifier = Modifier.padding(end = CoffeePeekDimens.spacing2)
-                .size(18.dp).graphicsLayer { rotationZ = rotation },
-            tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(stringResource(Res.string.home_check_in_recipe_title),
             modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface)
+        CoffeePeekIcon(CoffeePeekIcons.ChevronRight,
+            contentDescription = null, modifier = Modifier.padding(start = CoffeePeekDimens.spacing2)
+                .size(18.dp).graphicsLayer { rotationZ = rotation },
+            tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

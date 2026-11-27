@@ -8,3 +8,4 @@ resources:
   - ../../iosApp/iosApp/ru.lproj
   - ../../iosApp/iosApp/be.lproj
   - ../../iosApp/iosApp/PrivacyInfo.xcprivacy
+  - ../../core/design-system/src/commonMain/composeResources/drawable/shop_maskot_with_book.png

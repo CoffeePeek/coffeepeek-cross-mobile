@@ -16,6 +16,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_submit
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_step_next
+import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInEditorStep
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -24,6 +26,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun ShopCheckInSaveBar(
     state: ShopCheckInFormState, photosPreparing: Boolean, onAction: (ShopCheckInFormAction) -> Unit,
+    step: ShopCheckInEditorStep = ShopCheckInEditorStep.Details, onNext: () -> Unit = {},
 ) {
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
@@ -31,23 +34,26 @@ internal fun ShopCheckInSaveBar(
         .navigationBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4,
             vertical = CoffeePeekDimens.spacing2),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        ShopCheckInVisibilityField(state.input.visibility, state.isEditable(photosPreparing)) {
-            onAction(ShopCheckInFormAction.VisibilityChanged(it))
-        }
         CoffeePeekButton(
-            text = stringResource(Res.string.shop_checkin_form_submit),
-            enabled = state.isEditable(photosPreparing),
+            text = stringResource(if (step == ShopCheckInEditorStep.Ratings) Res.string.shop_checkin_step_next else Res.string.shop_checkin_form_submit),
+            enabled = if (step == ShopCheckInEditorStep.Ratings) state.canNavigate(photosPreparing) else state.isEditable(photosPreparing),
             onClick = {
                 keyboard?.hide()
                 focus.clearFocus(force = true)
-                onAction(ShopCheckInFormAction.Submit)
+                if (step == ShopCheckInEditorStep.Ratings) onNext() else onAction(ShopCheckInFormAction.Submit)
             },
         )
     }
 }
 
 internal fun ShopCheckInFormState.isEditable(photosPreparing: Boolean): Boolean =
-    !isLoading && !isSubmitting && !isDiscarding && !submitted && !deliveryUnconfirmed && !photosPreparing
+    canNavigate(photosPreparing) && !submitted && !deliveryUnconfirmed
+
+internal fun ShopCheckInFormState.canNavigate(photosPreparing: Boolean): Boolean =
+    !isLoading && canLeaveEditor(photosPreparing)
+
+internal fun ShopCheckInFormState.canLeaveEditor(photosPreparing: Boolean): Boolean =
+    !isSubmitting && !isDiscarding && !isChangingShop && !confirmDiscard && !photosPreparing
 
 @Preview @Composable private fun ShopCheckInSaveBarLightPreview() = CoffeePeekTheme(darkTheme = false) {
     ShopCheckInSaveBar(ShopCheckInFormState(com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput(

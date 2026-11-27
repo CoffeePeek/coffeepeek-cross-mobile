@@ -18,6 +18,9 @@
     <string name="profile_following">Вы подписаны</string>
     <string name="profile_follow_description">Подписаться на @%1$s</string>
     <string name="profile_unfollow_description">Отписаться от @%1$s</string>
+    <string name="profile_unfollow">Отписаться</string>
+    <string name="profile_unfollow_confirm_title">Отписаться от @%1$s?</string>
+    <string name="profile_unfollow_confirm_message">Вы сможете подписаться снова в любое время.</string>
 
     <string name="profile_stat_check_ins">Чекины</string>
     <string name="profile_stat_shops">Кофейни</string>
@@ -132,8 +135,8 @@
     <string name="profile_edit_username_label">Имя пользователя</string>
     <string name="profile_edit_username_placeholder">Ваше имя</string>
     <string name="profile_edit_username_empty">Имя не может быть пустым</string>
-    <string name="profile_edit_username_short">Минимум 2 символа</string>
-    <string name="profile_edit_username_long">Максимум 64 символа</string>
+    <string name="profile_edit_username_short">Минимум 3 символа</string>
+    <string name="profile_edit_username_long">Максимум 30 символов</string>
     <string name="profile_edit_about_label">О себе</string>
     <string name="profile_edit_about_placeholder">Расскажите немного о себе…</string>
     <string name="profile_edit_about_long">Максимум 600 символов</string>

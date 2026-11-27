@@ -13,12 +13,17 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -41,10 +46,36 @@ import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
 internal fun PublicProfileBody(state: PublicProfileState, visibilityPending: Boolean, viewingOwn: Boolean,
     authorActions: ProfileAuthorActions, slots: ProfileSlots, callbacks: PublicProfileCallbacks, own: OwnProfileExtras?) {
     val profile = state.profile
+    val canFollow = !viewingOwn && !visibilityPending && profile?.isBlockedByViewer == false &&
+        !state.isLoading && !state.isFollowLoading
+    var confirmUnfollow by remember(profile?.authorId, profile?.slug, state.isSignedIn, state.isFollowing, canFollow) {
+        mutableStateOf(false)
+    }
+    val onFollow: () -> Unit = {
+        if (canFollow) {
+            if (state.isFollowing) confirmUnfollow = true
+            else callbacks.onAction(PublicProfileAction.ToggleFollow)
+        }
+    }
     when {
         profile == null -> PublicProfileUnavailable(state, visibilityPending) { callbacks.onAction(PublicProfileAction.Refresh) }
         profile.isBlockedByViewer -> PublicProfileBlocked(profile, authorActions)
-        else -> PublicProfileLoadedContent(state, profile, viewingOwn, authorActions, slots, callbacks, own)
+        else -> PublicProfileLoadedContent(state, profile, viewingOwn, authorActions, slots, callbacks, own, onFollow)
+    }
+    if (confirmUnfollow && canFollow && state.isFollowing && profile != null) {
+        CoffeePeekDestructiveConfirmationSheet(
+            title = stringResource(Res.string.profile_unfollow_confirm_title, profile.nickname.trimStart('@')),
+            message = stringResource(Res.string.profile_unfollow_confirm_message),
+            confirmLabel = stringResource(Res.string.profile_unfollow),
+            cancelLabel = stringResource(Res.string.profile_cancel),
+            onConfirm = {
+                if (confirmUnfollow) {
+                    confirmUnfollow = false
+                    callbacks.onAction(PublicProfileAction.ToggleFollow)
+                }
+            },
+            onDismiss = { confirmUnfollow = false },
+        )
     }
 }
 @Composable
@@ -83,7 +114,8 @@ internal fun PublicProfileBlocked(profile: PublicProfile, authorActions: Profile
 
 @Composable
 private fun PublicProfileLoadedContent(state: PublicProfileState, profile: PublicProfile, viewingOwn: Boolean,
-    authorActions: ProfileAuthorActions, slots: ProfileSlots, callbacks: PublicProfileCallbacks, own: OwnProfileExtras?) {
+    authorActions: ProfileAuthorActions, slots: ProfileSlots, callbacks: PublicProfileCallbacks, own: OwnProfileExtras?,
+    onFollow: () -> Unit) {
     val checkInList = rememberLazyListState()
     ProfileContentTabs(
         profile.slug,
@@ -101,24 +133,24 @@ private fun PublicProfileLoadedContent(state: PublicProfileState, profile: Publi
     ) { selectCheckIns ->
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Spacer(Modifier.height(2.dp))
-            PublicProfileIdentity(state, profile, viewingOwn, slots, callbacks, own)
+            PublicProfileIdentity(state, profile, viewingOwn, slots, callbacks, own, onFollow)
             if (own != null) own.history.calendar()
             else ProfileCheckInCalendar(state, profile, slots.image, callbacks.onAction) { date ->
                 callbacks.onAction(PublicProfileAction.SelectCheckInDate(date))
                 if (date != null) selectCheckIns()
             }
-            PublicProfileRefreshErrors(state, viewingOwn, callbacks.onAction)
+            PublicProfileRefreshErrors(state, viewingOwn, callbacks.onAction, onFollow)
         }
     }
 }
 
 @Composable
 private fun PublicProfileIdentity(state: PublicProfileState, profile: PublicProfile, viewingOwn: Boolean,
-    slots: ProfileSlots, callbacks: PublicProfileCallbacks, own: OwnProfileExtras?) {
+    slots: ProfileSlots, callbacks: PublicProfileCallbacks, own: OwnProfileExtras?, onFollow: () -> Unit) {
     val contributions = own?.onOpenContributions ?: slots.onOwnContributions
     PublicProfileHeader(profile.nickname, profile.avatarUrl, profile.about, slots.image,
         isFollowing = state.isFollowing, followEnabled = !state.isFollowLoading && !state.isLoading,
-        onFollow = if (viewingOwn) null else ({ callbacks.onAction(PublicProfileAction.ToggleFollow) }),
+        onFollow = onFollow.takeUnless { viewingOwn },
         stats = profile.stats,
         onShopsClick = if (viewingOwn) ({ contributions(ProfileContribution.Shops) }) else null,
         onRoastersClick = if (viewingOwn) ({ contributions(ProfileContribution.Roasters) }) else null,
@@ -129,11 +161,11 @@ private fun PublicProfileIdentity(state: PublicProfileState, profile: PublicProf
 }
 
 @Composable
-private fun PublicProfileRefreshErrors(state: PublicProfileState, viewingOwn: Boolean, onAction: (PublicProfileAction) -> Unit) {
+private fun PublicProfileRefreshErrors(state: PublicProfileState, viewingOwn: Boolean, onAction: (PublicProfileAction) -> Unit,
+    onFollow: () -> Unit) {
     if (state.error != null) InlineProfileError(stringResource(Res.string.profile_update_failed)) { onAction(PublicProfileAction.Refresh) }
-    if (!viewingOwn && state.followError != null) InlineProfileError(stringResource(Res.string.profile_follow_failed)) {
-        onAction(PublicProfileAction.ToggleFollow)
-    }
+    if (!viewingOwn && state.followError != null)
+        InlineProfileError(stringResource(Res.string.profile_follow_failed), onRetry = onFollow)
 }
 
 @Composable

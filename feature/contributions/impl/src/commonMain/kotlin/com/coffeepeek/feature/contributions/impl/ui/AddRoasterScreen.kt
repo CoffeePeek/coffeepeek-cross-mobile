@@ -1,10 +1,8 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
 import com.coffeepeek.feature.contributions.impl.ui.component.ContributionPhotos
-import androidx.compose.foundation.Image
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.contributions.impl.resources.Res
-import com.coffeepeek.feature.contributions.impl.resources.contributions_mascot_happy
 import com.coffeepeek.feature.contributions.impl.resources.contributions_back
 import com.coffeepeek.feature.contributions.impl.resources.contributions_error_instagram
 import com.coffeepeek.feature.contributions.impl.resources.contributions_error_website
@@ -42,7 +40,6 @@ import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_in
 import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_retry_send
 import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_website_label
 import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_website_placeholder
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -53,7 +50,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.Surface
@@ -67,19 +63,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekCreationSuccess
+import com.coffeepeek.feature.contributions.impl.resources.contributions_close
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -226,39 +219,25 @@ private fun CityFieldOrState(state: AddRoasterState, onAction: (AddRoasterAction
 @Composable
 private fun RoasterSuccess(result: RoasterSubmitted, hadAddress: Boolean, host: AddRoasterHost, onDone: () -> Unit, modifier: Modifier) {
     LaunchedEffect(Unit) { host.feedback(true) }
-    Scaffold(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = { Box(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4)) { CoffeePeekButton(stringResource(Res.string.contributions_roaster_done), onDone) } },
-    ) { padding ->
-        Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = CoffeePeekDimens.spacing4),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(Modifier.height(CoffeePeekDimens.spacing6))
-            Image(painterResource(Res.drawable.contributions_mascot_happy), contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.size(160.dp))
-            Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-            Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) {
-                CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
-            }
-            Spacer(Modifier.height(CoffeePeekDimens.spacing4))
+    RoasterSuccessContent(result, hadAddress, onDone, modifier)
+}
+
+@Composable
+private fun RoasterSuccessContent(result: RoasterSubmitted, hadAddress: Boolean, onDone: () -> Unit, modifier: Modifier = Modifier) {
+    CoffeePeekCreationSuccess(
+        title = stringResource(Res.string.contributions_roaster_success_title),
+        message = result.message.ifBlank { stringResource(Res.string.contributions_roaster_success_description) },
+        buttonLabel = stringResource(Res.string.contributions_roaster_done),
+        closeLabel = stringResource(Res.string.contributions_close),
+        onClose = onDone, onDone = onDone, modifier = modifier,
+    ) {
+        if (hadAddress && !result.isAddressValidated) {
             Text(
-                stringResource(Res.string.contributions_roaster_success_title), style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                stringResource(Res.string.contributions_roaster_address_unchecked),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(Modifier.height(CoffeePeekDimens.spacing2))
-            Text(
-                result.message.ifBlank { stringResource(Res.string.contributions_roaster_success_description) }, style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
-            )
-            if (hadAddress && !result.isAddressValidated) {
-                Spacer(Modifier.height(CoffeePeekDimens.spacing3))
-                Text(
-                    stringResource(Res.string.contributions_roaster_address_unchecked), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            Spacer(Modifier.height(CoffeePeekDimens.spacing8))
         }
     }
 }
@@ -284,10 +263,8 @@ private val cities = listOf(CatalogOption("minsk", "Минск"), CatalogOption(
 @Preview @Composable private fun AddRoasterSuccessPreviewDark() = AddRoasterSuccessPreview(true)
 
 @Composable private fun AddRoasterSuccessPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    Surface {
-        AddRoasterContent(
-            AddRoasterState(signedIn = true, address = "Улица, 1", submit = RoasterSubmitState.Done(RoasterSubmitted("id", "Pending", isAddressValidated = false, message = "Обжарщик отправлен на модерацию"))),
-            AddRoasterHost(), noCallbacks, {},
-        )
-    }
+    RoasterSuccessContent(
+        RoasterSubmitted("id", "Pending", isAddressValidated = false, message = "Обжарщик отправлен на модерацию"),
+        hadAddress = true, onDone = {},
+    )
 }

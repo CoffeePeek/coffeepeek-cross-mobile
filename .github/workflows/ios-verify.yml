@@ -193,6 +193,7 @@ jobs:
           set -euo pipefail
           ./gradlew --max-workers=6 :composeApp:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.admin.di.KoinViewModelCompatibilityTest' \
+            --tests 'com.coffeepeek.admin.di.discovery.DiscoveryBindingsTest' \
             --tests 'com.coffeepeek.admin.AppLinkHandlingTest' \
             --tests 'com.coffeepeek.admin.ui.AppLinksTest' \
             --tests 'com.coffeepeek.admin.ui.ShopCheckInSignInHandoffTest' \
@@ -219,6 +220,8 @@ jobs:
             --tests 'com.coffeepeek.admin.location.LocationPermissionRequestTest' \
             --tests 'com.coffeepeek.admin.location.PermittedUserLocationTest' \
             --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
+            --tests 'com.coffeepeek.admin.ui.UsernameSelectionNavigationTest' \
+            --tests 'com.coffeepeek.admin.di.collections.UsernameSelectionPickerTest' \
             --tests 'com.coffeepeek.admin.ui.CollectionProfileReturnTest' \
             --tests 'com.coffeepeek.admin.ui.NativeRootNavigationModelTest' \
             --tests 'com.coffeepeek.admin.ui.NativeRootNavigationCommandTest' \
@@ -241,7 +244,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --max-workers=6 :feature:auth:impl:iosSimulatorArm64Test \
+          ./gradlew --max-workers=6 :feature:auth:domain:iosSimulatorArm64Test \
+            :feature:auth:data:iosSimulatorArm64Test :feature:auth:impl:iosSimulatorArm64Test \
             > "$RUNNER_TEMP/ios-auth-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-auth-tests.log"
               exit 1

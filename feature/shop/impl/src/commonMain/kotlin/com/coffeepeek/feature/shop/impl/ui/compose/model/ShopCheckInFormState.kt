@@ -12,6 +12,7 @@ internal data class ShopCheckInFormState(
     val hasDraft: Boolean = false,
     val confirmDiscard: Boolean = false,
     val isDiscarding: Boolean = false,
+    val isChangingShop: Boolean = false,
     val drinks: List<ShopConsumedDrinkOption> = emptyList(),
     val drinksLoading: Boolean = false,
     val drinksFailed: Boolean = false,

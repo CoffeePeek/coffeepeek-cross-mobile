@@ -2,7 +2,7 @@ package com.coffeepeek.feature.profile.impl.ui.model
 
 import com.coffeepeek.feature.profile.api.ProfileAvatarImage
 
-internal enum class UsernameError { Empty, TooShort, TooLong }
+internal enum class UsernameError { Empty, TooShort, TooLong, Invalid }
 
 internal enum class EditProfileError {
     Load, AvatarTooLarge, Avatar, Username, About, UsernameLimit, UsernameTaken, InvalidUsername, SignInRequired,
@@ -21,11 +21,12 @@ internal data class EditProfileState(
     val usernameRetryAtUtc: String? = null,
     val usernameToConfirm: String? = null,
 ) {
-    /** Measured on the untrimmed value, as in production; the saved value is trimmed. */
+    /** Validate the same trimmed username sent to the server. */
     val usernameError: UsernameError? get() = when {
         username.isBlank() -> UsernameError.Empty
-        username.length < MIN_USERNAME -> UsernameError.TooShort
-        username.length > MAX_USERNAME -> UsernameError.TooLong
+        username.trim().length < MIN_USERNAME -> UsernameError.TooShort
+        username.trim().length > MAX_USERNAME -> UsernameError.TooLong
+        !username.trim().first().isLetter() || !username.trim().all { it.isLetterOrDigit() || it == '.' || it == '_' } -> UsernameError.Invalid
         else -> null
     }
     val aboutTooLong: Boolean get() = about.length > MAX_ABOUT
@@ -33,8 +34,8 @@ internal data class EditProfileState(
     val canSave: Boolean get() = !isLoading && usernameError == null && !aboutTooLong && hasChanges && !isSaving
 
     companion object {
-        const val MIN_USERNAME = 2
-        const val MAX_USERNAME = 64
+        const val MIN_USERNAME = 3
+        const val MAX_USERNAME = 30
         const val MAX_ABOUT = 600
         const val MAX_AVATAR_BYTES = 5 * 1024 * 1024
     }

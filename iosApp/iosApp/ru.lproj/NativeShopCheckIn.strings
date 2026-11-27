@@ -21,9 +21,8 @@
 "shop_checkin_form_date_confirm" = "Готово";
 "shop_checkin_form_cancel" = "Отмена";
 "shop_checkin_form_drink" = "Напиток";
-"shop_checkin_form_drink_none" = "Не выбран";
 "shop_checkin_form_drink_other" = "Другое";
-"shop_checkin_form_drink_custom" = "Название напитка";
+"shop_checkin_form_drinks_empty" = "В каталоге пока нет напитков";
 "shop_checkin_form_drinks_error" = "Не удалось загрузить напитки";
 "shop_checkin_form_retry" = "Повторить";
 "shop_checkin_form_photos" = "Фото";
@@ -31,7 +30,6 @@
 "shop_checkin_form_public" = "Сделать публичным";
 "shop_checkin_form_public_hint" = "Добавить в ленту. Если выключено, чекин виден только вам.";
 "shop_checkin_form_submit" = "Опубликовать";
-"shop_checkin_form_change_shop" = "Изменить";
 "shop_checkin_today" = "Сегодня";
 "shop_checkin_form_sending" = "Отправляем чекин…";
 "shop_checkin_form_success_published" = "Чекин добавлен";
@@ -72,3 +70,10 @@
 "shop_checkin_photo_move_after" = "Переместить фото позже";
 "coffeepeek_photos_manage_hint" = "Нажмите, чтобы посмотреть. Удерживайте и перетаскивайте, чтобы менять порядок.";
 "coffeepeek_photo_description" = "Фото %1$d из %2$d";
+
+// Native editor step navigation.
+"shop_checkin_step_progress" = "Шаг %1$d из %2$d";
+"shop_checkin_step_impressions" = "Оценки и впечатления";
+"shop_checkin_step_details" = "Детали чекина";
+"shop_checkin_step_continue" = "Далее";
+"shop_checkin_step_back" = "Назад";

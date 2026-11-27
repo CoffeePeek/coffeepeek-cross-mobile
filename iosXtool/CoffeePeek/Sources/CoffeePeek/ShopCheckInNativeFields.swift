@@ -2,66 +2,82 @@ import ComposeApp
 import SwiftUI
 import UIKit
 
+enum ShopCheckInNativePhase: Equatable { case ratings, details }
+
 struct ShopCheckInNativeFields: View {
     let state: IosShopCheckInState
     let strings: CheckInNativeStrings
     let actions: ShopCheckInNativeActions
+    var phase: ShopCheckInNativePhase = .ratings
 
     var body: some View {
+        Group {
+            if phase == .ratings { impressions } else { details }
+        }.disabled(!state.editable || state.changingShop)
+    }
+
+    private var impressions: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            CheckInNativeField(title: "", error: validation("shop_checkin_form_invalid_rating")) { ratings }
+            CheckInNativeField(title: strings["shop_checkin_form_note"], error: validation("shop_checkin_form_invalid_note"),
+                counter: "\(state.note.utf16.count)/1000") {
+                CheckInNativeInput(title: strings["shop_checkin_form_note"], placeholder: strings["shop_checkin_form_note_hint"],
+                    value: Binding(get: { state.note }, set: { actions.noteChanged($0) }), multiline: true)
+            }
+            photos
+        }
+    }
+
+    private var details: some View {
         VStack(alignment: .leading, spacing: 20) {
             shop
-            CheckInNativeField(title: strings["shop_checkin_form_date"]) {
+            CheckInNativeField(title: strings["shop_checkin_form_date"], error: validation("shop_checkin_form_invalid_date")) {
                 CheckInNativeDateField(title: strings["shop_checkin_form_date"], value: state.visitDate,
                     today: state.today, label: state.dateLabel,
                     done: strings["shop_checkin_form_date_confirm"], cancel: strings["shop_checkin_form_cancel"],
                     changed: { actions.dateChanged($0) })
             }
             drink
-            ratings
-            CheckInNativeField(title: strings["shop_checkin_form_note"]) {
-                CheckInNativeInput(title: strings["shop_checkin_form_note"], placeholder: strings["shop_checkin_form_note_hint"],
-                    value: Binding(get: { state.note }, set: { actions.noteChanged($0) }), multiline: true)
+            Toggle(isOn: Binding(get: { state.isPublic }, set: actions.visibilityChanged)) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(strings["shop_checkin_form_public"]).font(CoffeePeekNativeStyle.font(17, weight: "Bold"))
+                    Text(strings["shop_checkin_form_public_hint"])
+                        .font(CoffeePeekNativeStyle.font(12)).foregroundStyle(CoffeePeekNativeStyle.secondary)
+                }
             }
-            photos
         }
-        .disabled(!state.editable)
     }
 
+    private func validation(_ key: String) -> String? { state.validationKey == key ? strings[key] : nil }
+
     private var shop: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(state.shopName).font(CoffeePeekNativeStyle.font(17, weight: "SemiBold"))
-                if let address = state.shopAddress { Text(address).foregroundStyle(CoffeePeekNativeStyle.secondary) }
-            }
-            Spacer(minLength: 0)
-            Button(strings["shop_checkin_form_change_shop"], action: actions.changeShop).frame(minHeight: 44)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(state.shopName).font(CoffeePeekNativeStyle.font(17, weight: "SemiBold"))
+            if let address = state.shopAddress { Text(address).foregroundStyle(CoffeePeekNativeStyle.secondary) }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var drink: some View {
-        CheckInNativeField(title: strings["shop_checkin_form_drink"]) {
+        CheckInNativeField(title: strings["shop_checkin_form_drink"], error: validation("shop_checkin_form_invalid_drink")) {
             if state.drinksLoading { CoffeePeekNativeLoader(label: strings["shop_checkin_form_drink"], size: 24) }
             if state.drinksFailed {
                 Button(strings["shop_checkin_form_drinks_error"], action: actions.retryDrinks)
+            } else if !state.drinksLoading && drinkOptions.isEmpty {
+                Text(strings["shop_checkin_form_drinks_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary)
             }
-            Picker(strings["shop_checkin_form_drink"], selection: drinkBinding) {
-                Text(strings["shop_checkin_form_drink_none"]).tag("")
-                ForEach(state.drinks, id: \.slug) { Text($0.name).tag($0.slug) }
-                if let slug = state.drinkSlug, !state.drinks.contains(where: { $0.slug == slug }) {
-                    Text(slug == "other" ? strings["shop_checkin_form_drink_other"] : slug).tag(slug)
-                }
-            }.pickerStyle(.menu).frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-                .disabled(state.drinksLoading)
-            if state.drinkSlug == "other" {
-                CheckInNativeInput(title: strings["shop_checkin_form_drink_custom"],
-                    placeholder: strings["shop_checkin_form_drink_custom"],
-                    value: Binding(get: { state.customDrink }, set: { actions.customDrinkChanged($0) }))
-            }
+            CoffeePeekNativeDrinkChips(options: drinkOptions, selected: state.drinkSlug,
+                legacyTitle: legacyDrinkTitle, changed: actions.drinkChanged)
         }
     }
 
-    private var drinkBinding: Binding<String> {
-        Binding(get: { state.drinkSlug ?? "" }, set: { actions.drinkChanged($0.isEmpty ? nil : $0) })
+    private var drinkOptions: [CoffeePeekNativeDrinkOption] {
+        state.drinks.filter { $0.slug != "other" }.map { .init(id: $0.slug, title: $0.name) }
+    }
+
+    private var legacyDrinkTitle: String? {
+        if !state.customDrink.isEmpty { return state.customDrink }
+        return state.drinkSlug.map { _ in strings["shop_checkin_form_drink_other"] }
     }
 
     private var ratings: some View {
@@ -75,7 +91,7 @@ struct ShopCheckInNativeFields: View {
     private func rating(_ kind: String, score: Int32, select: @escaping (Int) -> Void) -> some View {
         HStack(spacing: 12) {
             if let image = ratingImage(kind) {
-                Image(uiImage: image).resizable().scaledToFill().frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 8))
+                Image(uiImage: image).resizable().scaledToFit().frame(width: 52, height: 52).accessibilityHidden(true)
             }
             CheckInNativeRating(title: strings["shop_review_" + kind], value: Int(score),
                 label: { strings.format("shop_review_rating_value", strings["shop_review_" + kind], $0) }, select: select)
@@ -93,9 +109,14 @@ struct ShopCheckInNativeFields: View {
     }
 
     private var photos: some View {
-        ShopCheckInNativePhotos(photos: state.photos, editable: state.editable && !state.photosPreparing,
-            preparing: state.photosPreparing, strings: strings, move: actions.movePhoto,
-            remove: actions.removePhoto, add: actions.choosePhotos)
+        VStack(alignment: .leading, spacing: 8) {
+            ShopCheckInNativePhotos(photos: state.photos, editable: state.editable && !state.photosPreparing,
+                preparing: state.photosPreparing, strings: strings, move: actions.movePhoto,
+                remove: actions.removePhoto, add: actions.choosePhotos)
+            if let key = state.validationKey, ["shop_checkin_form_invalid_photos", "shop_checkin_form_invalid_photo"].contains(key) {
+                Text(strings[key]).font(CoffeePeekNativeStyle.font(12)).foregroundStyle(CoffeePeekNativeStyle.error)
+            }
+        }
     }
 
 }
@@ -291,5 +312,20 @@ private func shopPhotoPreviewItems() -> [IosShopCheckInPhoto] {
     ScrollView {
         ShopCheckInNativeFields(state: shopCheckInPreviewState(),
             strings: CheckInNativeStrings(languageTag: "be", table: "NativeShopCheckIn"), actions: ShopCheckInNativeActions())
+    }.padding(16).preferredColorScheme(.dark)
+}
+
+#Preview("Shop detail fields light") {
+    ScrollView {
+        ShopCheckInNativeFields(state: shopCheckInPreviewState(),
+            strings: CheckInNativeStrings(languageTag: "ru", table: "NativeShopCheckIn"),
+            actions: ShopCheckInNativeActions(), phase: .details)
+    }.padding(16).preferredColorScheme(.light)
+}
+#Preview("Shop detail fields dark") {
+    ScrollView {
+        ShopCheckInNativeFields(state: shopCheckInPreviewState(),
+            strings: CheckInNativeStrings(languageTag: "be", table: "NativeShopCheckIn"),
+            actions: ShopCheckInNativeActions(), phase: .details)
     }.padding(16).preferredColorScheme(.dark)
 }

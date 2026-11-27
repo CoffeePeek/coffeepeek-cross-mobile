@@ -6,21 +6,13 @@ struct HomeCheckInNativeSaved: View {
     let strings: CheckInNativeStrings
     let done: () -> Void
     var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "checkmark.circle").font(.system(size: 48))
-                .foregroundStyle(CoffeePeekNativeStyle.accent).accessibilityHidden(true)
-            Text(strings[saved.isPublic?.boolValue == false ? "home_check_in_saved_private" : "home_check_in_saved_unknown"])
-                .font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
-                .multilineTextAlignment(.center).accessibilityAddTraits(.isHeader)
-            if saved.visibilityUnconfirmed {
-                Text(strings["home_check_in_saved_visibility_changed"])
-                    .font(CoffeePeekNativeStyle.font(15)).foregroundStyle(CoffeePeekNativeStyle.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            CheckInNativePrimaryButton(title: strings["home_check_in_done"], action: done)
-        }.padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
-            .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+        CoffeePeekNativeSuccessScreen(title: strings["home_check_in_saved_unknown"],
+            description: strings[saved.isPublic?.boolValue == false ? "home_check_in_saved_private" : "home_check_in_saved_description"],
+            buttonTitle: strings["home_check_in_done"], closeLabel: strings["home_check_in_close"],
+            notice: saved.visibilityUnconfirmed ? strings["home_check_in_saved_visibility_changed"] : nil,
+            onDismiss: done, action: done)
     }
+
 }
 
 #Preview("Home saved light") {

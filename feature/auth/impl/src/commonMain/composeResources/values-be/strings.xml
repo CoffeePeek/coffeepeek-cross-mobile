@@ -57,4 +57,16 @@
     <string name="auth_sign_in_apple">Увайсці праз Apple</string>
     <string name="auth_social_apple_generic">Не ўдалося ўвайсці праз Apple. Паспрабуйце яшчэ раз.</string>
     <string name="auth_social_apple_email_not_verified">Apple не перадаў пацверджаны email. Паспрабуйце яшчэ раз.</string>
+    <string name="auth_username_title">Выберыце нік</string>
+    <string name="auth_username_description">Пад гэтым нікам вас убачаць у чэкінах, водгуках і профілі</string>
+    <string name="auth_username_label">Нік</string>
+    <string name="auth_username_rules">Ад 3 да 30 сімвалаў. Пачніце з літары; выкарыстоўвайце літары, лічбы, кропку ці падкрэсліванне</string>
+    <string name="auth_username_link_notice">Можна пакінуць цяперашні нік. Пры змене ніка спасылка на профіль зменіцца</string>
+    <string name="auth_username_continue">Працягнуць</string>
+    <string name="auth_username_retry">Паўтарыць</string>
+    <string name="auth_username_sign_out">Выйсці з акаўнта</string>
+    <string name="auth_username_invalid">Праверце даўжыню і сімвалы ніка</string>
+    <string name="auth_username_taken">Гэты нік ужо заняты. Выберыце іншы</string>
+    <string name="auth_username_conflict">Нік ужо пацверджаны на іншай прыладзе. Працягніце з цяперашнім нікам</string>
+    <string name="auth_username_unavailable">Не ўдалося праверыць профіль. Праверце злучэнне і паўтарыце спробу</string>
 </resources>

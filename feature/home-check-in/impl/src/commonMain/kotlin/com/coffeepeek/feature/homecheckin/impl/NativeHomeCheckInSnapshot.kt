@@ -16,12 +16,13 @@ private fun HomeCheckInEditorState.nativeDraft(dates: HomeCheckInEditorDates) = 
     methodCode = methods.firstOrNull { it.code == draft.brewMethodCode || draft.brewMethodCode in it.previousCodes }?.code
         ?: draft.brewMethodCode, dose = draft.doseGrams.orEmpty(), durationSeconds = draft.brewDurationSeconds,
     tasteScore = draft.tasteScore, note = draft.text.orEmpty(),
-    drinkName = draft.customDrinkName ?: entry?.drinkName.takeIf { draft.drinkSlug != null }.orEmpty(),
+    drinkName = draft.customDrinkName ?: entry?.drinkName.takeIf { draft.drinkSlug == entry?.drinkSlug }.orEmpty(),
     isPublic = draft.visibility.publicValue(), beanName = beanSelectionName ?: draft.customBeanName,
     shelfBagId = draft.shelfBagId, showShelfBag = draft.showShelfBag, shelfBagCardUrl = shelfBagCardUrl,
     photos = draft.photos.map { NativeHomeCheckInPhoto(it.fileName, it.contentType, it.bytes.copyOf()) },
     existingPhotoUrls = entry?.photos.orEmpty().map { it.thumbnailUrl ?: it.url },
     customBeanName = draft.customBeanName,
+    drinkSlug = draft.drinkSlug,
 )
 
 private fun HomeCheckInEditorState.nativeStatus(editing: Boolean, preparing: Boolean): NativeHomeCheckInStatus {
@@ -38,6 +39,8 @@ private fun HomeCheckInEditorState.nativeCatalog() = NativeHomeCheckInCatalog(
     shelfBags = shelfBags.matching(beanQuery).map { NativeHomeCheckInOption(it.id, it.name, it.roasterName, it.imageUrl) },
     methodsLoading = methodsLoading, beansLoading = beansLoading,
     methodsIssueKey = nativeHomeIssueKey(methodsIssue), beansIssueKey = nativeHomeIssueKey(beansIssue),
+    drinks = drinks.map { NativeHomeCheckInOption(it.slug, it.displayName(), null, null) },
+    drinksLoading = drinksLoading, drinksIssueKey = "home_check_in_drinks_error".takeIf { drinksFailed },
 )
 
 private fun HomeCheckInEditorState.nativeIssues() = NativeHomeCheckInIssues(

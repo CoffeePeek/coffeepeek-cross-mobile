@@ -49,11 +49,13 @@ private class DefaultShopCheckInCreateEntry(
         onSubmitted: () -> Unit,
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
+        shopSelectionIncluded: Boolean,
     ) {
         val owner = rememberCheckInOwner(shopId, shopSlug)
         val model = checkInViewModel(owner, shopId, shopSlug)
-        ShopCheckInCreateScreen(model, shopName, shopAddress, dates, photos, onChangeShop) { event ->
+        ShopCheckInCreateScreen(model, shopName, shopAddress, dates, photos, shopSelectionIncluded) { event ->
             when (event) {
+                ShopCheckInFormEvent.ChangeShop -> onChangeShop()
                 ShopCheckInFormEvent.Dismiss -> onDismiss()
                 is ShopCheckInFormEvent.Submitted -> onSubmitted()
                 ShopCheckInFormEvent.GoToFeed -> onGoToFeed()

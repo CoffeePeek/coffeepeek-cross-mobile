@@ -43,7 +43,7 @@ class HistoryHomeBridgeTest {
         val session = HistoryHostSession(0, CheckInHistorySession(sessions)).also(owned::add)
         val entries = historyHomeEditorFactory(source, object : CoffeePicker {
             override suspend fun search(query: String) = Result.success(emptyList<CoffeePickerItem>())
-        }, BrewMethodCatalog { Result.success(emptyList()) })
+        }, BrewMethodCatalog { Result.success(emptyList()) }, { Result.success(emptyList()) })
         val bridge = HistoryHomeBridge(session, HistoryHomeEditorFactory { lease, tracker ->
             onFactory(tracker); entries.create(lease, tracker)
         })

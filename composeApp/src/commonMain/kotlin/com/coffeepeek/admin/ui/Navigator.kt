@@ -185,6 +185,7 @@ private fun RootNavHost(
         @Serializable data class ShopCheckInSignIn(val shopId: String) : Screen
         @Serializable data object CreateCheckIn : Screen
         @Serializable data class ShopCheckInEditor(val shopId: String) : Screen
+        @Serializable data class ShopCheckInEditorFromPicker(val shopId: String) : Screen
         @Serializable data class CoffeeDetail(val slug: String) : Screen
         @Serializable data class ShopMenuGallery(val shopId: String) : Screen
         @Serializable data class ReportShop(val shopId: String, val shopTitle: String) : Screen
@@ -383,7 +384,8 @@ private fun RootNavHost(
     }
 
     private fun Screen.isCheckInRootRoute(): Boolean =
-        this is Screen.ShopCheckInSignIn || this is Screen.CreateCheckIn || this is Screen.ShopCheckInEditor
+        this is Screen.ShopCheckInSignIn || this is Screen.CreateCheckIn ||
+            this is Screen.ShopCheckInEditor || this is Screen.ShopCheckInEditorFromPicker
 
     fun navigate(screen: Screen) {
         navigatorScope.launch { _navigationEvents.emit(NavEvent.NavigateTo(screen)) }
@@ -464,7 +466,7 @@ private fun RootNavHost(
             message = errorMessage ?: "",
             onDismiss = { ErrorHandler.clearError() }
         )
-        NavigationContent(vm, state, loading)
+        UsernameSelectionNavigation(state) { NavigationContent(vm, state, loading) }
     }
 
     @Composable
@@ -618,8 +620,7 @@ private fun RootNavHost(
                         val route = backStack.toRoute<Screen.ShopDetail>()
                         koinInject<ShopDetailScreenRenderer>().Content(route.shopId, route.openCheckIn)
                     }
-                    composable<Screen.CreateCheckIn> { CheckInRootScreen(Screen.CreateCheckIn) }
-                    composable<Screen.ShopCheckInEditor> { ShopCheckInEditorRoute(it.toRoute<Screen.ShopCheckInEditor>().shopId) }
+                    checkInEditorRoutes()
                     composable<Screen.CoffeeDetail> { backStack ->
                         val route = backStack.toRoute<Screen.CoffeeDetail>()
                         koinInject<CoffeeScreenRenderer>().Detail(route.slug)
@@ -701,6 +702,12 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
         }
     }
 
+    private fun androidx.navigation.NavGraphBuilder.checkInEditorRoutes() {
+        composable<Screen.CreateCheckIn> { CheckInRootScreen(Screen.CreateCheckIn) }
+        composable<Screen.ShopCheckInEditor> { CheckInRootScreen(it.toRoute<Screen.ShopCheckInEditor>()) }
+        composable<Screen.ShopCheckInEditorFromPicker> { CheckInRootScreen(it.toRoute<Screen.ShopCheckInEditorFromPicker>()) }
+    }
+
     private fun androidx.navigation.NavGraphBuilder.homeCheckInRoutes(nav: NavHostController) {
         composable<Screen.VisitedPlaces> { entry ->
             LaunchedEffect(entry) {
@@ -729,7 +736,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             is Screen.ResetPassword -> LaunchedEffect(Unit) { resetToLogin() }
             is Screen.ShopDetail -> koinInject<ShopDetailScreenRenderer>().Content(screen.shopId, screen.openCheckIn)
             is Screen.ShopCheckInSignIn -> ShopCheckInSignInRoute(screen.shopId)
-            Screen.CreateCheckIn, is Screen.ShopCheckInEditor -> CheckInRootScreen(screen)
+            Screen.CreateCheckIn, is Screen.ShopCheckInEditor, is Screen.ShopCheckInEditorFromPicker -> CheckInRootScreen(screen)
             is Screen.CoffeeDetail -> koinInject<CoffeeScreenRenderer>().Detail(screen.slug)
             is Screen.ShopReviews -> koinInject<ShopCheckInListScreenRenderer>().Content(screen.shopId)
             is Screen.ReportReview -> org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer>().Content(screen.reviewId, false, screen.isPreview)
@@ -773,13 +780,14 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
         when (screen) {
             Screen.CreateCheckIn -> koinInject<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer>().Content()
             is Screen.ShopCheckInEditor -> ShopCheckInEditorRoute(screen.shopId)
+            is Screen.ShopCheckInEditorFromPicker -> ShopCheckInEditorRoute(screen.shopId, shopSelectionIncluded = true)
             else -> error("Expected a check-in route: $screen")
         }
     }
 
     @Composable
-    private fun ShopCheckInEditorRoute(shopId: String) {
-        koinInject<com.coffeepeek.admin.ui.screen.shop.ShopCheckInEditorRenderer>().Content(shopId)
+    private fun ShopCheckInEditorRoute(shopId: String, shopSelectionIncluded: Boolean = false) {
+        koinInject<com.coffeepeek.admin.ui.screen.shop.ShopCheckInEditorRenderer>().Content(shopId, shopSelectionIncluded)
     }
 
     @Composable

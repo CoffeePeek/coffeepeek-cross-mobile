@@ -17,6 +17,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.painter.Painter
@@ -43,25 +44,29 @@ fun CoffeePeekFilterChip(
     leadingIcon: ImageVector? = null,
     trailingIcon: ImageVector? = null,
     leadingPainter: Painter? = null,
+    enabled: Boolean = true,
+    maxLines: Int = 1,
 ) {
     val leading = leadingPainter ?: leadingIcon?.let { coffeePeekIconPainter(it) }
     val trailing = trailingIcon?.let { coffeePeekIconPainter(it) }
-    if (CoffeePeekNativeFilterChip(label, selected, onClick, modifier, leading, trailing)) return
-    CoffeePeekGlassFilterChip(label, selected, onClick, modifier, leading, trailing)
+    if (enabled && maxLines == 1 && CoffeePeekNativeFilterChip(label, selected, onClick, modifier, leading, trailing)) return
+    CoffeePeekGlassFilterChip(label, selected, onClick, modifier, leading, trailing, enabled, maxLines)
 }
 
 @Composable
 private fun CoffeePeekGlassFilterChip(
     label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier,
     leadingIcon: Painter?, trailingIcon: Painter?,
+    enabled: Boolean, maxLines: Int,
 ) {
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
     val colors = MaterialTheme.colorScheme
     val foreground = if (selected) colors.onPrimary else colors.onSurface
     Box(modifier.heightIn(min = CoffeePeekDimens.glassControlSize)
-        .coffeePeekGlassPress(pressed, true)
-        .toggleable(selected, interactions, indication = null, role = Role.Checkbox, onValueChange = { onClick() }),
+        .alpha(if (enabled) 1f else 0.5f)
+        .coffeePeekGlassPress(pressed, enabled)
+        .toggleable(selected, interactions, indication = null, enabled = enabled, role = Role.Checkbox, onValueChange = { onClick() }),
         contentAlignment = Alignment.Center) {
         Box(Modifier.padding(vertical = 2.dp).heightIn(min = CoffeePeekDimens.controlHeight),
             contentAlignment = Alignment.Center) {
@@ -71,7 +76,7 @@ private fun CoffeePeekGlassFilterChip(
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (leadingIcon != null) CoffeePeekIcon(leadingIcon, null, Modifier.size(18.dp),
                     tint = if (selected) foreground else colors.coffeePeekSecondaryAccent)
-                Text(label, color = foreground, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                Text(label, color = foreground, style = MaterialTheme.typography.labelMedium, maxLines = maxLines)
                 if (trailingIcon != null) CoffeePeekIcon(trailingIcon, null, Modifier.size(16.dp), tint = foreground)
             }
         }

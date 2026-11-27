@@ -1,3 +1,4 @@
+import com.coffeepeek.buildlogic.api
 import com.coffeepeek.buildlogic.testImplementation
 
 plugins {
@@ -7,5 +8,6 @@ plugins {
 android.namespace = "com.coffeepeek.feature.auth.domain"
 
 dependencies {
+    api(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlin.test)
 }

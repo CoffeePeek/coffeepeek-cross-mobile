@@ -25,19 +25,33 @@ struct DiscoveryShopCard: View {
             Button { actions.call(action, shop.id) } label: {
                 HStack(spacing: 12) {
                     photo.frame(width: picker ? 56 : 72, height: picker ? 56 : 72)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    VStack(alignment: .leading, spacing: 4) {
+                        .clipShape(RoundedRectangle(cornerRadius: picker ? 8 : 12))
+                    VStack(alignment: .leading, spacing: picker ? 2 : 4) {
                         if !picker { rating }
-                        Text(shop.title).font(CoffeePeekNativeStyle.font(16, weight: "SemiBold")).lineLimit(2)
-                        details
+                        Text(shop.title).font(CoffeePeekNativeStyle.font(picker ? 15 : 16, weight: "SemiBold"))
+                            .lineLimit(picker && !dynamicTypeSize.isAccessibilitySize ? 1 : 2)
+                        if picker { pickerDetails } else { details }
                     }.frame(maxWidth: .infinity, alignment: .leading)
-                    Image(systemName: "chevron.right").font(.system(size: 16))
-                        .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                    if !picker {
+                        Image(systemName: "chevron.right").font(.system(size: 16))
+                            .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                    }
                 }.contentShape(Rectangle())
             }.buttonStyle(.plain)
             if !picker && action == "open" { favorite }
-        }.padding(12).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 20))
-            .overlay { RoundedRectangle(cornerRadius: 20).stroke(CoffeePeekNativeStyle.border, lineWidth: 1) }
+        }.padding(12).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: picker ? 28 : 20))
+            .overlay { if !picker { RoundedRectangle(cornerRadius: 20).stroke(CoffeePeekNativeStyle.border, lineWidth: 1) } }
+    }
+
+    @ViewBuilder private var pickerDetails: some View {
+        if let address = shop.address, !address.isEmpty {
+            Text(address).font(CoffeePeekNativeStyle.font(13)).foregroundStyle(CoffeePeekNativeStyle.secondary)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
+        }
+        if let distance = shop.distance, !distance.isEmpty {
+            Text(distance).font(CoffeePeekNativeStyle.font(12, weight: "Medium"))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
+        }
     }
 
     private var card: some View {

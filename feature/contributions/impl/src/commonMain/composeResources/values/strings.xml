@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="contributions_back">Назад</string>
+    <string name="contributions_close">Закрыть</string>
     <string name="contributions_loading">Загрузка</string>
     <string name="contributions_load_failed">Ошибка загрузки</string>
     <string name="contributions_retry">Попробовать снова</string>

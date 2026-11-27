@@ -13,6 +13,7 @@ import com.coffeepeek.feature.homecheckin.api.HomeCheckInDetailEntry
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.impl.createHomeCheckInDetailEntry
+import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 
 /** App-owned assembly; history sees neither the Home ViewModel nor a second writer. */
 internal fun interface HistoryHomeEditorFactory {
@@ -22,13 +23,14 @@ internal fun interface HistoryHomeEditorFactory {
 internal class HistoryHomeEntries(val detail: HomeCheckInDetailEntry, val editor: HomeCheckInEditorEntry)
 
 internal fun historyHomeEditorFactory(repository: HomePreparationRepository, picker: CoffeePicker,
-    methods: BrewMethodCatalog, shelfBags: ShelfHomeCheckInBags? = null,
+    methods: BrewMethodCatalog, drinks: suspend () -> Result<List<ShopConsumedDrinkOption>>,
+    shelfBags: ShelfHomeCheckInBags? = null,
 ) = HistoryHomeEditorFactory { lease, tracker ->
     HistoryHomeEntries(
         createHomeCheckInDetailEntry(AppHomeCheckInRepository(lease, repository),
             { lease.isLoggedIn && lease.isCurrent() }) { url, description, modifier, _ ->
             CoffeePeekImage(url, contentDescription = description, modifier = modifier, contentScale = ContentScale.Crop)
         },
-        appHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Diary, tracker, shelfBags),
+        appHomeCheckInEditor(lease, repository, picker, methods, drinks, CheckInSource.Diary, tracker, shelfBags),
     )
 }

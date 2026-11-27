@@ -22,7 +22,9 @@ struct HomeCheckInNativeRecipe: View {
                 .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
                 .contentShape(Rectangle())
         }
-        .disclosureGroupStyle(.automatic)
+        .disclosureGroupStyle(HomeCheckInRecipeDisclosureStyle(
+            expandedLabel: strings["home_check_in_recipe_expanded"],
+            collapsedLabel: strings["home_check_in_recipe_collapsed"]))
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: isExpanded)
         .tint(CoffeePeekNativeStyle.foreground).disabled(!state.status.canEdit)
         .onChange(of: state.status.saveAttempt) { _, _ in if recipeError { expanded = true } }
@@ -91,6 +93,28 @@ struct HomeCheckInNativeRecipe: View {
     }
     private func error(_ field: String) -> String? {
         state.issues.fields.first { $0.field == field }.map { strings[$0.messageKey] }
+    }
+}
+
+private struct HomeCheckInRecipeDisclosureStyle: DisclosureGroupStyle {
+    let expandedLabel: String
+    let collapsedLabel: String
+    @Environment(\.layoutDirection) private var direction
+
+    func makeBody(configuration: Configuration) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button { configuration.isExpanded.toggle() } label: {
+                HStack(spacing: 12) {
+                    configuration.label
+                    Image(systemName: "chevron.forward").font(.system(size: 16))
+                        .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                        .rotationEffect(.degrees(configuration.isExpanded ? (direction == .rightToLeft ? -90 : 90) : 0))
+                        .accessibilityHidden(true)
+                }.contentShape(Rectangle())
+            }.buttonStyle(.plain)
+                .accessibilityValue(configuration.isExpanded ? expandedLabel : collapsedLabel)
+            if configuration.isExpanded { configuration.content }
+        }
     }
 }
 
@@ -182,7 +206,7 @@ private func homeRecipeDisclosurePreviewState(showError: Bool) -> IosHomeCheckIn
     let draft = IosHomeCheckInDraft(preparedOn: "2026-11-25", dateLabel: "25.11.2026", methodCode: nil,
         dose: "", durationSeconds: nil, tasteScore: nil, note: "", drinkName: "", isPublic: nil,
         beanName: nil, shelfBagId: nil, showShelfBag: false, shelfBagCardUrl: nil,
-        photos: [], existingPhotoUrls: [], customBeanName: nil)
+        photos: [], existingPhotoUrls: [], customBeanName: nil, drinkSlug: nil)
     let fields = showError ? [IosHomeCheckInFieldIssue(field: "Dose", messageKey: "home_check_in_error_dose")] : []
     return IosHomeCheckInState(draft: draft, status: base.status, catalog: base.catalog,
         issues: IosHomeCheckInIssues(loadKey: nil, saveKey: nil, fields: fields), saved: nil)
