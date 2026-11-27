@@ -42,6 +42,7 @@ internal fun DiscoveryTabContent(
     map: @Composable (DiscoveryMapPresentation, () -> Unit, Modifier) -> Unit,
 ) {
     val ui = rememberDiscoveryTabState()
+    host.contentReady("/", host.isVisible() && state.showsDiscovery && !state.isLoading && state.error == null && !ui.mapExpanded && !ui.showRoasters)
     val reduceMotion = host.reduceMotion()
     val motion = discoveryTabMotion(ui, state.showsDiscovery || ui.mapExpanded, reduceMotion)
     val toggleMap = discoveryMapToggle(ui, analytics)

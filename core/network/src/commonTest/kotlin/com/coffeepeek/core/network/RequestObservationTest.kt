@@ -12,6 +12,20 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.*
 
 class RequestObservationTest {
+    @Test fun attributionControlRequestsDoNotProduceRecursiveAnalytics() = runBlocking {
+        var observations = 0
+        val client = HttpClient(MockEngine { respond("ok") })
+        client.observeRequests("https://api.example.test") {
+            RequestObserver { _, _ -> observations++; null }
+        }
+        try {
+            client.get("https://api.example.test/api/v1/attribution/capabilities")
+            client.get("https://api.example.test/api/v1/attribution/touches")
+            client.get("https://api.example.test/api/v1/share-links")
+            assertEquals(0, observations)
+        } finally { client.close() }
+    }
+
     private class Session(var tokens: SessionTokens?, private val rotate: () -> SessionTokens) : BearerSession {
         override suspend fun load() = tokens?.let { SessionTokens(it.accessToken, it.refreshToken) }
         override suspend fun save(tokens: SessionTokens?) { this.tokens = tokens }

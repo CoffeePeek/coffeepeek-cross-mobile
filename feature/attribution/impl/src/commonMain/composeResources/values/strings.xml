@@ -1,0 +1,6 @@
+<resources>
+    <string name="attribution_link_failed">Не удалось открыть ссылку</string>
+    <string name="attribution_link_failed_body">Проверьте подключение и повторите попытку. Возможно, ссылка больше недоступна.</string>
+    <string name="attribution_retry">Повторить</string>
+    <string name="attribution_close">Закрыть</string>
+</resources>

@@ -36,4 +36,5 @@ class ProfileSlots(
     val onOwnContributions: (ProfileContribution) -> Unit = {},
     /** Opens only a real catalogue slug supplied by a home check-in's bag. */
     val onOpenCoffee: ((slug: String) -> Unit)? = null,
+    val contentReady: @Composable (canonicalPath: String?) -> Unit = {},
 )

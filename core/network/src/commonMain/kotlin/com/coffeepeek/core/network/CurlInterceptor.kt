@@ -14,7 +14,7 @@ internal object CurlInterceptor {
         val headers = headers.entries().joinToString(" ") {
             "-H '${it.key}: ${it.key.redactHeaderValue(it.value.joinToString(", "))}'"
         }
-        val body = body.let { body ->
+        val body = if (target.encodedPath.startsWith("/api/v1/attribution/") || target.encodedPath == "/api/v1/share-links") " -d '<redacted>'" else body.let { body ->
             when (body) {
                 is TextContent -> {
                     "-H 'Content-Type: ${body.contentType}; charset=${this.headers["Accept-Charset"]}'  -d '${body.text.redactSensitiveFields()}'"
@@ -38,6 +38,7 @@ internal object CurlInterceptor {
             header == "authorization" ||
             header == "cookie" ||
             header == "set-cookie" ||
+            header == "x-attribution-observer" ||
             header.contains("token")
         ) {
             "<redacted>"

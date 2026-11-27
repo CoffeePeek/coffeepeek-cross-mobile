@@ -52,7 +52,10 @@ private fun RoasterContentAction.wire() = when (this) {
 
 internal object RoasterScreenAnalyticsAdapter : RoasterScreenAnalytics {
     @Composable
-    override fun TrackDetail(loaded: Boolean) = TrackEntityDetail(Entity.Roaster, loaded)
+    override fun TrackDetail(loaded: Boolean, canonicalPath: String?) {
+        TrackEntityDetail(Entity.Roaster, loaded)
+        com.coffeepeek.admin.di.attribution.AttributionLoaded(canonicalPath, loaded)
+    }
 
     @Composable
     override fun exposure(modifier: Modifier, section: RoasterExposure): Modifier = when (section) {

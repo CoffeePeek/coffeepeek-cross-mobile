@@ -33,6 +33,7 @@ import com.coffeepeek.feature.settings.impl.AppReviewPrompt
 
 /** Root supplies platform services and exposure ownership, never business visual slots. */
 internal fun discoveryHost() = DiscoveryHost(
+    contentReady = { path, loaded -> com.coffeepeek.admin.di.attribution.AttributionLoaded(path, loaded) },
     exposure = ::discoveryExposure,
     haptic = { platformHaptic(HapticEvent.Selection) },
     retained = { visible, content -> RetainedContent(visible, content) },

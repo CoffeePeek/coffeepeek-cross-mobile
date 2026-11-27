@@ -25,15 +25,12 @@ internal fun HttpClient.observeRequests(baseUrl: String, observer: () -> Request
     requestPipeline.intercept(HttpRequestPipeline.State) {
         val request = context
         val url = request.url.build()
-        val method = request.method.value
-        val path = url.encodedPath.lowercase()
-        val isApi = url.protocol == origin.protocol && url.host == origin.host && url.port == origin.port
-        // Refresh is part of its parent's logical operation, and storage uploads are not API requests.
-        if (!isApi || method !in setOf("GET", "POST", "PUT", "PATCH", "DELETE") || method == "PUT" && path.trimEnd('/') == "/api/tokens/native") {
+        val category = observedCategory(origin, url, request.method.value)
+        if (category == null) {
             proceed()
             return@intercept
         }
-        val observation = runCatching { observer()?.begin(apiCategory(path), method) }.getOrNull()
+        val observation = runCatching { observer()?.begin(category, request.method.value) }.getOrNull()
         if (observation == null) { proceed(); return@intercept }
         val logical = LogicalRequest()
         request.attributes.put(logicalRequestKey, logical)
@@ -50,6 +47,14 @@ internal fun HttpClient.observeRequests(baseUrl: String, observer: () -> Request
             throw error
         }
     }
+}
+
+private fun observedCategory(origin: Url, url: Url, method: String): String? {
+    if (url.protocol != origin.protocol || url.host != origin.host || url.port != origin.port) return null
+    val path = url.encodedPath.lowercase().trimEnd('/')
+    if (path.startsWith("/api/v1/attribution/") || path == "/api/v1/share-links") return null
+    if (method !in setOf("GET", "POST", "PUT", "PATCH", "DELETE") || method == "PUT" && path == "/api/tokens/native") return null
+    return apiCategory(path)
 }
 
 internal fun apiCategory(path: String): String = when {

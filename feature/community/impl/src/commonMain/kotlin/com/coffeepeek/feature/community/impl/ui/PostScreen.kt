@@ -96,6 +96,7 @@ internal fun PostScreenContent(
     snackbar: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
+    host.postReady(state.post?.takeIf { state.isPublished && state.error == null }?.let { "/check-ins/${it.id}" })
     var preview by remember { mutableStateOf<PostPhotoPreview?>(null) }
     preview?.takeIf { state.post != null && state.error == null }
         ?.let { host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null } }

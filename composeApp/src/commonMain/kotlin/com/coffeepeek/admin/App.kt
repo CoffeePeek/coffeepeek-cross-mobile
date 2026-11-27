@@ -52,6 +52,7 @@ fun App(onReady: () -> Unit = {}) {
 /** Shared presentation environment, also used by native iOS tab controllers. */
 @Composable
 internal fun AppContent(content: @Composable () -> Unit) {
+    com.coffeepeek.admin.di.attribution.AttributionAppLinks()
     val kamelConfig = koinInject<KamelConfig>()
     val language by koinInject<AppLanguagePreference>().selection.collectAsState()
     val themeMode by ThemeManager.themeMode.collectAsState()

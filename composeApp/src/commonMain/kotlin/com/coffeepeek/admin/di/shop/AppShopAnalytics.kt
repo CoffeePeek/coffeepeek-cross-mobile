@@ -37,7 +37,10 @@ internal object AppShopAnalytics : ShopAnalytics {
         }
     }
 
-    @Composable override fun TrackDetail(loaded: Boolean) = TrackEntityDetail(Entity.Shop, loaded)
+    @Composable override fun TrackDetail(loaded: Boolean, canonicalPath: String?) {
+        TrackEntityDetail(Entity.Shop, loaded)
+        com.coffeepeek.admin.di.attribution.AttributionLoaded(canonicalPath, loaded)
+    }
     @Composable override fun Overlay(content: @Composable () -> Unit) = AnalyticsOverlay(content)
 
     @Composable override fun exposure(modifier: Modifier, feature: ShopExposure): Modifier =

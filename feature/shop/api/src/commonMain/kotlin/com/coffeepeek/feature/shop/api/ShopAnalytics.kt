@@ -10,7 +10,7 @@ interface ShopAnalytics {
     fun checkInStarted(authenticated: Boolean) {}
     fun favoriteRequiresSignIn(desired: Boolean) {}
     fun content(section: ShopContentMetric, action: ShopContentAction) {}
-    @Composable fun TrackDetail(loaded: Boolean) {}
+    @Composable fun TrackDetail(loaded: Boolean, canonicalPath: String? = null) {}
     @Composable fun Overlay(content: @Composable () -> Unit) { content() }
     @Composable fun exposure(modifier: Modifier, feature: ShopExposure): Modifier = modifier
 

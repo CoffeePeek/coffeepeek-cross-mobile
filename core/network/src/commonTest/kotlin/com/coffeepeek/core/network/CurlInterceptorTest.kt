@@ -11,6 +11,17 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class CurlInterceptorTest {
+    @Test fun attributionBodyAndCapabilityNeverReachDebugLogs() {
+        val request = HttpRequestBuilder().apply {
+            url("https://api.example.test/api/v1/attribution/touches")
+            headers.append("X-Attribution-Observer", "private-observer")
+            setBody(TextContent("""{"receipt":"private-receipt","context":{"sdkDistinctId":"private-account"}}""", ContentType.Application.Json))
+        }
+        val curl = request.asCurlString()
+        listOf("private-observer", "private-receipt", "private-account").forEach { assertFalse(curl.contains(it)) }
+        assertTrue(curl.contains("<redacted>"))
+    }
+
     @Test fun omitsQueryFragmentAndUserinfo() {
         val request = HttpRequestBuilder().apply {
             url("https://secret-user:secret-pass@example.com/photo?signature=signed-secret&token=query-secret#fragment-secret")

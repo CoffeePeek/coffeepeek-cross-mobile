@@ -6,37 +6,13 @@ import com.posthog.kmp.PostHogBeforeSend
 import com.posthog.kmp.PostHogConfig
 import com.posthog.kmp.PostHogContext
 
-internal expect val postHogProjectToken: String
-internal expect fun postHogContext(): PostHogContext
-internal expect fun setupPostHog(config: PostHogConfig, context: PostHogContext)
-internal expect fun erasePostHogQueue()
-internal expect val analyticsDebugEnabled: Boolean
-
 internal class PostHogTransport : AnalyticsTransport {
     private var started = false
     override fun start(allow: () -> Boolean, userId: String?) {
         // Offline events survive transient network loss while foregrounded. A new run never
         // replays old consent/account events. SDK owns batching and the only offline queue.
         erasePostHogQueue()
-        setupPostHog(
-            PostHogConfig(
-                apiKey = postHogProjectToken,
-                host = PostHogConfig.HOST_EU,
-                captureApplicationLifecycleEvents = false,
-                captureScreenViews = false,
-                captureDeepLinks = false,
-                sendFeatureFlagEvent = false,
-                preloadFeatureFlags = false,
-                autocapture = false,
-                sessionRecording = null,
-                errorTracking = ErrorTrackingConfig(autoCapture = false),
-                maxQueueSize = 1000,
-                maxBatchSize = 50,
-                beforeSend = listOf(PostHogBeforeSend { event ->
-                    if (!allow()) null else sanitizeSdkProperties(event.event, event.properties)?.let { event.copy(properties = it) }
-                }),
-            ), postHogContext(),
-        )
+        setupPostHog(permittedPostHogConfig(allow), postHogContext())
         started = true
         // Never restore an account from SDK storage after the application has logged it out.
         val previous = PostHog.getDistinctId()
@@ -44,6 +20,11 @@ internal class PostHogTransport : AnalyticsTransport {
         PostHog.optIn()
     }
     override fun identify(userId: String) { PostHog.identify(userId) }
+    override fun identity(): Pair<String, String?>? {
+        if (!started) return null
+        val distinct = PostHog.getDistinctId() ?: return null
+        return distinct to PostHog.getSessionId()
+    }
     override fun capture(event: String, properties: Map<String, Any>) { PostHog.capture(event, properties) }
     override fun screen(page: String, properties: Map<String, Any>) { PostHog.screen(page, properties) }
     override fun stopDelivery() { if (started) PostHog.optOut() }
@@ -61,6 +42,24 @@ internal class PostHogTransport : AnalyticsTransport {
         failure?.let { throw IllegalStateException("Analytics cleanup failed", it) }
     }
 }
+
+private fun permittedPostHogConfig(allow: () -> Boolean) = PostHogConfig(
+    apiKey = postHogProjectToken,
+    host = PostHogConfig.HOST_EU,
+    captureApplicationLifecycleEvents = false,
+    captureScreenViews = false,
+    captureDeepLinks = false,
+    sendFeatureFlagEvent = false,
+    preloadFeatureFlags = false,
+    autocapture = false,
+    sessionRecording = null,
+    errorTracking = ErrorTrackingConfig(autoCapture = false),
+    maxQueueSize = 1000,
+    maxBatchSize = 50,
+    beforeSend = listOf(PostHogBeforeSend { event ->
+        if (!allow()) null else sanitizeSdkProperties(event.event, event.properties)?.let { event.copy(properties = it) }
+    }),
+)
 
 /** Strip SDK-enriched text, URLs, person properties and any unexpected automatic events. */
 internal fun sanitizeSdkProperties(name: String, properties: Map<String, Any?>): Map<String, Any?>? {

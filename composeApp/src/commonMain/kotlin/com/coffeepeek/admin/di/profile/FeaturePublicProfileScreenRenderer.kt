@@ -35,7 +35,7 @@ internal class FeaturePublicProfileScreenRenderer(private val entry: PublicProfi
             onOpenRoaster = { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) },
             onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenUser = { userSlug, userNickname, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(userSlug, userNickname, avatar)) },
-            onShare = { url -> ShareHelper.shareText(url) },
+            onShare = { url -> com.coffeepeek.admin.di.attribution.AppAttribution.shareTextAction(url, "public_profile") },
             checkInsOnly = checkInsOnly, modifier = Modifier)
     }
 }
@@ -73,6 +73,7 @@ internal fun featurePublicProfileScreenRenderer(
 /** Platform media, formatting and routing; feature-owned card content is never injected here. */
 internal fun profileSlots(): ProfileSlots {
     return ProfileSlots(
+        contentReady = { com.coffeepeek.admin.di.attribution.AttributionLoaded(it, it != null) },
         featuredCollection = { slug -> ProfileFeaturedCollection(slug) },
         shelfPreview = { slug, ownerView -> ProfileShelfPreview(slug, ownerView) },
         ownerCollection = { ProfileOwnerCollection() },

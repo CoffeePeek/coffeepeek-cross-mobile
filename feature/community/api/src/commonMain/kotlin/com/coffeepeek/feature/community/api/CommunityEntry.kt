@@ -30,6 +30,7 @@ class CommunityHost(
     val snackbar: @Composable (state: SnackbarHostState, bottomClearance: Dp) -> Unit = { state, _ -> SnackbarHost(state) },
     val leaders: (@Composable (refreshKey: Long, bottomClearance: Dp, modifier: Modifier) -> Unit)? = null,
     val share: (text: String) -> Unit = {},
+    val postReady: @Composable (canonicalPath: String?) -> Unit = {},
     val nativeCard: (@Composable (CommunityCardPresentation, CommunityCardActions, Modifier) -> Unit)? = null,
 )
 

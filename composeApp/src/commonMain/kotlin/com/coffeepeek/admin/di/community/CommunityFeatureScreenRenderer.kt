@@ -71,7 +71,8 @@ internal fun communityHost() = CommunityHost(
     snackbar = { state, clearance -> CommunitySnackbar(state, clearance) },
     // Temporarily show only Feed; ranking implementation remains available for re-enabling.
     leaders = null,
-    share = ShareHelper::shareText,
+    share = { com.coffeepeek.admin.di.attribution.AppAttribution.shareTextAction(it, "check_in") },
+    postReady = { com.coffeepeek.admin.di.attribution.AttributionLoaded(it, it != null) },
     nativeCard = nativeCommunityCardRenderer(),
 )
 

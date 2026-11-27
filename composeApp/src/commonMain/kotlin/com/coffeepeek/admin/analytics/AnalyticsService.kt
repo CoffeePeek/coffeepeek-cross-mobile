@@ -40,6 +40,7 @@ internal interface AnalyticsConsentStore {
 
 /** SDK calls belong to the adapter, never to feature UI or domain. */
 internal interface AnalyticsTransport {
+    fun identity(): Pair<String, String?>? = null
     fun start(allow: () -> Boolean, userId: String?)
     fun identify(userId: String)
     fun capture(event: String, properties: Map<String, Any>)
@@ -108,6 +109,11 @@ internal class AnalyticsService(
     }
 
     suspend fun restoreConsent() = reconcileAndWait()
+
+    fun attributionIdentity(): Pair<String, String?>? {
+        if (!allowed() || !state.value.ready) return null
+        return transport.identity()?.takeIf { it.first == state.value.userId }
+    }
 
     private suspend fun restoreAccountPreference() {
         val snapshot = state.value

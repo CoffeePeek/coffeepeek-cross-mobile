@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 interface CoffeeScreenAnalytics {
     /** Reports the detail page once it is [loaded] and actually visible. */
     @Composable
-    fun TrackDetail(loaded: Boolean)
+    fun TrackDetail(loaded: Boolean, canonicalPath: String? = null)
 
     @Composable
     fun Overlay(content: @Composable () -> Unit) { content() }
@@ -17,7 +17,7 @@ interface CoffeeScreenAnalytics {
 
     companion object {
         val None: CoffeeScreenAnalytics = object : CoffeeScreenAnalytics {
-            @Composable override fun TrackDetail(loaded: Boolean) = Unit
+            @Composable override fun TrackDetail(loaded: Boolean, canonicalPath: String?) = Unit
             @Composable override fun exposure(modifier: Modifier, section: CoffeeExposure) = modifier
         }
     }

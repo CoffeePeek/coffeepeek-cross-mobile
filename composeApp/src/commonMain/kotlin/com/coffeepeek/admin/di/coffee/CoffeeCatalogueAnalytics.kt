@@ -63,7 +63,10 @@ private fun CoffeeContentAction.wire() = when (this) {
 
 internal object CoffeeCatalogueScreenAnalytics : CoffeeScreenAnalytics {
     @Composable
-    override fun TrackDetail(loaded: Boolean) = TrackEntityDetail(Entity.Coffee, loaded)
+    override fun TrackDetail(loaded: Boolean, canonicalPath: String?) {
+        TrackEntityDetail(Entity.Coffee, loaded)
+        com.coffeepeek.admin.di.attribution.AttributionLoaded(canonicalPath, loaded)
+    }
 
     @Composable
     override fun Overlay(content: @Composable () -> Unit) = AnalyticsOverlay(content)

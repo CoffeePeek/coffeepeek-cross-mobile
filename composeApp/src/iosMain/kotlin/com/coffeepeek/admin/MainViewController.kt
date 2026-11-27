@@ -85,9 +85,7 @@ fun configureNativeLoader(factory: (UIColor, Double) -> UIViewController) {
 }
 
 fun handleAppLink(link: String): Boolean {
-    val screen = appLinkScreen(link) ?: return false
-    Navigator.openAppLink(screen)
-    return true
+    return com.coffeepeek.admin.di.attribution.AppAttribution.open(link)
 }
 
 fun MainViewController(

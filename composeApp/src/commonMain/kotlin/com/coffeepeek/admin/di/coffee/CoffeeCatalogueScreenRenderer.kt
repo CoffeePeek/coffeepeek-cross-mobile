@@ -26,7 +26,7 @@ internal class FeatureCoffeeScreenRenderer(
             onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
             onOpenRoaster = { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) },
             onOpenSeller = OpenInBrowser::openInBrowser,
-            onShare = { name, path -> ShareHelper.shareText("$name — https://coffeepeek.by$path") }, modifier = Modifier)
+            onShare = { name, path -> com.coffeepeek.admin.di.attribution.AppAttribution.shareAction(path, "coffee_detail", name) }, modifier = Modifier)
     }
 }
 

@@ -12,6 +12,7 @@ enum class DiscoveryExposure { Search, Filters, ShopCatalog, Favorite, MapPrevie
  * Defaults keep previews and tests free of application services.
  */
 class DiscoveryHost(
+    val contentReady: @Composable (canonicalPath: String?, loaded: Boolean) -> Unit = { _, _ -> },
     val exposure: (Modifier, DiscoveryExposure) -> Modifier = { modifier, _ -> modifier },
     val haptic: () -> Unit = {},
     /** The application's map: it draws [MapCanvasState] and reports through [MapCanvasCallbacks]. */

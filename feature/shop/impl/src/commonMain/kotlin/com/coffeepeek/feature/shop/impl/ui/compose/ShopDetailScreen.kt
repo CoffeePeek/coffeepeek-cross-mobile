@@ -123,7 +123,7 @@ internal fun ShopDetailScreen(
     val visibleState = state.takeIf { it.sessionGeneration == sessionGeneration }
         ?: ShopDetailState(sessionGeneration = sessionGeneration)
     val analytics = LocalShopAnalytics.current
-    analytics.TrackDetail(visibleState.details != null)
+    analytics.TrackDetail(visibleState.details != null, visibleState.details?.overview?.canonicalPath)
     OpenLinkedCheckIn(openCheckIn, visibleState.isLoggedIn && visibleState.details != null) {
         trackShopAction(ShopDetailAction.OpenCheckIn, visibleState, analytics)
         viewModel.onAction(ShopDetailAction.OpenCheckIn)

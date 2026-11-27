@@ -97,7 +97,7 @@ internal fun CoffeeDetailScreenContent(
     modifier: Modifier = Modifier,
     screen: CoffeeScreenAnalytics = CoffeeScreenAnalytics.None,
 ) {
-    screen.TrackDetail(loaded = state.details != null)
+    screen.TrackDetail(loaded = state.details != null, canonicalPath = state.details?.canonicalPath)
     val details = state.details
     val currentDetails = details
     val hazeState = rememberHazeState()

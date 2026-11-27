@@ -77,6 +77,7 @@ internal fun PublicProfileScreen(
     var photos by remember(slug) { mutableStateOf<ProfilePhotos?>(null) }
     val pending = !visibility.ready || state.profile?.let { !it.isBlockedByViewer && visibility.hides(it.authorId, it.slug) } == true
     val visible = if (pending) state.copy(profile = null, checkIns = emptyList(), connectionKind = null) else state
+    slots.contentReady(visible.profile?.slug?.let { "/users/$it" })
     val callbacks = PublicProfileCallbacks(onBack, onOpenShop, onOpenUser, onShare,
         vm::onAction,
         { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) })
