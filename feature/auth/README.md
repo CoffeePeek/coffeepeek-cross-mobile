@@ -112,6 +112,12 @@ Kotlin 2.4.21, `native_targets=ios_simulator_arm64`; это компиляция
 первый sandbox-прогон имел 9 ошибок запуска дочерних инструментов. Полные macOS
 build/test результаты фиксируются в PR; реальные OAuth и device gates остаются отдельно.
 
+Повторный macOS прогон на `6b57f0932` скомпилировал auth domain и Kotlin-исходники приложения,
+но Native test link выявил несовместимую Compose-заглушку `DiscoveryBindingsTest`.
+Общая проверка единой ленивой фабрики теперь не создаёт UI-объект; две проверки
+порядка разрешения с Compose-рендерером находятся в androidUnitTest. Все три
+DI-проверки сохраняются, Native selector общей проверки остаётся включённым.
+
 - [Общие модели и Android UI](impl/src/), [HTTP и токены](data/src/commonMain/),
   [контракты](domain/src/commonMain/).
 - [Нативные экраны](../../iosXtool/CoffeePeek/Sources/CoffeePeek/) и
