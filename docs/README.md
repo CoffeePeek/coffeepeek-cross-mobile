@@ -15,6 +15,7 @@
 - [Android run modes](../composeApp/ANDROID_RUN_MODES.md), [Sandbox](../composeApp/SANDBOX.md), [DEX checks](../build-logic/ANDROID_RUNTIME_PACKAGING.md).
 - [Проверки изменений](VERIFICATION_FLOW.md) — unit/contract, preview/manual, live/release gates.
 - [Design system](../core/design-system/README.md), [platform design](PLATFORM_DESIGN.md), [media](../core/media/README.md).
+- [App icon artwork](../design/app-icon/README.md) — исходник, плотности и варианты оформления.
 - [iOS setup](IOS_SETUP.md), [xcross](IOS_XCROSS.md), [native navigation](IOS_NATIVE_NAVIGATION.md), [root/session contracts](IOS_NATIVE_ROOT_SESSION_CONTRACTS.md), [native exit](IOS_NATIVE_EXIT_PLAN.md).
 - [iOS map](IOS_MAP_PARITY.md), [feed photo memory](IOS_FEED_PHOTO_MEMORY.md), [optional xtool host](../iosXtool/CoffeePeek/README.md).
 
