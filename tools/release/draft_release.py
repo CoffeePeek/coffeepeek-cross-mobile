@@ -97,7 +97,7 @@ def android_version(commit, marketing_version, number):
     )
     if literal:
         return f"{literal[1]}.{number}"
-    # Early release runs used the marketing version as the entire versionName.
+    # Shared marketing version format, also used by early release runs.
     if re.search(r"val appVersionName: Provider<String> = appVersionConfig.map \{ config ->\s+Regex\(.*MARKETING_VERSION", gradle):
         return marketing_version
     raise ValueError("The selected commit uses an unsupported Android versionName format.")

@@ -110,6 +110,15 @@ class BuildSelectionTest(unittest.TestCase):
         with patch.object(drafts, "git", side_effect=[config, "1847"]):
             self.assertEqual(("1.2.0", 2847), drafts.build_version("ios", COMMIT))
 
+    def test_shared_marketing_version_keeps_build_number_separate_on_both_platforms(self):
+        config = "MARKETING_VERSION = 2.0.0\nBUILD_NUMBER_OFFSET = 1100\n"
+        android = ('val appVersionName: Provider<String> = appVersionConfig.map { config ->\n'
+                   '    Regex("^MARKETING_VERSION = ([0-9]+\\.[0-9]+\\.[0-9]+)$")\n}')
+        with patch.object(drafts, "git", side_effect=[config, "1847", android]):
+            self.assertEqual(("2.0.0", 2947), drafts.build_version("android", COMMIT))
+        with patch.object(drafts, "git", side_effect=[config, "1847"]):
+            self.assertEqual(("2.0.0", 2947), drafts.build_version("ios", COMMIT))
+
 
 class DraftReleaseTest(unittest.TestCase):
     def setUp(self):
