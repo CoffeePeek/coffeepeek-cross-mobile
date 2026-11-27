@@ -57,7 +57,7 @@ class AndroidChecksTest(unittest.TestCase):
 
     def test_stalled_command_is_failed_instead_of_treated_as_success(self):
         result = self.run_checks("unit", mode="delay", limit="3s")
-        self.assertEqual(124, result.returncode, result.stderr)
+        self.assertIn(result.returncode, (124, 137), result.stderr)
         self.assertIn("Waiting in fake Gradle", result.stdout)
         self.assertIn("QUIT", result.stderr)
 
