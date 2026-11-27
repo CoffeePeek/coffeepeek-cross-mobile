@@ -95,6 +95,23 @@ tests, все без failures/errors/skips (всего 1 036). Debug и Sandbox 
 за macOS CI; реальный OAuth, устройство, визуальные темы/клавиатура/VoiceOver
 локально не проверялись. Эти ограничения не заменяются успешной Android сборкой.
 
+Исправление iOS CI 27.11.2026 в [PR #455](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/455):
+`UsernameSelectionAccount.observe()` возвращает публичный `Flow`, но coroutines
+из-за отсутствующего KMP import попали только в Android `implementation`.
+Оба macOS job на `55b1d63d1` остановились в auth domain с unresolved
+`coroutines`/`Flow`. Зависимость теперь объявлена через commonMain `api`, как у
+других публичных Flow-контрактов. CI также исполняет auth domain/data/impl suites
+и общий `DiscoveryBindingsTest` на Native.
+
+Локальный исходный сбой повторён `compileCommonMainKotlinMetadata`; после исправления
+эта задача и `compileKotlinIosSimulatorArm64` прошли. Проверен KLIB manifest:
+Kotlin 2.4.21, `native_targets=ios_simulator_arm64`; это компиляция domain,
+не линковка/запуск полного приложения. Android auth suites: 12/42/48 тестов,
+без failures/errors/skips; Direct Debug assembly с DEX checks и function limits
+прошли. Все 45 tools/ios unit-проверок прошли после разрешённого запуска Swift/Bash;
+первый sandbox-прогон имел 9 ошибок запуска дочерних инструментов. Полные macOS
+build/test результаты фиксируются в PR; реальные OAuth и device gates остаются отдельно.
+
 - [Общие модели и Android UI](impl/src/), [HTTP и токены](data/src/commonMain/),
   [контракты](domain/src/commonMain/).
 - [Нативные экраны](../../iosXtool/CoffeePeek/Sources/CoffeePeek/) и
