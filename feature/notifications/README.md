@@ -1,55 +1,76 @@
-# Notifications
+# Уведомления
 
-Layout: `api` (feature interface, immutable inbox state, `PushDevicePlatform`, `NotificationAccount` port), `domain`
-(models and repository interface), `data` (Ktor transport, DTOs stay internal), `impl` (the presenter and
-`createNotificationFeature`). The composition root adapts its session storage to `NotificationAccount`
-(`composeApp/.../di/notifications/SessionNotificationAccount.kt`); the feature has no dependency on the legacy modules.
+Сверено с `develop` `8cdc15f9` — 2026-11-27.
 
-Owns notification history, unread state, the account push switch, device registration,
-post-check-in permission coordination and foreground activity reporting.
-The application composition consumes `api` and supplies the authenticated HTTP client,
-session repository and native device port. Domain has no platform or transport imports;
-DTOs and HTTP endpoints stay internal to data. Shared presentation coordinates session
-changes; platform SDKs remain in Android/iOS application boundaries. Application DI
-wires successful shop/home creation callbacks to the feature API. Automatic permission
-requests respect a previous denial. Explicit enabling from the notification panel
-requests authorization or opens OS settings after a denial. Foreground push receipts
-refresh the history, including when a previous request is still in flight.
-No other feature may depend on internals. A separate module follows the existing
-author-blocking feature boundary and prevents native Firebase dependencies leaking into
-the shared business code. The legacy modules have no dependency on this feature.
+## Владение и представление
 
-The public API exposes immutable presentation state and actions. Domain models,
-repositories, transport DTOs and the presenter implementation remain internal.
-Android's Compose renderer lives in notifications/impl and uses core/design-system;
-composeApp owns its root navigation adapter and native intent handoff. The remaining
-legacy shared renderer serves iOS. Android/shared and native iOS root composition pass
-the bell into the community header through a Composable slot; the community feature
-does not import notification implementation or require its DI binding in isolation.
-Account/session changes clear the inbox and fence
-late responses; login and foreground entry never overwrite saved push preferences.
+`api` предоставляет `NotificationFeature`, immutable inbox state, destination,
+account/city и native device ports; `domain` — модели/repository contracts;
+`data` — Ktor transport/внутренние DTO; `impl` — presenter и platform UI sessions.
+Composition адаптирует существующие session/current city, navigation и native
+FCM/APNs providers. Firebase SDK не является зависимостью feature domain.
 
-The bell on the community feed opens a light/dark bottom sheet with date groups,
-read/unread rows and pagination; the push preference lives in Settings. Android's
-migrated panel and iOS's transitional panel mark a row read after it has been mostly
-visible for two continuous seconds while the app is resumed. Leaving the viewport
-or backgrounding the app resets the timer, and several visible rows are written in
-sequence. The history works with push disabled or OS authorization denied. Supported
-types are ShopApproved,
-ShopRejected, RoasterApproved, RoasterRejected, CheckInModeration, CorrectionModeration,
-NewShop, Inactivity and General; unknown future types display as General.
+Feature владеет history/unread, account push switch, device registration,
+post-check-in permission coordination и foreground reporting. Android bell
+открывает Compose bottom sheet. На iOS bell/inbox — SwiftUI/native sheet с
+NavigationStack, large detent и тем же Kotlin owner; старый transitional Compose
+inbox больше не описывает активный путь. Settings использует ту же feature.
 
-Android rows with supported entity metadata remain actionable after reading. The API
-resolves an owned notification through GET /api/v1/me/notifications/{id}/destination;
-transport DTOs and entity identifiers stay inside the feature. Its public destination
-contract distinguishes published shop slugs from correction/submission IDs. Application
-composition resolves contributions and owns cross-feature routing. Native push taps
-wait for root/session readiness and discard another account's or generation's result.
-Errors retain the sheet for retry. Deploy the additive Account endpoint before this client.
+## History, permission и destinations
 
-## Visible-read panel verification — 2026-11-02
+- History доступна при выключенном push и denied OS authorization. Login и
+  foreground не перезаписывают сохранённое push preference.
+- Автоматическая permission opportunity уважает предыдущий denial; explicit
+  enable запрашивает разрешение либо предлагает OS settings по существующей policy.
+- Строка отмечается прочитанной после двух непрерывных секунд достаточной
+  видимости в активном приложении. iOS требует не менее половины строки.
+  Viewport exit/background сбрасывают таймер; receipts отправляются последовательно.
+- Account/session changes очищают inbox и отсекают поздние read/navigation replies.
+  Несколько foreground receipts не теряются за уже выполняющимся refresh.
+- Поддерживаются ShopApproved/Rejected, RoasterApproved/Rejected,
+  CheckInModeration, CorrectionModeration, NewShop, Inactivity и General;
+  неизвестный future type отображается как General.
+- Actionable rows остаются такими после read. Feature читает owned destination
+  через `GET /api/v1/me/notifications/{id}/destination`, различая public shop slug
+  и submission/change ID. Composition разрешает contributions и cross-feature routes.
+  Push open ждёт root/session readiness; ошибка сохраняет inbox для retry.
 
-- Source: `codex/migration-notifications-visible-read-develop` based on `origin/develop` at `4ff207f40`. Android variant: `directSandbox` (`com.coffeepeek.sandbox`). No device was selected, and no APK was installed.
-- `:feature:notifications:impl:testDebugUnitTest`: 34 tests passed, 0 failed, no retries. This includes multiple simultaneous read receipts and an account change during a pending write.
-- `:composeApp:assembleDirectSandbox`: passed with `--max-workers=6`. Sandbox isolation and packaged DEX runtime-class checks passed.
-- Paired light/dark previews remain beside both row and sheet implementations; the row previews use a long message. IDE preview rendering and manual light/dark, large text, accessibility, scroll, back and modal checks were not run. iOS compilation and live backend acceptance remain unverified.
+## Аудитория выбранного города
+
+`NotificationCity` пассивно читает текущий город, выбранный пользователем или
+автоматикой приложения. Отсутствие первого emission означает loading;
+`NotificationCitySelection(null)` — разрешённое пустое значение. Adapter не
+запрашивает GPS/permission и не загружает второй каталог.
+
+Для signed-in аккаунта `PUT /api/v1/me/notifications/city` отправляет обязательный
+nullable `citySlug`, включая explicit JSON null. Успех — HTTP 204; 404/503 и
+другие rejected ответы сохраняют failure для retry на foreground/новом выборе.
+Sync не зависит от push enabled, permission или provider availability.
+
+Collector принадлежит account generation; queued city selections conflated к
+последней. Отдельный city-write mutex сериализует запросы между generations:
+даже noncancellable старый write завершается раньше нового. Account повторно
+проверяется внутри lock. Inbox/device/login не ждут city synchronization.
+Server отвечает за recipients и queued-delivery revalidation; клиентский фильтр
+не может ограничивать background delivery. Контракт companion:
+[backend #381](https://github.com/CoffeePeek/coffeepeek-backend/pull/381).
+
+## Источники и проверка
+
+[Публичные contracts](api/src/), [HTTP](data/src/), [presenter и tests](impl/src/),
+[app adapters](../../composeApp/src/),
+[native screens/provider](../../iosXtool/CoffeePeek/Sources/CoffeePeek/).
+
+Unit/contracts проверяют permission timing, read visibility/account guards,
+navigation failure, registration, city loading vs empty, explicit null, retries,
+latest-city order и noncancellable A→B→A. Android assembly/packaged DEX и
+затронутые suites проверяются отдельно от macOS Swift/Native job в
+[ios-verify.yml](../../.github/workflows/ios-verify.yml).
+
+Ручные gates: paging/visible-read, background/swipe dismissal, ru/be, themes,
+large text/screen reader, OS permission/settings и реальная FCM/APNs доставка
+в foreground/background/terminated states. Для live пушей нужен согласованный
+тестовый аккаунт; fake backend не доказывает server audience/deployment.
+Документационное обновление эти gates заново не выполняло. Исторические CI,
+release и failed-attempt records доступны в Git history; они не обозначают
+текущую последнюю TestFlight-сборку.

@@ -43,6 +43,10 @@ plugins {
 rootProject.name = "CoffeePeek"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
+// xcross discovers the iOS framework from literal includes without evaluating settings plugins.
+// Re-including the app is idempotent; com.coffeepeek.modules still owns the module graph.
+include(":composeApp")
+
 dependencyResolutionManagement {
     repositories {
         maven("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")

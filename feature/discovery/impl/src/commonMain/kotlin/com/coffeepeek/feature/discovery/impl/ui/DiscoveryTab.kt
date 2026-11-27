@@ -23,6 +23,8 @@ internal class TabCallbacks(
     val onFocusConsumed: () -> Unit,
     val reselections: kotlinx.coroutines.flow.Flow<Unit> = kotlinx.coroutines.flow.emptyFlow(),
     val onContinueCheckIn: (() -> Unit)? = null,
+    val onClose: () -> Unit = {},
+    val onBack: () -> Unit = {},
 )
 
 /** Lifecycle adapter; layout and transient overlays belong to the stateless content. */

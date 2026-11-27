@@ -17,6 +17,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekFullScreenDialog
 /** Application-owned full-screen editor surface; the choice picker remains a sheet. */
 @Composable
 internal fun HomeCheckInFullScreenDialog(onDismiss: () -> Unit, content: @Composable () -> Unit) {
+    if (PlatformHomeCheckInFullScreen(content)) return
     val background = MaterialTheme.colorScheme.background
     CoffeePeekFullScreenDialog(onDismiss, darkSystemBarIcons = background.luminance() > 0.5f) {
         // The editor consumes IME space; this host reserves only the screen's safe edges.
@@ -26,3 +27,6 @@ internal fun HomeCheckInFullScreenDialog(onDismiss: () -> Unit, content: @Compos
         }
     }
 }
+
+@Composable
+internal expect fun PlatformHomeCheckInFullScreen(content: @Composable () -> Unit): Boolean

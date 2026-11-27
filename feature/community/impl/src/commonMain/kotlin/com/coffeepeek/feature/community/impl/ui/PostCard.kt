@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.community.impl.ui
 
-import androidx.compose.foundation.background
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.community.impl.resources.Res
 import com.coffeepeek.feature.community.impl.resources.community_share_shop
@@ -31,39 +30,31 @@ import com.coffeepeek.feature.community.impl.resources.community_unlike
 import com.coffeepeek.feature.community.impl.resources.community_user
 import com.coffeepeek.feature.community.impl.resources.community_you
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
-import com.coffeepeek.core.designsystem.component.CoffeePeekDrinkLabel
-import com.coffeepeek.core.designsystem.component.CoffeePeekDrinkLabelSize
-import com.coffeepeek.core.designsystem.component.CoffeePeekLikeCount
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineHeader
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineFooter
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
@@ -119,40 +110,56 @@ internal fun PostCard(
     changingVisibility: Boolean = false,
     horizontalInset: Dp = 0.dp,
 ) {
+    host.nativeCard?.let { renderer ->
+        val native = nativePostPresentation(post, isOwn, publicTimeline, showHelpfulCount, enabled, changingVisibility,
+            actions, host, horizontalInset.value.toDouble())
+        renderer(native, nativePostActions(actions, enabled, changingVisibility), modifier)
+        return
+    }
     val openLabel = stringResource(Res.string.community_open_post)
     // The gallery scrolls through the side inset; the other content stays inside it.
     val photoScrollInset = if (post.photos.originals.size > 1) horizontalInset else 0.dp
     val textInset = Modifier.padding(horizontal = photoScrollInset)
-    Column(
-        modifier.padding(horizontal = horizontalInset - photoScrollInset).fillMaxWidth().clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
+    CoffeePeekTimelineContent(
+        note = post.note,
+        modifier = modifier.padding(horizontal = horizontalInset - photoScrollInset).fillMaxWidth().clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
             .then(actions.onOpen?.let { Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = it) } ?: Modifier),
-        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
-    ) {
-        PostHeader(post, isOwn, actions, enabled, changingVisibility, host, textInset)
-        PostIntroduction(post, actions, host, textInset)
-        if (post.note.isNotBlank()) Text(post.note, modifier = textInset, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-        PostPhotoStrip(post.photos, actions.onPhoto, host, horizontalInset = photoScrollInset)
-        if (!publicTimeline && !(isOwn && post.moderation == PostModeration.Rejected)) {
-            Text(publicationText(post.publicationLabel()), modifier = textInset,
-                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        if (isOwn && post.moderation == PostModeration.Rejected) Box(textInset) {
-            PostRejection(post.rejectionReason, actions.onEdit, enabled)
-        }
-        val drinkName = post.drink?.displayName(Locale.current.language)
-        if (showHelpfulCount || drinkName != null || actions.onPublish != null) Row(
-            textInset.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
-        ) {
-            if (showHelpfulCount) HelpfulButton(post.helpfulCount, post.isHelpfulByCurrentUser, actions.onHelpful)
-            Spacer(Modifier.weight(1f))
-            actions.onPublish?.let { publish ->
+        header = { PostHeader(post, isOwn, actions, enabled, changingVisibility, host, textInset) },
+        heading = { PostIntroduction(post, actions, host, textInset) },
+        photos = { PostPhotoStrip(post.photos, actions.onPhoto, host, horizontalInset = photoScrollInset) },
+        supporting = { PostPublication(post, isOwn, publicTimeline, actions, enabled, textInset) },
+        footer = { PostFooter(post, showHelpfulCount, enabled, changingVisibility, actions, textInset) },
+        noteModifier = textInset,
+    )
+}
+
+@Composable
+private fun PostPublication(post: CommunityPost, isOwn: Boolean, publicTimeline: Boolean,
+    actions: PostCardActions, enabled: Boolean, modifier: Modifier) {
+    if (!publicTimeline && !(isOwn && post.moderation == PostModeration.Rejected)) {
+        Text(publicationText(post.publicationLabel()), modifier = modifier,
+            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    if (isOwn && post.moderation == PostModeration.Rejected) Box(modifier) {
+        PostRejection(post.rejectionReason, actions.onEdit, enabled)
+    }
+}
+
+@Composable
+private fun PostFooter(post: CommunityPost, showHelpfulCount: Boolean, enabled: Boolean,
+    changingVisibility: Boolean, actions: PostCardActions, modifier: Modifier) {
+    CoffeePeekTimelineFooter(
+        count = post.helpfulCount.takeIf { showHelpfulCount }, selected = post.isHelpfulByCurrentUser,
+        likesDescription = helpfulDescription(post.helpfulCount, post.isHelpfulByCurrentUser, actions.onHelpful),
+        drink = post.drink?.displayName(Locale.current.language), modifier = modifier, onLike = actions.onHelpful,
+        actions = actions.onPublish?.let { publish ->
+            {
                 TextButton(onClick = publish, enabled = enabled) {
                     Text(stringResource(if (changingVisibility) Res.string.community_saving else Res.string.community_publish))
                 }
             }
-            drinkName?.let { CoffeePeekDrinkLabel(it, size = CoffeePeekDrinkLabelSize.Compact) }
-        }
-    }
+        },
+    )
 }
 
 @Composable
@@ -177,34 +184,15 @@ private fun PostIntroduction(post: CommunityPost, actions: PostCardActions, host
 private fun PostHeader(post: CommunityPost, isOwn: Boolean, actions: PostCardActions, enabled: Boolean, hiding: Boolean,
     host: CommunityHost, modifier: Modifier) {
     val name = post.author.name.ifBlank { stringResource(if (isOwn) Res.string.community_you else Res.string.community_user) }
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        val openLabel = stringResource(Res.string.community_open_profile, name)
-        Row(
-            Modifier.weight(1f).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)).then(
-                actions.onAuthor?.let { Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = it) } ?: Modifier,
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Avatar(name, post.author.avatarUrl, host)
-            Column(Modifier.weight(1f).padding(start = CoffeePeekDimens.spacing3), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (post.createdAt.isNotBlank()) Text(host.displayDate(post.createdAt), style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        }
-        PostMenu(actions, enabled, hiding)
-    }
-}
-
-@Composable
-private fun Avatar(name: String, photoUrl: String?, host: CommunityHost) {
-    val avatar = Modifier.size(44.dp).clip(CircleShape)
-    Box(avatar.background(CoffeePeekColors.GoldWarmSoft), contentAlignment = Alignment.Center) {
-        Text(name.trim().firstOrNull()?.uppercase() ?: "?", style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold, color = CoffeePeekColors.LightTextPrimary)
-        if (photoUrl != null) host.image(photoUrl, null, avatar, ContentScale.Crop, null)
-    }
+    val openLabel = stringResource(Res.string.community_open_profile, name)
+    CoffeePeekTimelineHeader(
+        name, post.createdAt.takeIf(String::isNotBlank)?.let { host.displayDate(it) }.orEmpty(), modifier,
+        avatar = { avatar -> post.author.avatarUrl?.let { host.image(it, null, avatar, ContentScale.Crop, null) } },
+        actions = { PostMenu(actions, enabled, hiding) },
+        identityModifier = Modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)).then(
+            actions.onAuthor?.let { Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = it) } ?: Modifier,
+        ),
+    )
 }
 
 /** The overflow menu: share, edit, hide, report, block (last, in red) вЂ” only what this viewer may do with this post. */
@@ -228,7 +216,7 @@ private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean
 }
 
 @Composable
-private fun publicationText(label: PublicationLabel): String = stringResource(
+internal fun publicationText(label: PublicationLabel): String = stringResource(
     when (label) {
         PublicationLabel.Private -> Res.string.community_label_private
         PublicationLabel.Rejected -> Res.string.community_label_rejected
@@ -294,17 +282,15 @@ internal fun oneDecimal(value: Double): String {
 }
 
 @Composable
-private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) {
-    val description = when {
+internal fun helpfulDescription(count: Int, helpful: Boolean, onClick: (() -> Unit)?): String =
+    when {
         onClick == null -> stringResource(Res.string.community_likes, count)
         helpful -> stringResource(Res.string.community_unlike, count)
         else -> stringResource(Res.string.community_like, count)
     }
-    CoffeePeekLikeCount(count, helpful, description, onClick = onClick)
-}
 
 @Composable
-private fun HomePreparation.details(methodLabel: (String) -> String?): String {
+internal fun HomePreparation.details(methodLabel: (String) -> String?): String {
     val formattedMethod = brewMethodCode?.let(methodLabel)
     val generic = brewMethodCode == "other" && (formattedMethod == null || formattedMethod == brewMethodCode)
     val method = if (generic) stringResource(Res.string.community_drink_other) else formattedMethod
@@ -317,7 +303,7 @@ private fun HomePreparation.details(methodLabel: (String) -> String?): String {
     ).joinToString(separator)
 }
 
-private fun com.coffeepeek.feature.community.domain.model.PostDrink.displayName(language: String): String? =
+internal fun com.coffeepeek.feature.community.domain.model.PostDrink.displayName(language: String): String? =
     customName?.takeIf(String::isNotBlank) ?: if (language == "en") nameEn?.takeIf(String::isNotBlank) ?: nameRu?.takeIf(String::isNotBlank)
     else nameRu?.takeIf(String::isNotBlank) ?: nameEn?.takeIf(String::isNotBlank)
 
@@ -330,14 +316,16 @@ internal fun previewPost() = CommunityPost(
 
 @Composable private fun PostCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostCard(previewPost(), isOwn = false, publicTimeline = true, showHelpfulCount = true, enabled = true,
-        PostCardActions({}, {}, {}, {}, {}), CommunityHost(), horizontalInset = CoffeePeekDimens.spacing4)
+        PostCardActions({}, {}, {}, {}, {}, onReport = {}, onShare = {}, onOpen = {}),
+        CommunityHost(), horizontalInset = CoffeePeekDimens.spacing4)
 }
 @Preview @Composable private fun PostCardLightPreview() = PostCardPreview(false)
 @Preview @Composable private fun PostCardDarkPreview() = PostCardPreview(true)
 
 @Composable private fun HomePostCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostCard(previewPost().copy(isHome = true, home = HomePreparation("2026-10-07", "hario-v60", "Р­С„РёРѕРїРёСЏ", 18.0, 150, 4), photos = PostPhotos.None, rating = null),
-        isOwn = true, publicTimeline = false, showHelpfulCount = false, enabled = true, PostCardActions(null, null, null, null, {}), CommunityHost())
+        isOwn = true, publicTimeline = false, showHelpfulCount = false, enabled = true,
+        PostCardActions(null, null, null, null, {}, onEdit = {}, onPublish = {}), CommunityHost())
 }
 
 @Preview @Composable private fun HomePostCardLightPreview() = HomePostCardPreview(false)

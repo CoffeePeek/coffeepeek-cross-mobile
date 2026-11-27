@@ -21,10 +21,10 @@ class CoffeePeekControlSizingTest {
         assertTrue(coffeePeekSegmentsNeedScroll(3, available - 1.dp, 1f, false))
     }
 
-    @Test fun ratingBudgetPreservesFiveActionTargetsAndSpacing() {
-        val width = coffeePeekRatingInputWidth(2.dp)
-        assertTrue(width >= 228.dp)
-        assertEquals(CoffeePeekDimens.minimumTouchTarget, (width - 8.dp) / 5)
+    @Test fun ratingBudgetMatchesStarSizedTargetsAndSpacing() {
+        val star = CoffeePeekRatingSize.Large.starSize
+        val width = coffeePeekRatingInputWidth(star, 4.dp)
+        assertEquals(star * 5 + 4.dp * 4, width)
     }
 
     @Test fun priceArtworkHasStableBoxesForCompactAndRegularUses() {

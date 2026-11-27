@@ -5,6 +5,7 @@ interface NotificationRepository {
     suspend fun destination(notificationId: String): NotificationTarget?
     suspend fun pushEnabled(): Boolean
     suspend fun setPushEnabled(enabled: Boolean)
+    suspend fun setCity(citySlug: String?)
     suspend fun markRead(id: String)
     suspend fun markAllRead(throughId: String)
     suspend fun register(installationId: String, token: String)

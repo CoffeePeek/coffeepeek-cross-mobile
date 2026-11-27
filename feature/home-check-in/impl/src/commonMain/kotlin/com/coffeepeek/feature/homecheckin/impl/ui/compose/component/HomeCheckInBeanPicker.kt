@@ -30,6 +30,7 @@ import com.coffeepeek.feature.homecheckin.impl.resources.*
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.*
 import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInBeanOption
 import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInShelfBag
+import com.coffeepeek.feature.homecheckin.impl.ui.data.matching
 
 @Composable
 internal fun HomeCheckInBeanPicker(
@@ -158,12 +159,6 @@ private fun HomeCheckInCustomBean(name: String, onName: (String) -> Unit, onActi
         CoffeePeekButton(stringResource(Res.string.home_check_in_use_custom_bean),
             { onAction(HomeCheckInEditorAction.CustomBeanChosen(name.trim())) }, enabled = name.isNotBlank())
     }
-}
-
-/** Bags are few, so the query filters them here instead of asking the server. */
-private fun List<HomeCheckInShelfBag>.matching(query: String): List<HomeCheckInShelfBag> {
-    val text = query.trim().takeIf(String::isNotEmpty) ?: return this
-    return filter { bag -> listOfNotNull(bag.name, bag.roasterName).any { it.contains(text, ignoreCase = true) } }
 }
 
 @Composable private fun HomeCheckInBeanPickerPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {

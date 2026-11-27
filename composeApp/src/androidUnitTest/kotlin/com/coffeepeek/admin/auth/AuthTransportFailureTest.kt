@@ -46,7 +46,7 @@ class AuthTransportFailureTest {
             apiClientFactory = { configure -> HttpClient(MockEngine { throw failure() }) { configure() } },
             uploadClientFactory = { configure -> HttpClient(MockEngine { throw failure() }) { configure() } })
         try {
-            val repository = createAuthRepository(client.plainClient, client.client, LocalSandboxSession(), object : LocalUserData {
+            val repository = createAuthRepository(client.plainClient, LocalSandboxSession(), object : LocalUserData {
                 override suspend fun clear() = Unit
             })
             val error = repository.signIn("person@example.com", "secret1").exceptionOrNull()
@@ -65,7 +65,7 @@ class AuthTransportFailureTest {
             "unknown host" to ({ UnknownHostException("api.example") } to generic),
             "connect failure" to ({ ConnectException("Failed to connect to api.example/10.0.0.1:443") } to network),
             "socket timeout" to ({ SocketTimeoutException("timeout") } to network),
-            "request timeout" to ({ HttpRequestTimeoutException("https://api.example/api/Tokens", 10_000) } to network),
+            "request timeout" to ({ HttpRequestTimeoutException("https://api.example/api/tokens/native", 10_000) } to network),
         )
         val seen = cases.mapValues { (_, case) -> loginMessage(case.first) }
         assertEquals(cases.mapValues { it.value.second }, seen.mapValues { it.value.second }, seen.toString())

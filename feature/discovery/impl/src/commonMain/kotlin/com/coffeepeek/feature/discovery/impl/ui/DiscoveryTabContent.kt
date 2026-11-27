@@ -55,7 +55,7 @@ internal fun DiscoveryTabContent(
         DiscoverySearchLayer(state, ui, motion, host, roasters, context, bottomClearance,
             callbacks.onAddShop, onAction)
         DiscoveryRoasterOverlay(ui, roasters, context, reduceMotion, onAction)
-        if (state.showFilters) FilterSheet(state, host, onAction)
+        if (state.showFilters) FilterSheet(state, onAction)
         if (ui.mapAnchor.width > 0f || ui.mapExpanded) DiscoveryMapLayer(ui, motion, host, canvasSize, toggleMap, map)
         if (callbacks.onContinueCheckIn != null && host.isVisible() && !state.showFilters &&
             !ui.showRoasters && !ui.mapExpanded && motion.expansion.value == 0f) {
@@ -77,9 +77,7 @@ internal fun DiscoveryTabContent(
 }
 
 private fun isIdleDiscovery(state: SearchState, ui: DiscoveryTabState, motion: DiscoveryTabMotion): Boolean =
-    state.showsDiscovery && !state.isLoading && !state.isRefreshing && state.error == null &&
-        !state.showFilters && !state.nearbyRequested && !state.locationUnavailable &&
-        !state.locationSettingsNeeded && !ui.showRoasters && !ui.mapExpanded && motion.expansion.value == 0f &&
+    state.isIdleDiscoveryContent() && !ui.showRoasters && !ui.mapExpanded && motion.expansion.value == 0f &&
         !ui.list.isScrollInProgress && !ui.shops.isScrollInProgress
 
 @Composable

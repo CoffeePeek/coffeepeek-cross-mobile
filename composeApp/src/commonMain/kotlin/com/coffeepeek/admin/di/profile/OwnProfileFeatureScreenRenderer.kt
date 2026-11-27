@@ -1,25 +1,9 @@
 package com.coffeepeek.admin.di.profile
 
-import coffeepeek.composeapp.generated.resources.profile_collections_cancel
-import coffeepeek.composeapp.generated.resources.profile_collections_settings
-import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
-import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
-import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.layout.Row
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.local_data_cleanup_error
 import com.coffeepeek.admin.auth.GoogleAuth
@@ -40,9 +24,9 @@ import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
-import com.coffeepeek.feature.profile.api.OwnProfileActivity
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.OwnProfileShelf
+import com.coffeepeek.feature.profile.api.OwnProfileSectionRequest
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
 import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.impl.createOwnProfileEntry
@@ -123,31 +107,20 @@ internal fun featureOwnProfileScreenRenderer(
 private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfileSlots(
     shared = profileSlots(),
     favoritesPreview = { _, _, header ->
-        // Like the shelf: the settings button sits next to the section title and opens the
-        // collection preferences in a bottom sheet.
-        var preferencesOpen by rememberSaveable { mutableStateOf(false) }
         Column {
-            Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.weight(1f)) { header() }
-                CoffeePeekIconButton({ preferencesOpen = true }) {
-                    CoffeePeekIcon(CoffeePeekIcons.Settings, stringResource(Res.string.profile_collections_settings))
-                }
-            }
+            header()
             ProfileOwnerCollection()
         }
-        if (preferencesOpen) CoffeePeekSwipeDismissModalBottomSheet(
-            onDismissRequest = { preferencesOpen = false },
-            dismissDescription = stringResource(Res.string.profile_collections_cancel),
-        ) { ProfileDisplayPreferences() }
     },
-    activity = OwnProfileActivity(
-        month = { date, select, expanded, header -> activity.Calendar(date, select, expanded, header) },
-        onOpenHistory = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
-    ),
+    history = { content -> activity.History(content) },
     loadError = { onRetry -> CoffeePeekLoadErrorContent(onRetry = onRetry) },
     shelf = OwnProfileShelf(
         content = { modifier, header -> ProfileOwnShelf(modifier, header) },
         openRequested = { Navigator.pendingProfileShelf.collectAsState().value },
         onOpened = Navigator::consumeProfileShelf,
+    ),
+    collectionsRequest = OwnProfileSectionRequest(
+        requested = { Navigator.pendingProfileCollections.collectAsState().value },
+        onConsumed = Navigator::consumeProfileCollections,
     ),
 )

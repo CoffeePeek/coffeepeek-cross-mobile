@@ -58,7 +58,7 @@ private fun ProfileCheckInFooter(row: PublicProfileCheckIn, onLike: () -> Unit, 
 @Composable
 private fun ProfileCheckInHeading(row: PublicProfileCheckIn, slots: ProfileSlots, onShop: (() -> Unit)?) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (row.isHome) ProfileCheckInPreparation(row.preparation, slots.logoImage, slots.onOpenCoffee)
+        if (row.isHome) ProfileCheckInPreparation(row.preparation, slots)
         else {
             Text(row.venue.ifBlank { stringResource(Res.string.profile_favorite_shop) },
                 Modifier.then(onShop?.let { Modifier.clickable(role = Role.Button, onClick = it) } ?: Modifier),

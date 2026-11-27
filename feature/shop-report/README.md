@@ -1,74 +1,55 @@
-# Shop report feature
+# Reports about coffee shop information
 
-## iOS activation — 2026-10-25
+Reviewed against `develop` on 2026-11-27. This feature reports inaccurate place
+information; [Content Report](../content-report/README.md) handles publications.
+Completed Android activation/native-form correction ledgers remain in Git.
 
-Android and iOS now select the shared feature entries through app composition.
-Native navigation, photo/map/date presenters and the existing backend contracts
-are retained. Legacy screens remain a fallback until acceptance; the older notes
-below describe the original Android-first checkpoints. Current verification and
-remaining device/server gates: [iOS migration plan](../IOS_MIGRATION_PLAN.md).
+## Ownership and entries
 
-## Grouped reasons correction — 2026-10-15
+`api/domain/data/impl` own `ShopReportEntry`, issue categories and validation,
+the existing POST contract, and MVI form. Composition supplies the configured
+authenticated client, account reader, child store and navigation. Shop detail
+handles guest access before emitting its `ReportShop` effect; the application
+retains `ReportShop(shopId, shopTitle)` as the destination.
 
-All six existing reasons now share one outlined rounded group with dividers.
-A yellow check replaces the visible radio control, but selectable-group and
-single-choice accessibility semantics remain. Nothing is selected initially;
-the existing Other/500-character rule and submit intents are unchanged. Reason
-changes are disabled during submission. Component/screen previews remain
-colocated in paired themes; no domain, transport, root DI or iOS change is needed.
+Android uses the shared Compose form. iOS `NativeShopReport` presents the same
+Kotlin ViewModel in `ShopReportScreen.swift`; UIKit owns Back/interactive pop.
+No nested runtime navigation stack, new repository or Swift-side mutation policy
+is needed. Native strings live in the `ShopReport` RU/BE tables; shared resources
+remain feature-owned. DTOs/backend stay inside data; domain is pure Kotlin.
 
-Self-targeted Android tests and a fake visual activity exercise these controls
-without application DI, session storage, network or report submission. The
-activity exists only in the instrumentation APK, not the shipped app.
+## Form, session and delivery contracts
 
-All four isolated reason-list UI tests pass on the temporary emulator: both
-themes/single selection, divider-only row gaps, Other/typed submit intent and
-pending-state protection. Both app variants assemble; feature/app lint and the
-five Shop Report MVI unit tests also pass. Real server submission/error handling
-and individual IDE preview rendering remain release gates, not inferred results.
+Six categories share one selectable group; no reason is selected initially.
+Other requires a description with the existing Unicode-safe 500-character limit.
+Selection/editing is disabled while sending. Android semantics retain a
+single-choice group even though the visual selection is a check mark.
 
-Android-first migration of the “report incorrect coffee shop data” capability.
-Android composition now supplies the feature entry with the application's
-configured authenticated HTTP client. The existing shared/iOS route and legacy
-Koin binding remain active; no iOS screen or native integration was switched.
+Data posts to `/api/ShopIssueReports`. One form allows one pending request.
+Known failure retains correction/retry with the same draft; uncertain delivery
+blocks blind repeated submissions. This is not a promise of server idempotency
+across a new destination/process. Preserve cancellation explicitly.
 
-| Module | Responsibility and public surface | Dependencies and consumers |
-|---|---|---|
-| `api` | Minimal composable `ShopReportEntry` screen contract | Compose runtime; application composition |
-| `domain` | `ShopIssueCategory` and `ShopIssueReportRepository`, returning `Result<Unit>` | Kotlin/coroutines only; feature impl/data |
-| `data` | `createShopIssueReportRepository(HttpClient)` construction surface | Domain, core/network, Ktor and serialization; application composition only |
-| `impl` | MVI form, resources, API adapter, and Navigation 3 entry registration | API/domain/design-system/core presentation; application composition |
+An account-generation change rejects queued and late actions/requests, clears
+the draft and cancels work. Same-account token renewal preserves it. Leaving a
+native screen suspends its subscription; removing the controller closes the
+owner. Root navigation owns screen analytics; the originating shop report action
+keeps its existing shop event, with consent/session guards.
 
-`data` owns the request, response DTOs, mapper, and repository implementation.
-Its backend implementation is hidden. UI never sees transport types. The
-application supplies its configured authenticated `HttpClient`; no second
-client or Koin module is created in the feature.
+## Source and verification
 
-The form preserves the existing category set, requires a description for
-`Other`, limits it to 500 characters, reports request failures without leaking
-backend text into UI, and keeps `CancellationException` semantics. The screen
-content is stateless and its previews use fake state. User-visible copy is in
-feature resources; the repository currently has only the default resource
-locale for migrated features, so no unsupported translation is claimed.
+Start with [API](api/src/commonMain), [domain](domain/src/commonMain),
+[transport](data/src/commonMain) and [MVI/native session](impl/src/commonMain).
+Native application/session adapters are under `composeApp/.../di/shopreport`;
+SwiftUI lives in `iosXtool/CoffeePeek/Sources/CoffeePeek/ShopReportScreen.swift`.
+Existing feature and application contracts cover category/Unicode validation,
+retry and uncertain delivery, subscription resumption, cancellation, queued
+actions across account replacement and token refresh. Check the current Native
+CI selectors when adding tests; metadata compilation alone executes none.
 
-## Remaining migration
-
-1. Done: assemble the repository and entry in Android application composition
-   using the existing authenticated client.
-2. Done: route Android Shop Report through the new feature while the shared/iOS
-   fallback continues using the legacy screen.
-3. Done: compile the app and cover request success/failure/cancellation and MVI
-   validation, duplicate submission, retry and back navigation with unit tests.
-4. Manually inspect both previews and the submit flow against a non-production
-   endpoint; automated tests do not verify the rendered modal or live server.
-5. Retire legacy code only after all platform consumers have moved.
-
-The current root navigator is still a shared Navigation 2 host and retains
-ownership of route arguments and back-stack changes. A root Navigation 3
-migration is not part of this feature slice.
-
-## Retroactive parity audit — 2026-10-20
-
-Open gaps from the legacy-first audit: S1–S5 (medium: S1 pre-send failures block resubmission). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
-
-Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.
+Code changes require relevant non-UI tests, Android assembly/DEX checks and
+Native CI. Manual acceptance needs both themes/languages, large text, VoiceOver/
+TalkBack, keyboard/scrolling, Back and completed/cancelled edge swipe, and fake
+success/error outcomes. No real report, device check or app build was performed
+for this documentation update. Remaining repository migration gates belong in
+the [legacy exit plan](../LEGACY_EXIT_PLAN.md).

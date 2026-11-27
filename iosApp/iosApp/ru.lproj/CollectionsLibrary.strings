@@ -1,0 +1,15 @@
+"library.title" = "Подборки";
+"library.back" = "Назад";
+"library.new" = "Новая подборка";
+"library.public" = "Публичные";
+"library.private" = "Личные";
+"library.loading" = "Загрузка подборки";
+"library.signInHint" = "Войдите, чтобы выбрать места из своего избранного.";
+"library.signIn" = "Войти";
+"library.error" = "Не удалось загрузить подборки. Попробуйте ещё раз.";
+"library.retry" = "Повторить";
+"library.search" = "Поиск подборок";
+"library.clearSearch" = "Очистить поиск";
+"library.empty" = "У вас пока нет подборок.";
+"library.noMatches" = "Ничего не найдено";
+"library.count" = "Мест: %d";

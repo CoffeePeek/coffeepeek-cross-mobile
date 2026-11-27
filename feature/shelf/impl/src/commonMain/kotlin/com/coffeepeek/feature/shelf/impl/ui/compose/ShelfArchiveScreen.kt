@@ -74,12 +74,16 @@ internal fun ShelfArchiveScreenContent(state: ShelfArchiveState, onAction: (Shel
 }
 
 @Composable
-private fun ShelfArchiveList(state: ShelfArchiveState, onAction: (ShelfArchiveAction) -> Unit, image: ShelfImage, modifier: Modifier) {
+internal fun ShelfArchiveList(
+    state: ShelfArchiveState, onAction: (ShelfArchiveAction) -> Unit, image: ShelfImage, modifier: Modifier,
+    header: (@Composable () -> Unit)? = null,
+) {
     val listState = rememberLazyListState()
     ShelfArchivePaging(state, listState, onAction)
     val retry = { onAction(ShelfArchiveAction.Retry) }
     LazyColumn(modifier.fillMaxSize(), listState,
         contentPadding = coffeePeekScrollContentPadding(PaddingValues(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2))) {
+        if (header != null) item(key = "settings") { header() }
         // A refresh over existing results keeps them on screen; the thin bar is the only sign of work.
         if (state.loading && state.items.isNotEmpty()) item(key = "reload-hint") {
             LinearProgressIndicator(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.primary)

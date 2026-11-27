@@ -49,7 +49,6 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
-import com.coffeepeek.feature.profile.api.OwnProfileActivity
 import com.coffeepeek.feature.profile.api.ProfileCalendarHeaderContent
 import com.coffeepeek.feature.profile.api.ProfileImage
 import com.coffeepeek.feature.profile.domain.PublicProfile
@@ -65,14 +64,9 @@ internal fun ProfileCheckInCalendar(
     state: PublicProfileState,
     profile: PublicProfile,
     image: ProfileImage,
-    ownerActivity: OwnProfileActivity?,
     onAction: (PublicProfileAction) -> Unit,
     onSelectDate: (String?) -> Unit,
 ) {
-    if (ownerActivity != null) {
-        OwnerCheckInCalendar(ownerActivity, state.checkInDate, onSelectDate)
-        return
-    }
     ProfileCalendarFrame(profile.slug) { expanded, header ->
         PublicProfileActivityCalendar(
             profile.activity, state.activityMonth, state.isLoadingActivity, state.activityError, state.checkIns, image,
@@ -84,15 +78,6 @@ internal fun ProfileCheckInCalendar(
             header = header,
             profileKey = profile.slug,
         )
-    }
-}
-
-@Composable
-internal fun OwnerCheckInCalendar(
-    activity: OwnProfileActivity, selectedDate: String?, onSelectDate: (String?) -> Unit, modifier: Modifier = Modifier,
-) {
-    ProfileCalendarFrame(stateKey = null, modifier = modifier) { expanded, header ->
-        activity.month(selectedDate, onSelectDate, expanded, header)
     }
 }
 

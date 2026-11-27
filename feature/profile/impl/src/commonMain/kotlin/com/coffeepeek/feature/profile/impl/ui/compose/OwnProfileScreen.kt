@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
+import com.coffeepeek.feature.profile.api.OwnProfileHistory
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileContribution
@@ -68,7 +69,9 @@ internal fun OwnProfileScreen(
     val profile = state.profile
     if (state.isLoggedIn && slug != null && profile != null) {
         key(slug) {
-            OwnPublicProfileContent(state, publicModel(slug), authorActions, slots, callbacks, actions, bottomPadding)
+            slots.history { history ->
+                OwnPublicProfileContent(state, publicModel(slug), authorActions, slots, callbacks, actions, bottomPadding, history)
+            }
         }
     } else {
         OwnProfileFallbackScreen(state, slots, callbacks, actions, bottomPadding) { vm.onAction(OwnProfileAction.Refresh) }
@@ -79,6 +82,7 @@ internal fun OwnProfileScreen(
 private fun OwnPublicProfileContent(
     state: OwnProfileState, publicVm: PublicProfileViewModel, authorActions: ProfileAuthorActions,
     slots: OwnProfileSlots, callbacks: OwnProfileCallbacks, actions: @Composable () -> Unit, bottomPadding: Dp,
+    history: OwnProfileHistory,
 ) {
     val profile = state.profile ?: return
     val slug = state.publicSlug ?: return
@@ -89,10 +93,12 @@ private fun OwnPublicProfileContent(
         onOpenShop = callbacks.openShop, onOpenRoaster = callbacks.openRoaster, onLogin = callbacks.login,
         onOpenUser = callbacks.openUser, onShare = {},
         own = OwnProfileExtras(
-            onOpenFavorites = callbacks.openFavorites, activity = slots.activity,
+            onOpenFavorites = callbacks.openFavorites,
             onOpenContributions = callbacks.openContributions, topBarActions = actions,
             favoritesPreview = { header -> slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster, header) },
+            checkInCount = profile.checkInCount, history = history,
             bottomContentPadding = bottomPadding, shelf = slots.shelf,
+            collectionsRequest = slots.collectionsRequest,
         ),
     )
 }

@@ -45,7 +45,7 @@ class CheckInHistoryModuleTest {
         }
         val app = historyApplication(client, sessions)
         try {
-            assertSame(app.koin.get<FeatureCheckInHistoryScreenRenderer>(), app.koin.get<FeatureCheckInHistoryScreenRenderer>())
+            assertSame(app.koin.get<FeatureHomeCheckInDetailRenderer>(), app.koin.get<FeatureHomeCheckInDetailRenderer>())
             assertSame(app.koin.get<AppCheckInHistoryCalendar>(), app.koin.get<AppCheckInHistoryCalendar>())
             assertEquals(1, app.koin.getAll<CheckInHistoryRepository>().size)
             assertEquals(1, app.koin.getAll<HomePreparationReader>().size)
@@ -78,7 +78,7 @@ class CheckInHistoryModuleTest {
     }
 
     private fun assertHistoryGraph(koin: Koin) {
-        assertSame(koin.get<FeatureCheckInHistoryScreenRenderer>(), koin.get<FeatureCheckInHistoryScreenRenderer>())
+        assertSame(koin.get<FeatureHomeCheckInDetailRenderer>(), koin.get<FeatureHomeCheckInDetailRenderer>())
         assertSame(koin.get<AppCheckInHistoryCalendar>(), koin.get<AppCheckInHistoryCalendar>())
         assertEquals(1, koin.getAll<CheckInHistoryRepository>().size)
         assertEquals(1, koin.getAll<HomePreparationReader>().size)

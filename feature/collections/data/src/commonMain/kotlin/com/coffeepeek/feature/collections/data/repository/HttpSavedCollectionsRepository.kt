@@ -13,6 +13,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.Mutex
@@ -31,6 +32,7 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
     private val defaultCreation = Mutex()
     private val changes = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val ownerCache = OwnerCollectionsCache(account, timeSource)
+    private val coverCache = CollectionImageMemoryCache(account, CoroutineScope(client.coroutineContext), timeSource)
 
     override fun observeChanges() = changes.asSharedFlow()
     override fun cachedMine(target: SavedCollectionTarget?) = ownerCache.peek(target)
@@ -201,8 +203,13 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
     }
 
     override suspend fun cover(collectionId: String, cover: SavedCollectionCover): Result<ByteArray> = withTimeout(8_000) {
-        if (cover.authenticated) owned { owner -> coverBytes(collectionId, cover, owner) }
-        else request { coverBytes(collectionId, cover, null) }
+        if (cover.authenticated) owned { owner -> cachedCoverBytes(collectionId, cover, owner) }
+        else request { cachedCoverBytes(collectionId, cover, null) }
+    }
+
+    private suspend fun cachedCoverBytes(id: String, cover: SavedCollectionCover, owner: String?): ByteArray {
+        val key = "${collectionId(id)}:${collectionId(cover.id)}:${cover.authenticated}"
+        return checkNotNull(coverCache.read(key) { coverBytes(id, cover, owner) })
     }
 
     private suspend fun upload(input: CollectionCoverInput, target: SavedCoverReservationResponse) {

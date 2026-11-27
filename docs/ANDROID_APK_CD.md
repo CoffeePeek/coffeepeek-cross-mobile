@@ -1,5 +1,7 @@
 # Публикация Android APK на VPS
 
+Сверено с workflow 27.11.2026; конфигурация внешнего VPS/админки этим документом не подтверждается.
+
 Workflow `.github/workflows/android-apk.yml` (`Android Release`) собирает подписанные release APK и AAB при push в `main`. Один APK доставляется на сайт и в Firebase; AAB — в Play internal testing.
 
 Публичные ссылки:
@@ -13,14 +15,13 @@ Workflow `.github/workflows/android-apk.yml` (`Android Release`) собирае�
 
 ```bash
 sudo mkdir -p /var/www/coffeepeek-downloads/android/main
-sudo mkdir -p /var/www/coffeepeek-downloads/android/dev
 sudo mkdir -p /var/www/coffeepeek-downloads/android/releases
 sudo chown -R deploy:deploy /var/www/coffeepeek-downloads
 ```
 
 Пользователь из `VPS_USER` должен иметь права записи в `/var/www/coffeepeek-downloads` и `/tmp`.
 
-На текущем VPS файлы раздаёт Caddy из Docker Compose. В сервис `caddy` добавлен read-only mount:
+Пример серверной настройки для Caddy в Docker Compose (реальную конфигурацию VPS проверяет оператор отдельно):
 
 ```yaml
 volumes:
@@ -47,7 +48,7 @@ handle {
 }
 ```
 
-Основной домен размещён на Vercel. Его `vercel.json` должен перенаправлять download-маршруты на VPS до SPA rewrites:
+Если основной домен проксирует downloads через Vercel, соответствующий web-репозиторий должен направлять эти пути на файловый сервер до SPA rewrites, например:
 
 ```json
 "redirects": [
@@ -63,7 +64,7 @@ handle {
 
 Создайте environments:
 
-- `production` — разрешить ветку `main` без required reviewers для автоматической доставки;
+- `production` — разрешённая ветка `main`; существующие reviewer gates применяются перед доставкой. Изменение этой политики не является частью сборки.
 
 ## GitHub Variables
 
@@ -114,7 +115,7 @@ ssh-keygen -l -E sha256 -f /etc/ssh/ssh_host_ed25519_key.pub | awk '{print $2}'
 
 ## Версии и metadata
 
-Публичная версия Android — `1.1.1.N`, где `N` равен `versionCode`. Номер сборки — `BUILD_NUMBER_OFFSET + git rev-list --count HEAD`; сдвиг `1000` читается из `iosApp/Configuration/Shared.xcconfig`. iOS использует отдельную публичную версию `MARKETING_VERSION`. Workflow сохраняет в GitHub job summary:
+Android version name рассчитывается в `composeApp/build.gradle.kts` (сейчас `1.2.2.N`). Номер сборки — `BUILD_NUMBER_OFFSET + git rev-list --count HEAD`; текущий offset `1100` читается из `iosApp/Configuration/Shared.xcconfig`. iOS использует отдельный `MARKETING_VERSION` (сейчас `2.0`). Источник и правила повторов — [GOOGLE_PLAY_CD.md](GOOGLE_PLAY_CD.md). Workflow сохраняет в GitHub job summary:
 
 - version name и version code;
 - размер APK;

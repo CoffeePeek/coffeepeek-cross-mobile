@@ -7,6 +7,36 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A9AB00000000000000000001 /* HistoryFailureNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AB00000000000000000002 /* HistoryFailureNativeScreen.swift */; };
+		C0F180000000000000000101 /* ContributionFormModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000103 /* ContributionFormModel.swift */; };
+		C0F180000000000000000201 /* ContributionFormScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000203 /* ContributionFormScreen.swift */; };
+		C0F180000000000000000301 /* ContributionScheduleContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000303 /* ContributionScheduleContent.swift */; };
+		C0F180000000000000000401 /* ContributionMapPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000403 /* ContributionMapPicker.swift */; };
+		C0F180000000000000000501 /* ContributionPhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000503 /* ContributionPhotoPicker.swift */; };
+		C0F180000000000000000601 /* CoffeePeekNativeThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000603 /* CoffeePeekNativeThumbnail.swift */; };
+		CDC4E218272AEBD62CCBD0CF /* RoasterNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */; };
+		8E9C5C56A4E3BE2852ED1CB6 /* RoasterNativeCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */; };
+		FF51FDC39D4F328BFC814202 /* RoasterDiscoveryNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */; };
+		8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */; };
+		6878214BAD9DFB393A3514C0 /* NativeRoaster.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9EFAA51590745D5526C255B5 /* NativeRoaster.strings */; };
+		B23122000000000000000021 /* CoffeePeekLocalBackProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */; };
+		B23122000000000000000011 /* CollectionEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000013 /* CollectionEditorContent.swift */; };
+		B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000003 /* CollectionPosterScreen.swift */; };
+		E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */; };
+		D15C0A000000000000000004 /* DiscoveryMapControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000004 /* DiscoveryMapControls.swift */; };
+		D15C0A000000000000000003 /* DiscoveryShopCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000003 /* DiscoveryShopCard.swift */; };
+		D15C0A000000000000000002 /* DiscoveryNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000002 /* DiscoveryNativeScreen.swift */; };
+		D15C0A000000000000000005 /* DiscoveryMapLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000005 /* DiscoveryMapLayout.swift */; };
+		D15C0A000000000000000001 /* DiscoveryNativeHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000001 /* DiscoveryNativeHost.swift */; };
+		5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000004 /* ShopCheckInListScreen.swift */; };
+		5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000005 /* ShopCheckInListComponents.swift */; };
+		5C13B3110000000000000003 /* NativeShopCheckIns.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000008 /* NativeShopCheckIns.strings */; };
+		5A0D0A000000000000000004 /* ShopDetailNativeOverlays.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000004 /* ShopDetailNativeOverlays.swift */; };
+		5A0D0A000000000000000003 /* ShopDetailNativeInformation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000003 /* ShopDetailNativeInformation.swift */; };
+		5A0D0A000000000000000002 /* ShopDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000002 /* ShopDetailNativeScreen.swift */; };
+		5A0D0A000000000000000001 /* ShopDetailNativeHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000001 /* ShopDetailNativeHost.swift */; };
+		A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */; };
+		A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000006 /* ShopMenuGallery.strings */; };
 		6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */; };
 		A10000000000000000000001 /* CoffeePeekApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* CoffeePeekApp.swift */; };
 		A10000000000000000000002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* Assets.xcassets */; };
@@ -20,9 +50,157 @@
 		A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */; };
 		A10000000000000000000013 /* CoffeePeekNativeGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* CoffeePeekNativeGlass.swift */; };
 		A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* PrivacyInfo.xcprivacy */; };
+		A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* ThemeSettingsScreen.swift */; };
+		A10000000000000000000016 /* ThemeSettings.strings in Resources */ = {isa = PBXBuildFile; fileRef = DAD91A913BF64AB1A801759B /* ThemeSettings.strings */; };
+		B30000000000000000000001 /* ShopReportScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000003 /* ShopReportScreen.swift */; };
+		CD184B270000000000000001 /* NotificationInboxScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD184B270000000000000004 /* NotificationInboxScreen.swift */; };
+		CD184B270000000000000002 /* NotificationInboxHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD184B270000000000000005 /* NotificationInboxHost.swift */; };
+		CD184B270000000000000003 /* NativeNotificationInbox.strings in Resources */ = {isa = PBXBuildFile; fileRef = CD184B270000000000000008 /* NativeNotificationInbox.strings */; };
+		71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C04E5D0000000000000003 /* ContentReportScreen.swift */; };
+		B30000000000000000000002 /* ShopReport.strings in Resources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000006 /* ShopReport.strings */; };
+		71C04E5D0000000000000002 /* ContentReport.strings in Resources */ = {isa = PBXBuildFile; fileRef = 71C04E5D0000000000000006 /* ContentReport.strings */; };
+		5E1FA2300000000000000001 /* ShelfNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000001 /* ShelfNativeScreen.swift */; };
+		5E1FA2300000000000000002 /* ShelfNativeGridScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000002 /* ShelfNativeGridScreen.swift */; };
+		5E1FA2300000000000000003 /* ShelfNativeFinishSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000003 /* ShelfNativeFinishSheet.swift */; };
+		5E1FA2300000000000000004 /* ShelfNativeBagScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000004 /* ShelfNativeBagScreen.swift */; };
+		5E1FA2300000000000000005 /* ShelfNativeAddScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000005 /* ShelfNativeAddScreen.swift */; };
+		5E1FA2300000000000000006 /* ShelfNativeBagForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000006 /* ShelfNativeBagForm.swift */; };
+		5E1FA2300000000000000007 /* ShelfNativeCameraScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000007 /* ShelfNativeCameraScreen.swift */; };
+		5E1FA2500000000000000001 /* NativeShelf.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5E1FA2500000000000000003 /* NativeShelf.strings */; };
+		5E1FA2200000000000000001 /* ShelfArchiveScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */; };
+		B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* CollectionsLibraryScreen.swift */; };
+		5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5E1FA2200000000000000006 /* NativeShelfArchive.strings */; };
+		86C051CE0000000000000001 /* CollectionsWorkspaceScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C051CE0000000000000003 /* CollectionsWorkspaceScreen.swift */; };
+		B20000000000000000000002 /* CollectionsLibrary.strings in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000006 /* CollectionsLibrary.strings */; };
+		86C051CE0000000000000002 /* CollectionsWorkspace.strings in Resources */ = {isa = PBXBuildFile; fileRef = 86C051CE0000000000000006 /* CollectionsWorkspace.strings */; };
+		53E771650000000000000001 /* SettingsNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000002 /* SettingsNativeController.swift */; };
+		53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000004 /* SettingsNativeComponents.swift */; };
+		53E771650000000000000005 /* SettingsNativeTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000006 /* SettingsNativeTab.swift */; };
+		53E771650000000000000007 /* CitySettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000008 /* CitySettingsScreen.swift */; };
+		53E771650000000000000009 /* LanguageSettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E77165000000000000000A /* LanguageSettingsScreen.swift */; };
+		53E77165000000000000000B /* UsagePolicyScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E77165000000000000000C /* UsagePolicyScreen.swift */; };
+		53E77165000000000000000D /* SettingsNative.strings in Resources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000010 /* SettingsNative.strings */; };
+		B10000000000000000000001 /* BlockedAuthorsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* BlockedAuthorsScreen.swift */; };
+		B10000000000000000000002 /* BlockedAuthors.strings in Resources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* BlockedAuthors.strings */; };
+		C1E6A50B0000000000000001 /* CheckInCreatePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E6A50B0000000000000003 /* CheckInCreatePickerView.swift */; };
+		C1E6A50B0000000000000002 /* NativeCheckInCreate.strings in Resources */ = {isa = PBXBuildFile; fileRef = C1E6A50B0000000000000006 /* NativeCheckInCreate.strings */; };
+		C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000004 /* CoffeeDetailScreen.swift */; };
+		C0FFEE500000000000000002 /* CoffeeDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000005 /* CoffeeDetailComponents.swift */; };
+		C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000008 /* CoffeeDetail.strings */; };
+		A0871E7A0000000000000001 /* AuthNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000002 /* AuthNativeController.swift */; };
+		A0871E7A0000000000000003 /* AuthNativeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000004 /* AuthNativeComponents.swift */; };
+		A0871E7A0000000000000005 /* LoginScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000006 /* LoginScreen.swift */; };
+		A0871E7A0000000000000007 /* PasswordRecoveryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */; };
+		A0871E7A000000000000000D /* CoffeePeekNativeStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */; };
+		A9AA00000000000000000001 /* CoffeePeekNativeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */; };
+		A0871E7A000000000000000F /* RegisterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000010 /* RegisterScreen.swift */; };
+		A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000012 /* RegisterConsent.swift */; };
+		A0871E7A0000000000000009 /* NativeAuth.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7A000000000000000C /* NativeAuth.strings */; };
+		A0871E7B0000000000000001 /* CoffeePeekAppleSignInButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */; };
+		A26C0FFE0000000000000001 /* CoffeePeekGoogleSignInButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A26C0FFE0000000000000002 /* CoffeePeekGoogleSignInButton.swift */; };
+		A0871E7B0000000000000003 /* CoffeePeekGuestAccountCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */; };
+		A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000006 /* GuestProfileScreen.swift */; };
+		A0871E7B0000000000000007 /* NativeProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000008 /* NativeProfile.strings */; };
+		A0871E7C0000000000000001 /* OwnProfileScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000005 /* OwnProfileScreen.swift */; };
+		817EAB940000000000000001 /* PublicProfileScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817EAB940000000000000005 /* PublicProfileScreen.swift */; };
+		A0871E7C0000000000000002 /* OwnProfileComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000006 /* OwnProfileComponents.swift */; };
+		817EAB940000000000000002 /* PublicProfileRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817EAB940000000000000006 /* PublicProfileRows.swift */; };
+		A0871E7C0000000000000003 /* OwnProfileActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000007 /* OwnProfileActivityView.swift */; };
+		A0871E7C0000000000000004 /* OwnProfileCheckIns.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */; };
+		A0871E7C0000000000000009 /* NativeOwnProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7C000000000000000C /* NativeOwnProfile.strings */; };
+		B251C0510000000000000001 /* ContributionsNativeHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = B251C0510000000000000004 /* ContributionsNativeHost.swift */; };
+		B251C0510000000000000002 /* ContributionsListNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B251C0510000000000000005 /* ContributionsListNativeScreen.swift */; };
+		B251C0510000000000000003 /* ChangeRequestNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B251C0510000000000000006 /* ChangeRequestNativeScreen.swift */; };
+		B251C051000000000000000A /* NativeContributions.strings in Resources */ = {isa = PBXBuildFile; fileRef = B251C0510000000000000009 /* NativeContributions.strings */; };
+		817EAB940000000000000009 /* NativePublicProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = 817EAB94000000000000000C /* NativePublicProfile.strings */; };
+		F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */; };
+		F07A11400000000000000002 /* NativePhotoViewer.strings in Resources */ = {isa = PBXBuildFile; fileRef = F07A11400000000000000006 /* NativePhotoViewer.strings */; };
+		C39A482AD721BD4CE3E954E6 /* CheckInNativeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F35E4494F2133912E05680DB /* CheckInNativeComponents.swift */; };
+		0C20174F28F6D29AA76E2BEE /* CheckInNativeDateField.swift in Sources */ = {isa = PBXBuildFile; fileRef = C89F0137C4ACC294E23840D7 /* CheckInNativeDateField.swift */; };
+		19EE56A02A19F8C0EF365A81 /* ShopCheckInNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2535FE304764F633F83757 /* ShopCheckInNativeScreen.swift */; };
+		A975A16A0F08668B1352B857 /* ShopCheckInNativeFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BB9149083BDDBB25028DCA9 /* ShopCheckInNativeFields.swift */; };
+		CFB71285E32784D6A7C89461 /* HomeCheckInNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DC75EE9EC7A52285BE12E6B /* HomeCheckInNativeScreen.swift */; };
+		AB3988F5DCA8C7B40BD3D01D /* HomeCheckInNativeRecipe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F4DF9CE7FF41E11B230215 /* HomeCheckInNativeRecipe.swift */; };
+		30A90043BD692A633392CBEE /* HomeCheckInNativeBeanPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE717B8364C9C15EFD76AB5F /* HomeCheckInNativeBeanPicker.swift */; };
+		BE080A3022FB00856830F021 /* HomeCheckInNativePhotos.swift in Sources */ = {isa = PBXBuildFile; fileRef = D49685C4AC658E8E723DCCE1 /* HomeCheckInNativePhotos.swift */; };
+		5B7D6EE565C6D0EB469E72A7 /* HomeCheckInNativeSaved.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5FF61E5E7113C624BCBB1BC /* HomeCheckInNativeSaved.swift */; };
+		A212BDBD9C4E88828A595102 /* NativeHomeCheckIn.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0C1A750256D49685CBF6D16F /* NativeHomeCheckIn.strings */; };
+		0543AA17535E355866739201 /* NativeShopCheckIn.strings in Resources */ = {isa = PBXBuildFile; fileRef = EC640EEA5E659199A22C4935 /* NativeShopCheckIn.strings */; };
+		C22721FA8DE144AF9E0A2BF8 /* EditProfileNativeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A07DF1284A0A4A1BA912127D /* EditProfileNativeModel.swift */; };
+		84DBB4A53A194255851C3CF4 /* EditProfileNativeFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F183ADBA4744FA39CFA5DC7 /* EditProfileNativeFields.swift */; };
+		C17C79C980964743A1A224AD /* EditProfileNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 031FEDA29E0E401EA5C6ED3F /* EditProfileNativeScreen.swift */; };
+		4E059EBD0B5D4EC1818F5821 /* NativeEditProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7E8B5C6A8BD94EDCB3E12F53 /* NativeEditProfile.strings */; };
+		60F1DA56802444D4AAED714A /* CoffeePeekCheckInCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA42BB3C38F3CAE69A847E40 /* CoffeePeekCheckInCard.swift */; };
+		67BB2306FBA01497B6C2A5BF /* CoffeePeekCheckInCardData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE9AE1A5E5433651646AFD9 /* CoffeePeekCheckInCardData.swift */; };
+		00B9031DF9CEEA84481B4495 /* CoffeePeekCheckInPhotoStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = C81D3982143661CAB5562DAD /* CoffeePeekCheckInPhotoStrip.swift */; };
+		BD8B1EB2E303103F86366987 /* CoffeePeekCheckInProfileAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8E5F0D83FEB1E3D9D1C4E7 /* CoffeePeekCheckInProfileAdapter.swift */; };
+		78A7DD89998FCB72E4D2A814 /* CoffeePeekCommunityCardHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = A44D991116E6787B1080A9A0 /* CoffeePeekCommunityCardHost.swift */; };
+		0A8D371634C33941B0A3B65E /* CoffeePeekCheckInCardMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FEE323F041175CE7CB48A5D /* CoffeePeekCheckInCardMapping.swift */; };
+		553A0D82DFD57F0624F032F7 /* CheckInDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */; };
+		4A4149ED7EA558535A593018 /* CheckInDetailNativeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */; };
+		B23123000000000000000005 /* CommunityReportContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000006 /* CommunityReportContent.swift */; };
+		B23123000000000000000003 /* CommunityEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000004 /* CommunityEditorContent.swift */; };
+		B23123000000000000000001 /* CommunitySheetHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000002 /* CommunitySheetHost.swift */; };
+		24B6C1CE91371B3F19C414C4 /* CommunityFeedNativeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56BCB17E90B80BABAB18568D /* CommunityFeedNativeModel.swift */; };
+		D8ED759D953BFD65B94F0ADE /* CommunityFeedNativePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C64B0C6CBAC0C087713348C /* CommunityFeedNativePresentation.swift */; };
+		DAD5EF785C5BAC5D9F65C43E /* CommunityFeedNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */; };
+		15E615F307B4D33226886FF1 /* CommunityFeedNativeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */; };
+		91B28778B1017172858BC88D /* CommunityFeedNativeStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */; };
+		4330C63C97160834EB1EC6FA /* CoffeePeekNativeLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 220DCD8C6CC925FC5019893E /* CoffeePeekNativeLoader.swift */; };
+		A430B5D1219E4B7B980EA14F /* CoffeePeekLikeIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3CD9FBC9024412590956ADE /* CoffeePeekLikeIcon.swift */; };
+		26E4BC2F1E8076E36E7674AA /* GlobalDialogNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCBB913B662C398717072D0 /* GlobalDialogNativeScreen.swift */; };
+		13E1EB359E1732420F69CBB7 /* CoffeePeekNativeActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */; };
+		5EB38D9D1A59581550BCF75A /* AccountDeletionNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */; };
+		45F8E39BC34FFD6CDC34298B /* RootModalNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */; };
+		1AFFB44C0CA1DABC7CE94803 /* GuestOnboardingNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1F415B437B8A86F54CBC84 /* GuestOnboardingNativeScreen.swift */; };
+		0AA13B21D6BCD94E8B05BD6E /* AppUpdateNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 409A8042B64371AC0EF51FED /* AppUpdateNativeScreen.swift */; };
+		9F65437D1B4E3D385CB36601 /* NativeAccountDeletion.strings in Resources */ = {isa = PBXBuildFile; fileRef = 29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */; };
+		5C55A1F6A4F5DFB3DE7EDF5B /* NativeGuestOnboarding.strings in Resources */ = {isa = PBXBuildFile; fileRef = C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */; };
+		C13FD4859C40AAE420E7E0FC /* NativeAppUpdate.strings in Resources */ = {isa = PBXBuildFile; fileRef = EA778DBEF66FD480C275D198 /* NativeAppUpdate.strings */; };
+		B0510A100000000000000001 /* OwnershipNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000001 /* OwnershipNativeScreen.swift */; };
+		B0510A100000000000000002 /* OwnershipNativeOverview.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000002 /* OwnershipNativeOverview.swift */; };
+		B0510A100000000000000003 /* OwnershipNativeForms.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000003 /* OwnershipNativeForms.swift */; };
+		B0510A100000000000000004 /* OwnershipNativeQrSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */; };
+		B0510A100000000000000005 /* OwnershipNativeActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000005 /* OwnershipNativeActions.swift */; };
+		B0510A300000000000000001 /* NativeOwnership.strings in Resources */ = {isa = PBXBuildFile; fileRef = B0510A300000000000000004 /* NativeOwnership.strings */; };
+		CC3EB4067BD44B5EAF5746D4 /* NativeRootController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CA391DA525463FA268045B /* NativeRootController.swift */; };
+		41CD23D084804E1C98CC9E2F /* NativeRootModalPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7042FB2928046658CCFC580 /* NativeRootModalPresenter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A9AB00000000000000000002 /* HistoryFailureNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HistoryFailureNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HistoryFailureNativeScreen.swift; sourceTree = "<group>"; };
+		C0F180000000000000000103 /* ContributionFormModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionFormModel.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionFormModel.swift; sourceTree = "<group>"; };
+		C0F180000000000000000203 /* ContributionFormScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionFormScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionFormScreen.swift; sourceTree = "<group>"; };
+		C0F180000000000000000303 /* ContributionScheduleContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionScheduleContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionScheduleContent.swift; sourceTree = "<group>"; };
+		C0F180000000000000000403 /* ContributionMapPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionMapPicker.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionMapPicker.swift; sourceTree = "<group>"; };
+		C0F180000000000000000503 /* ContributionPhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionPhotoPicker.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionPhotoPicker.swift; sourceTree = "<group>"; };
+		C0F180000000000000000603 /* CoffeePeekNativeThumbnail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeThumbnail.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeThumbnail.swift; sourceTree = "<group>"; };
+		181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterNativeController.swift; sourceTree = "<group>"; };
+		2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterNativeCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterNativeCard.swift; sourceTree = "<group>"; };
+		AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterDiscoveryNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterDiscoveryNativeScreen.swift; sourceTree = "<group>"; };
+		2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterDetailNativeScreen.swift; sourceTree = "<group>"; };
+		7358E39742738F1AF7508555 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeRoaster.strings; sourceTree = "<group>"; };
+		93392B65F66B89565E0DF9D8 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeRoaster.strings; sourceTree = "<group>"; };
+		B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekLocalBackProtection.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLocalBackProtection.swift; sourceTree = "<group>"; };
+		B23122000000000000000013 /* CollectionEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionEditorContent.swift; sourceTree = "<group>"; };
+		B23122000000000000000003 /* CollectionPosterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionPosterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionPosterScreen.swift; sourceTree = "<group>"; };
+		E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryFilterSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryFilterSheet.swift; sourceTree = "<group>"; };
+		D15C0B000000000000000004 /* DiscoveryMapControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryMapControls.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryMapControls.swift; sourceTree = "<group>"; };
+		D15C0B000000000000000003 /* DiscoveryShopCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryShopCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryShopCard.swift; sourceTree = "<group>"; };
+		D15C0B000000000000000002 /* DiscoveryNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryNativeScreen.swift; sourceTree = "<group>"; };
+		D15C0B000000000000000005 /* DiscoveryMapLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryMapLayout.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryMapLayout.swift; sourceTree = "<group>"; };
+		D15C0B000000000000000001 /* DiscoveryNativeHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryNativeHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryNativeHost.swift; sourceTree = "<group>"; };
+		5C13B3110000000000000004 /* ShopCheckInListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListScreen.swift; sourceTree = "<group>"; };
+		5C13B3110000000000000005 /* ShopCheckInListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListComponents.swift; sourceTree = "<group>"; };
+		5C13B3110000000000000006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShopCheckIns.strings; sourceTree = "<group>"; };
+		5C13B3110000000000000007 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeShopCheckIns.strings; sourceTree = "<group>"; };
+		5A0D0B000000000000000004 /* ShopDetailNativeOverlays.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeOverlays.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeOverlays.swift; sourceTree = "<group>"; };
+		5A0D0B000000000000000003 /* ShopDetailNativeInformation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeInformation.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeInformation.swift; sourceTree = "<group>"; };
+		5A0D0B000000000000000002 /* ShopDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeScreen.swift; sourceTree = "<group>"; };
+		5A0D0B000000000000000001 /* ShopDetailNativeHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeHost.swift; sourceTree = "<group>"; };
+		A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopMenuGalleryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopMenuGalleryScreen.swift; sourceTree = "<group>"; };
+		A6C011E60000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
+		A6C011E60000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
 		63F9FA5248F9B32DFB6EE1B8 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		699B07C40BD723F87323A277 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		A20000000000000000000001 /* CoffeePeekApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeePeekApp.swift; sourceTree = "<group>"; };
@@ -39,6 +217,145 @@
 		A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift; sourceTree = "<group>"; };
 		A20000000000000000000014 /* CoffeePeekNativeGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeGlass.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeGlass.swift; sourceTree = "<group>"; };
 		A20000000000000000000015 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A20000000000000000000016 /* ThemeSettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThemeSettingsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ThemeSettingsScreen.swift; sourceTree = "<group>"; };
+		A20000000000000000000017 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
+		A20000000000000000000018 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
+		B30000000000000000000003 /* ShopReportScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopReportScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopReportScreen.swift; sourceTree = "<group>"; };
+		CD184B270000000000000004 /* NotificationInboxScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NotificationInboxScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/NotificationInboxScreen.swift; sourceTree = "<group>"; };
+		CD184B270000000000000005 /* NotificationInboxHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NotificationInboxHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/NotificationInboxHost.swift; sourceTree = "<group>"; };
+		CD184B270000000000000006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeNotificationInbox.strings; sourceTree = "<group>"; };
+		CD184B270000000000000007 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeNotificationInbox.strings; sourceTree = "<group>"; };
+		71C04E5D0000000000000003 /* ContentReportScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentReportScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContentReportScreen.swift; sourceTree = "<group>"; };
+		B30000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ShopReport.strings; sourceTree = "<group>"; };
+		71C04E5D0000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ContentReport.strings; sourceTree = "<group>"; };
+		B30000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopReport.strings; sourceTree = "<group>"; };
+		71C04E5D0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ContentReport.strings; sourceTree = "<group>"; };
+		5E1FA2400000000000000001 /* ShelfNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeScreen.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000002 /* ShelfNativeGridScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeGridScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeGridScreen.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000003 /* ShelfNativeFinishSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeFinishSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeFinishSheet.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000004 /* ShelfNativeBagScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeBagScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeBagScreen.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000005 /* ShelfNativeAddScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeAddScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeAddScreen.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000006 /* ShelfNativeBagForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeBagForm.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeBagForm.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000007 /* ShelfNativeCameraScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeCameraScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeCameraScreen.swift; sourceTree = "<group>"; };
+		5E1FA2500000000000000002 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShelf.strings; sourceTree = "<group>"; };
+		5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfArchiveScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfArchiveScreen.swift; sourceTree = "<group>"; };
+		B20000000000000000000003 /* CollectionsLibraryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionsLibraryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionsLibraryScreen.swift; sourceTree = "<group>"; };
+		5E1FA2200000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShelfArchive.strings; sourceTree = "<group>"; };
+		B20000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
+		5E1FA2200000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeShelfArchive.strings; sourceTree = "<group>"; };
+		86C051CE0000000000000003 /* CollectionsWorkspaceScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionsWorkspaceScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionsWorkspaceScreen.swift; sourceTree = "<group>"; };
+		86C051CE0000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CollectionsWorkspace.strings; sourceTree = "<group>"; };
+		B20000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
+		86C051CE0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/CollectionsWorkspace.strings; sourceTree = "<group>"; };
+		53E771650000000000000002 /* SettingsNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeController.swift; sourceTree = "<group>"; };
+		53E771650000000000000004 /* SettingsNativeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeComponents.swift; sourceTree = "<group>"; };
+		53E771650000000000000006 /* SettingsNativeTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeTab.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeTab.swift; sourceTree = "<group>"; };
+		53E771650000000000000008 /* CitySettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CitySettingsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CitySettingsScreen.swift; sourceTree = "<group>"; };
+		53E77165000000000000000A /* LanguageSettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LanguageSettingsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/LanguageSettingsScreen.swift; sourceTree = "<group>"; };
+		53E77165000000000000000C /* UsagePolicyScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UsagePolicyScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/UsagePolicyScreen.swift; sourceTree = "<group>"; };
+		53E77165000000000000000E /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/SettingsNative.strings; sourceTree = "<group>"; };
+		53E77165000000000000000F /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/SettingsNative.strings; sourceTree = "<group>"; };
+		B10000000000000000000003 /* BlockedAuthorsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlockedAuthorsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/BlockedAuthorsScreen.swift; sourceTree = "<group>"; };
+		B10000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
+		B10000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
+		C1E6A50B0000000000000003 /* CheckInCreatePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInCreatePickerView.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInCreatePickerView.swift; sourceTree = "<group>"; };
+		C1E6A50B0000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeCheckInCreate.strings; sourceTree = "<group>"; };
+		C1E6A50B0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeCheckInCreate.strings; sourceTree = "<group>"; };
+		C0FFEE500000000000000004 /* CoffeeDetailScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeeDetailScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeeDetailScreen.swift; sourceTree = "<group>"; };
+		C0FFEE500000000000000005 /* CoffeeDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeeDetailComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeeDetailComponents.swift; sourceTree = "<group>"; };
+		C0FFEE500000000000000006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CoffeeDetail.strings; sourceTree = "<group>"; };
+		C0FFEE500000000000000007 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/CoffeeDetail.strings; sourceTree = "<group>"; };
+		A0871E7A0000000000000002 /* AuthNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AuthNativeController.swift; sourceTree = "<group>"; };
+		A0871E7A0000000000000004 /* AuthNativeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthNativeComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AuthNativeComponents.swift; sourceTree = "<group>"; };
+		A0871E7A0000000000000006 /* LoginScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LoginScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/LoginScreen.swift; sourceTree = "<group>"; };
+		A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PasswordRecoveryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/PasswordRecoveryScreen.swift; sourceTree = "<group>"; };
+		A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeStyle.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeStyle.swift; sourceTree = "<group>"; };
+		A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeMessage.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeMessage.swift; sourceTree = "<group>"; };
+		A0871E7A0000000000000010 /* RegisterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegisterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RegisterScreen.swift; sourceTree = "<group>"; };
+		A0871E7A0000000000000012 /* RegisterConsent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegisterConsent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RegisterConsent.swift; sourceTree = "<group>"; };
+		A0871E7A000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAuth.strings; sourceTree = "<group>"; };
+		A0871E7A000000000000000B /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeAuth.strings; sourceTree = "<group>"; };
+		A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekAppleSignInButton.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekAppleSignInButton.swift; sourceTree = "<group>"; };
+		A26C0FFE0000000000000002 /* CoffeePeekGoogleSignInButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekGoogleSignInButton.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekGoogleSignInButton.swift; sourceTree = "<group>"; };
+		A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekGuestAccountCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekGuestAccountCard.swift; sourceTree = "<group>"; };
+		A0871E7B0000000000000006 /* GuestProfileScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GuestProfileScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/GuestProfileScreen.swift; sourceTree = "<group>"; };
+		A0871E7B0000000000000009 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeProfile.strings; sourceTree = "<group>"; };
+		A0871E7B000000000000000A /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeProfile.strings; sourceTree = "<group>"; };
+		A0871E7C0000000000000005 /* OwnProfileScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnProfileScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnProfileScreen.swift; sourceTree = "<group>"; };
+		817EAB940000000000000005 /* PublicProfileScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PublicProfileScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/PublicProfileScreen.swift; sourceTree = "<group>"; };
+		A0871E7C0000000000000006 /* OwnProfileComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnProfileComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnProfileComponents.swift; sourceTree = "<group>"; };
+		817EAB940000000000000006 /* PublicProfileRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PublicProfileRows.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/PublicProfileRows.swift; sourceTree = "<group>"; };
+		A0871E7C0000000000000007 /* OwnProfileActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnProfileActivityView.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnProfileActivityView.swift; sourceTree = "<group>"; };
+		A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnProfileCheckIns.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnProfileCheckIns.swift; sourceTree = "<group>"; };
+		A0871E7C000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeOwnProfile.strings; sourceTree = "<group>"; };
+		817EAB94000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativePublicProfile.strings; sourceTree = "<group>"; };
+		A0871E7C000000000000000B /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeOwnProfile.strings; sourceTree = "<group>"; };
+		B251C0510000000000000004 /* ContributionsNativeHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionsNativeHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionsNativeHost.swift; sourceTree = "<group>"; };
+		B251C0510000000000000005 /* ContributionsListNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionsListNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionsListNativeScreen.swift; sourceTree = "<group>"; };
+		B251C0510000000000000006 /* ChangeRequestNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ChangeRequestNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ChangeRequestNativeScreen.swift; sourceTree = "<group>"; };
+		B251C0510000000000000007 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeContributions.strings; sourceTree = "<group>"; };
+		B251C0510000000000000008 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeContributions.strings; sourceTree = "<group>"; };
+		817EAB94000000000000000B /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativePublicProfile.strings; sourceTree = "<group>"; };
+		F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativePhotoViewer.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativePhotoViewer.swift; sourceTree = "<group>"; };
+		F07A11400000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativePhotoViewer.strings; sourceTree = "<group>"; };
+		F07A11400000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativePhotoViewer.strings; sourceTree = "<group>"; };
+		F35E4494F2133912E05680DB /* CheckInNativeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInNativeComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInNativeComponents.swift; sourceTree = "<group>"; };
+		C89F0137C4ACC294E23840D7 /* CheckInNativeDateField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInNativeDateField.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInNativeDateField.swift; sourceTree = "<group>"; };
+		CC2535FE304764F633F83757 /* ShopCheckInNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInNativeScreen.swift; sourceTree = "<group>"; };
+		3BB9149083BDDBB25028DCA9 /* ShopCheckInNativeFields.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInNativeFields.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInNativeFields.swift; sourceTree = "<group>"; };
+		3DC75EE9EC7A52285BE12E6B /* HomeCheckInNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HomeCheckInNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HomeCheckInNativeScreen.swift; sourceTree = "<group>"; };
+		25F4DF9CE7FF41E11B230215 /* HomeCheckInNativeRecipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HomeCheckInNativeRecipe.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HomeCheckInNativeRecipe.swift; sourceTree = "<group>"; };
+		DE717B8364C9C15EFD76AB5F /* HomeCheckInNativeBeanPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HomeCheckInNativeBeanPicker.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HomeCheckInNativeBeanPicker.swift; sourceTree = "<group>"; };
+		D49685C4AC658E8E723DCCE1 /* HomeCheckInNativePhotos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HomeCheckInNativePhotos.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HomeCheckInNativePhotos.swift; sourceTree = "<group>"; };
+		D5FF61E5E7113C624BCBB1BC /* HomeCheckInNativeSaved.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HomeCheckInNativeSaved.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HomeCheckInNativeSaved.swift; sourceTree = "<group>"; };
+		3D2DD99281245D969A9C04BC /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeHomeCheckIn.strings; sourceTree = "<group>"; };
+		2A139ABC193D775C51577878 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeHomeCheckIn.strings; sourceTree = "<group>"; };
+		38A0271F3F63C5C4D0439D14 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShopCheckIn.strings; sourceTree = "<group>"; };
+		C8F6F7C0AED4F7CAC866D33C /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeShopCheckIn.strings; sourceTree = "<group>"; };
+		A07DF1284A0A4A1BA912127D /* EditProfileNativeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EditProfileNativeModel.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/EditProfileNativeModel.swift; sourceTree = "<group>"; };
+		9F183ADBA4744FA39CFA5DC7 /* EditProfileNativeFields.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EditProfileNativeFields.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/EditProfileNativeFields.swift; sourceTree = "<group>"; };
+		031FEDA29E0E401EA5C6ED3F /* EditProfileNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EditProfileNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/EditProfileNativeScreen.swift; sourceTree = "<group>"; };
+		B901C8723E094C91B01145A3 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeEditProfile.strings; sourceTree = "<group>"; };
+		AE837BE2E3AD45E6A8F139A0 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeEditProfile.strings; sourceTree = "<group>"; };
+		BA42BB3C38F3CAE69A847E40 /* CoffeePeekCheckInCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCheckInCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCheckInCard.swift; sourceTree = "<group>"; };
+		1BE9AE1A5E5433651646AFD9 /* CoffeePeekCheckInCardData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCheckInCardData.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCheckInCardData.swift; sourceTree = "<group>"; };
+		C81D3982143661CAB5562DAD /* CoffeePeekCheckInPhotoStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCheckInPhotoStrip.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCheckInPhotoStrip.swift; sourceTree = "<group>"; };
+		7C8E5F0D83FEB1E3D9D1C4E7 /* CoffeePeekCheckInProfileAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCheckInProfileAdapter.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCheckInProfileAdapter.swift; sourceTree = "<group>"; };
+		A44D991116E6787B1080A9A0 /* CoffeePeekCommunityCardHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCommunityCardHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCommunityCardHost.swift; sourceTree = "<group>"; };
+		0FEE323F041175CE7CB48A5D /* CoffeePeekCheckInCardMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCheckInCardMapping.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCheckInCardMapping.swift; sourceTree = "<group>"; };
+		9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInDetailNativeScreen.swift; sourceTree = "<group>"; };
+		7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInDetailNativeModel.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInDetailNativeModel.swift; sourceTree = "<group>"; };
+		B23123000000000000000006 /* CommunityReportContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityReportContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityReportContent.swift; sourceTree = "<group>"; };
+		B23123000000000000000004 /* CommunityEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityEditorContent.swift; sourceTree = "<group>"; };
+		B23123000000000000000002 /* CommunitySheetHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunitySheetHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunitySheetHost.swift; sourceTree = "<group>"; };
+		56BCB17E90B80BABAB18568D /* CommunityFeedNativeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeModel.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeModel.swift; sourceTree = "<group>"; };
+		6C64B0C6CBAC0C087713348C /* CommunityFeedNativePresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativePresentation.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativePresentation.swift; sourceTree = "<group>"; };
+		803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeScreen.swift; sourceTree = "<group>"; };
+		30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeRow.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeRow.swift; sourceTree = "<group>"; };
+		C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeStatus.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeStatus.swift; sourceTree = "<group>"; };
+		220DCD8C6CC925FC5019893E /* CoffeePeekNativeLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeLoader.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeLoader.swift; sourceTree = "<group>"; };
+		D3CD9FBC9024412590956ADE /* CoffeePeekLikeIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekLikeIcon.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLikeIcon.swift; sourceTree = "<group>"; };
+		5BCBB913B662C398717072D0 /* GlobalDialogNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GlobalDialogNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/GlobalDialogNativeScreen.swift; sourceTree = "<group>"; };
+		CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeActionButton.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeActionButton.swift; sourceTree = "<group>"; };
+		E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AccountDeletionNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AccountDeletionNativeScreen.swift; sourceTree = "<group>"; };
+		CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RootModalNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RootModalNativeController.swift; sourceTree = "<group>"; };
+		CC1F415B437B8A86F54CBC84 /* GuestOnboardingNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GuestOnboardingNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/GuestOnboardingNativeScreen.swift; sourceTree = "<group>"; };
+		409A8042B64371AC0EF51FED /* AppUpdateNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppUpdateNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AppUpdateNativeScreen.swift; sourceTree = "<group>"; };
+		D47404F9E2F7C880C6AFDCA0 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAccountDeletion.strings; sourceTree = "<group>"; };
+		07C3A68E7563BFECB15E5D10 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeAccountDeletion.strings; sourceTree = "<group>"; };
+		0769FE21141D267C9A925D7F /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeGuestOnboarding.strings; sourceTree = "<group>"; };
+		D4CE6039F8E15828368F22A6 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeGuestOnboarding.strings; sourceTree = "<group>"; };
+		168991BEEC11C0CB322F684C /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAppUpdate.strings; sourceTree = "<group>"; };
+		C4E9615DA2EF35A243B7C779 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeAppUpdate.strings; sourceTree = "<group>"; };
+		B0510A200000000000000001 /* OwnershipNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeScreen.swift; sourceTree = "<group>"; };
+		B0510A200000000000000002 /* OwnershipNativeOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeOverview.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeOverview.swift; sourceTree = "<group>"; };
+		B0510A200000000000000003 /* OwnershipNativeForms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeForms.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeForms.swift; sourceTree = "<group>"; };
+		B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeQrSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeQrSheet.swift; sourceTree = "<group>"; };
+		B0510A200000000000000005 /* OwnershipNativeActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeActions.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeActions.swift; sourceTree = "<group>"; };
+		B0510A300000000000000002 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
+		B0510A300000000000000003 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
+		70CA391DA525463FA268045B /* NativeRootController.swift */ = {isa = PBXFileReference; name = "NativeRootController.swift"; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/NativeRootController.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		A7042FB2928046658CCFC580 /* NativeRootModalPresenter.swift */ = {isa = PBXFileReference; name = "NativeRootModalPresenter.swift"; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/NativeRootModalPresenter.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,15 +387,160 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
+				A0871E7A0000000000000002 /* AuthNativeController.swift */,
+				A0871E7A0000000000000004 /* AuthNativeComponents.swift */,
+				A0871E7A0000000000000006 /* LoginScreen.swift */,
+				A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */,
+				A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */,
+				A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */,
+				A0871E7A0000000000000010 /* RegisterScreen.swift */,
+				A0871E7A0000000000000012 /* RegisterConsent.swift */,
+				A0871E7B0000000000000006 /* GuestProfileScreen.swift */,
+				E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */,
+				D15C0B000000000000000004 /* DiscoveryMapControls.swift */,
+				D15C0B000000000000000003 /* DiscoveryShopCard.swift */,
+				D15C0B000000000000000002 /* DiscoveryNativeScreen.swift */,
+				D15C0B000000000000000005 /* DiscoveryMapLayout.swift */,
+				D15C0B000000000000000001 /* DiscoveryNativeHost.swift */,
+				F35E4494F2133912E05680DB /* CheckInNativeComponents.swift */,
+				C89F0137C4ACC294E23840D7 /* CheckInNativeDateField.swift */,
+				CC2535FE304764F633F83757 /* ShopCheckInNativeScreen.swift */,
+				3BB9149083BDDBB25028DCA9 /* ShopCheckInNativeFields.swift */,
+				3DC75EE9EC7A52285BE12E6B /* HomeCheckInNativeScreen.swift */,
+				25F4DF9CE7FF41E11B230215 /* HomeCheckInNativeRecipe.swift */,
+				DE717B8364C9C15EFD76AB5F /* HomeCheckInNativeBeanPicker.swift */,
+				D49685C4AC658E8E723DCCE1 /* HomeCheckInNativePhotos.swift */,
+				D5FF61E5E7113C624BCBB1BC /* HomeCheckInNativeSaved.swift */,
+				A07DF1284A0A4A1BA912127D /* EditProfileNativeModel.swift */,
+				9F183ADBA4744FA39CFA5DC7 /* EditProfileNativeFields.swift */,
+				031FEDA29E0E401EA5C6ED3F /* EditProfileNativeScreen.swift */,
+				C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */,
+				30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */,
+				803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */,
+				6C64B0C6CBAC0C087713348C /* CommunityFeedNativePresentation.swift */,
+				B23123000000000000000002 /* CommunitySheetHost.swift */,
+				B23123000000000000000004 /* CommunityEditorContent.swift */,
+				B23123000000000000000006 /* CommunityReportContent.swift */,
+				56BCB17E90B80BABAB18568D /* CommunityFeedNativeModel.swift */,
+				7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */,
+				9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */,
+				0FEE323F041175CE7CB48A5D /* CoffeePeekCheckInCardMapping.swift */,
+				A44D991116E6787B1080A9A0 /* CoffeePeekCommunityCardHost.swift */,
+				7C8E5F0D83FEB1E3D9D1C4E7 /* CoffeePeekCheckInProfileAdapter.swift */,
+				C81D3982143661CAB5562DAD /* CoffeePeekCheckInPhotoStrip.swift */,
+				1BE9AE1A5E5433651646AFD9 /* CoffeePeekCheckInCardData.swift */,
+				BA42BB3C38F3CAE69A847E40 /* CoffeePeekCheckInCard.swift */,
+				A0871E7C0000000000000005 /* OwnProfileScreen.swift */,
+				817EAB940000000000000005 /* PublicProfileScreen.swift */,
+				A0871E7C0000000000000006 /* OwnProfileComponents.swift */,
+				817EAB940000000000000006 /* PublicProfileRows.swift */,
+				A0871E7C0000000000000007 /* OwnProfileActivityView.swift */,
+				A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */,
+				A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */,
+				A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */,
+				A26C0FFE0000000000000002 /* CoffeePeekGoogleSignInButton.swift */,
+				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
+				B30000000000000000000003 /* ShopReportScreen.swift */,
+				B251C0510000000000000004 /* ContributionsNativeHost.swift */,
+				C0F180000000000000000103 /* ContributionFormModel.swift */,
+				C0F180000000000000000203 /* ContributionFormScreen.swift */,
+				C0F180000000000000000303 /* ContributionScheduleContent.swift */,
+				C0F180000000000000000403 /* ContributionMapPicker.swift */,
+				C0F180000000000000000503 /* ContributionPhotoPicker.swift */,
+				C0F180000000000000000603 /* CoffeePeekNativeThumbnail.swift */,
+				B251C0510000000000000005 /* ContributionsListNativeScreen.swift */,
+				B251C0510000000000000006 /* ChangeRequestNativeScreen.swift */,
+				B251C0510000000000000009 /* NativeContributions.strings */,
+				CD184B270000000000000004 /* NotificationInboxScreen.swift */,
+				CD184B270000000000000005 /* NotificationInboxHost.swift */,
+				71C04E5D0000000000000003 /* ContentReportScreen.swift */,
+				B30000000000000000000006 /* ShopReport.strings */,
+				C0FFEE500000000000000004 /* CoffeeDetailScreen.swift */,
+				C0FFEE500000000000000005 /* CoffeeDetailComponents.swift */,
+				C0FFEE500000000000000008 /* CoffeeDetail.strings */,
+				CD184B270000000000000008 /* NativeNotificationInbox.strings */,
+				71C04E5D0000000000000006 /* ContentReport.strings */,
+				5E1FA2400000000000000007 /* ShelfNativeCameraScreen.swift */,
+				5E1FA2400000000000000006 /* ShelfNativeBagForm.swift */,
+				5E1FA2400000000000000005 /* ShelfNativeAddScreen.swift */,
+				5E1FA2400000000000000004 /* ShelfNativeBagScreen.swift */,
+				5E1FA2400000000000000003 /* ShelfNativeFinishSheet.swift */,
+				5E1FA2400000000000000002 /* ShelfNativeGridScreen.swift */,
+				5E1FA2400000000000000001 /* ShelfNativeScreen.swift */,
+				5E1FA2500000000000000003 /* NativeShelf.strings */,
+				5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */,
+				B0510A200000000000000005 /* OwnershipNativeActions.swift */,
+				B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */,
+				B0510A200000000000000003 /* OwnershipNativeForms.swift */,
+				B0510A200000000000000002 /* OwnershipNativeOverview.swift */,
+				B0510A200000000000000001 /* OwnershipNativeScreen.swift */,
+				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
+				5E1FA2200000000000000006 /* NativeShelfArchive.strings */,
+				B0510A300000000000000004 /* NativeOwnership.strings */,
+				86C051CE0000000000000003 /* CollectionsWorkspaceScreen.swift */,
+				B23122000000000000000003 /* CollectionPosterScreen.swift */,
+				B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */,
+				B23122000000000000000013 /* CollectionEditorContent.swift */,
+				B20000000000000000000006 /* CollectionsLibrary.strings */,
+				86C051CE0000000000000006 /* CollectionsWorkspace.strings */,
+				53E771650000000000000002 /* SettingsNativeController.swift */,
+				53E771650000000000000004 /* SettingsNativeComponents.swift */,
+				53E771650000000000000006 /* SettingsNativeTab.swift */,
+				53E771650000000000000008 /* CitySettingsScreen.swift */,
+				53E77165000000000000000A /* LanguageSettingsScreen.swift */,
+				53E77165000000000000000C /* UsagePolicyScreen.swift */,
+				B10000000000000000000003 /* BlockedAuthorsScreen.swift */,
+				C1E6A50B0000000000000003 /* CheckInCreatePickerView.swift */,
+				B10000000000000000000006 /* BlockedAuthors.strings */,
+				C1E6A50B0000000000000006 /* NativeCheckInCreate.strings */,
 				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
+				A9AB00000000000000000002 /* HistoryFailureNativeScreen.swift */,
+				181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */,
+				2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */,
+				AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */,
+				2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */,
+				9EFAA51590745D5526C255B5 /* NativeRoaster.strings */,
+				A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */,
+				F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */,
+				F07A11400000000000000006 /* NativePhotoViewer.strings */,
+				5C13B3110000000000000004 /* ShopCheckInListScreen.swift */,
+				5A0D0B000000000000000004 /* ShopDetailNativeOverlays.swift */,
+				5A0D0B000000000000000003 /* ShopDetailNativeInformation.swift */,
+				5A0D0B000000000000000002 /* ShopDetailNativeScreen.swift */,
+				5A0D0B000000000000000001 /* ShopDetailNativeHost.swift */,
+				5C13B3110000000000000005 /* ShopCheckInListComponents.swift */,
 				A20000000000000000000009 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
 				A20000000000000000000003 /* Info.plist */,
 				A20000000000000000000015 /* PrivacyInfo.xcprivacy */,
 				A20000000000000000000012 /* GoogleService-Info.plist */,
+				A6C011E60000000000000006 /* ShopMenuGallery.strings */,
+				5C13B3110000000000000008 /* NativeShopCheckIns.strings */,
 				37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */,
+				DAD91A913BF64AB1A801759B /* ThemeSettings.strings */,
+				A0871E7A000000000000000C /* NativeAuth.strings */,
+				A0871E7B0000000000000008 /* NativeProfile.strings */,
+				0C1A750256D49685CBF6D16F /* NativeHomeCheckIn.strings */,
+				EC640EEA5E659199A22C4935 /* NativeShopCheckIn.strings */,
+				7E8B5C6A8BD94EDCB3E12F53 /* NativeEditProfile.strings */,
+				A0871E7C000000000000000C /* NativeOwnProfile.strings */,
+				817EAB94000000000000000C /* NativePublicProfile.strings */,
+				53E771650000000000000010 /* SettingsNative.strings */,
+				220DCD8C6CC925FC5019893E /* CoffeePeekNativeLoader.swift */,
+				D3CD9FBC9024412590956ADE /* CoffeePeekLikeIcon.swift */,
+				5BCBB913B662C398717072D0 /* GlobalDialogNativeScreen.swift */,
+				CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */,
+				E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */,
+				CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */,
+				CC1F415B437B8A86F54CBC84 /* GuestOnboardingNativeScreen.swift */,
+				409A8042B64371AC0EF51FED /* AppUpdateNativeScreen.swift */,
+				29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */,
+				C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */,
+				EA778DBEF66FD480C275D198 /* NativeAppUpdate.strings */,
+				70CA391DA525463FA268045B /* NativeRootController.swift */,
+				A7042FB2928046658CCFC580 /* NativeRootModalPresenter.swift */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -186,9 +648,37 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C13FD4859C40AAE420E7E0FC /* NativeAppUpdate.strings in Resources */,
+				5C55A1F6A4F5DFB3DE7EDF5B /* NativeGuestOnboarding.strings in Resources */,
+				9F65437D1B4E3D385CB36601 /* NativeAccountDeletion.strings in Resources */,
 				A10000000000000000000002 /* Assets.xcassets in Resources */,
 				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
+				A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */,
+				F07A11400000000000000002 /* NativePhotoViewer.strings in Resources */,
+				5C13B3110000000000000003 /* NativeShopCheckIns.strings in Resources */,
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
+				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
+				A0871E7A0000000000000009 /* NativeAuth.strings in Resources */,
+				A0871E7B0000000000000007 /* NativeProfile.strings in Resources */,
+				A212BDBD9C4E88828A595102 /* NativeHomeCheckIn.strings in Resources */,
+				0543AA17535E355866739201 /* NativeShopCheckIn.strings in Resources */,
+				4E059EBD0B5D4EC1818F5821 /* NativeEditProfile.strings in Resources */,
+				6878214BAD9DFB393A3514C0 /* NativeRoaster.strings in Resources */,
+				A0871E7C0000000000000009 /* NativeOwnProfile.strings in Resources */,
+				817EAB940000000000000009 /* NativePublicProfile.strings in Resources */,
+				B30000000000000000000002 /* ShopReport.strings in Resources */,
+				C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */,
+				B251C051000000000000000A /* NativeContributions.strings in Resources */,
+				CD184B270000000000000003 /* NativeNotificationInbox.strings in Resources */,
+				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
+				5E1FA2500000000000000001 /* NativeShelf.strings in Resources */,
+				5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */,
+				B0510A300000000000000001 /* NativeOwnership.strings in Resources */,
+				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
+				86C051CE0000000000000002 /* CollectionsWorkspace.strings in Resources */,
+				53E77165000000000000000D /* SettingsNative.strings in Resources */,
+				B10000000000000000000002 /* BlockedAuthors.strings in Resources */,
+				C1E6A50B0000000000000002 /* NativeCheckInCreate.strings in Resources */,
 				A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -200,10 +690,16 @@
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
-			files = ();
-			inputPaths = ("$(SRCROOT)/copy-firebase-config.sh", "$(SRCROOT)/iosApp");
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/copy-firebase-config.sh",
+				"$(SRCROOT)/iosApp",
+			);
 			name = "Copy Firebase Configuration";
-			outputPaths = ("$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist");
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$SRCROOT/copy-firebase-config.sh\"\n";
@@ -252,17 +748,170 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26E4BC2F1E8076E36E7674AA /* GlobalDialogNativeScreen.swift in Sources */,
+				4330C63C97160834EB1EC6FA /* CoffeePeekNativeLoader.swift in Sources */,
+				A430B5D1219E4B7B980EA14F /* CoffeePeekLikeIcon.swift in Sources */,
+				0AA13B21D6BCD94E8B05BD6E /* AppUpdateNativeScreen.swift in Sources */,
+				1AFFB44C0CA1DABC7CE94803 /* GuestOnboardingNativeScreen.swift in Sources */,
+				45F8E39BC34FFD6CDC34298B /* RootModalNativeController.swift in Sources */,
+				5EB38D9D1A59581550BCF75A /* AccountDeletionNativeScreen.swift in Sources */,
+				13E1EB359E1732420F69CBB7 /* CoffeePeekNativeActionButton.swift in Sources */,
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
+				A0871E7A0000000000000001 /* AuthNativeController.swift in Sources */,
+				A0871E7A0000000000000003 /* AuthNativeComponents.swift in Sources */,
+				A0871E7A0000000000000005 /* LoginScreen.swift in Sources */,
+				A0871E7A0000000000000007 /* PasswordRecoveryScreen.swift in Sources */,
+				A0871E7A000000000000000D /* CoffeePeekNativeStyle.swift in Sources */,
+				A9AA00000000000000000001 /* CoffeePeekNativeMessage.swift in Sources */,
+				A0871E7A000000000000000F /* RegisterScreen.swift in Sources */,
+				A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */,
+				A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */,
+				E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */,
+				D15C0A000000000000000004 /* DiscoveryMapControls.swift in Sources */,
+				D15C0A000000000000000003 /* DiscoveryShopCard.swift in Sources */,
+				D15C0A000000000000000002 /* DiscoveryNativeScreen.swift in Sources */,
+				D15C0A000000000000000005 /* DiscoveryMapLayout.swift in Sources */,
+				D15C0A000000000000000001 /* DiscoveryNativeHost.swift in Sources */,
+				C39A482AD721BD4CE3E954E6 /* CheckInNativeComponents.swift in Sources */,
+				0C20174F28F6D29AA76E2BEE /* CheckInNativeDateField.swift in Sources */,
+				19EE56A02A19F8C0EF365A81 /* ShopCheckInNativeScreen.swift in Sources */,
+				A975A16A0F08668B1352B857 /* ShopCheckInNativeFields.swift in Sources */,
+				CFB71285E32784D6A7C89461 /* HomeCheckInNativeScreen.swift in Sources */,
+				AB3988F5DCA8C7B40BD3D01D /* HomeCheckInNativeRecipe.swift in Sources */,
+				30A90043BD692A633392CBEE /* HomeCheckInNativeBeanPicker.swift in Sources */,
+				BE080A3022FB00856830F021 /* HomeCheckInNativePhotos.swift in Sources */,
+				5B7D6EE565C6D0EB469E72A7 /* HomeCheckInNativeSaved.swift in Sources */,
+				C22721FA8DE144AF9E0A2BF8 /* EditProfileNativeModel.swift in Sources */,
+				84DBB4A53A194255851C3CF4 /* EditProfileNativeFields.swift in Sources */,
+				C17C79C980964743A1A224AD /* EditProfileNativeScreen.swift in Sources */,
+				91B28778B1017172858BC88D /* CommunityFeedNativeStatus.swift in Sources */,
+				15E615F307B4D33226886FF1 /* CommunityFeedNativeRow.swift in Sources */,
+				DAD5EF785C5BAC5D9F65C43E /* CommunityFeedNativeScreen.swift in Sources */,
+				D8ED759D953BFD65B94F0ADE /* CommunityFeedNativePresentation.swift in Sources */,
+				B23123000000000000000001 /* CommunitySheetHost.swift in Sources */,
+				B23123000000000000000003 /* CommunityEditorContent.swift in Sources */,
+				B23123000000000000000005 /* CommunityReportContent.swift in Sources */,
+				24B6C1CE91371B3F19C414C4 /* CommunityFeedNativeModel.swift in Sources */,
+				4A4149ED7EA558535A593018 /* CheckInDetailNativeModel.swift in Sources */,
+				553A0D82DFD57F0624F032F7 /* CheckInDetailNativeScreen.swift in Sources */,
+				0A8D371634C33941B0A3B65E /* CoffeePeekCheckInCardMapping.swift in Sources */,
+				78A7DD89998FCB72E4D2A814 /* CoffeePeekCommunityCardHost.swift in Sources */,
+				BD8B1EB2E303103F86366987 /* CoffeePeekCheckInProfileAdapter.swift in Sources */,
+				00B9031DF9CEEA84481B4495 /* CoffeePeekCheckInPhotoStrip.swift in Sources */,
+				67BB2306FBA01497B6C2A5BF /* CoffeePeekCheckInCardData.swift in Sources */,
+				60F1DA56802444D4AAED714A /* CoffeePeekCheckInCard.swift in Sources */,
+				A0871E7C0000000000000001 /* OwnProfileScreen.swift in Sources */,
+				817EAB940000000000000001 /* PublicProfileScreen.swift in Sources */,
+				A0871E7C0000000000000002 /* OwnProfileComponents.swift in Sources */,
+				817EAB940000000000000002 /* PublicProfileRows.swift in Sources */,
+				A0871E7C0000000000000003 /* OwnProfileActivityView.swift in Sources */,
+				A0871E7C0000000000000004 /* OwnProfileCheckIns.swift in Sources */,
+				A0871E7B0000000000000003 /* CoffeePeekGuestAccountCard.swift in Sources */,
+				A0871E7B0000000000000001 /* CoffeePeekAppleSignInButton.swift in Sources */,
+				A26C0FFE0000000000000001 /* CoffeePeekGoogleSignInButton.swift in Sources */,
+				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
+				F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */,
+				5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */,
+				5A0D0A000000000000000004 /* ShopDetailNativeOverlays.swift in Sources */,
+				5A0D0A000000000000000003 /* ShopDetailNativeInformation.swift in Sources */,
+				5A0D0A000000000000000002 /* ShopDetailNativeScreen.swift in Sources */,
+				5A0D0A000000000000000001 /* ShopDetailNativeHost.swift in Sources */,
+				5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */,
+				A9AB00000000000000000001 /* HistoryFailureNativeScreen.swift in Sources */,
+				8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */,
+				FF51FDC39D4F328BFC814202 /* RoasterDiscoveryNativeScreen.swift in Sources */,
+				8E9C5C56A4E3BE2852ED1CB6 /* RoasterNativeCard.swift in Sources */,
+				CDC4E218272AEBD62CCBD0CF /* RoasterNativeController.swift in Sources */,
+				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
+				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
+				C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */,
+				C0FFEE500000000000000002 /* CoffeeDetailComponents.swift in Sources */,
+				B251C0510000000000000001 /* ContributionsNativeHost.swift in Sources */,
+				C0F180000000000000000101 /* ContributionFormModel.swift in Sources */,
+				C0F180000000000000000201 /* ContributionFormScreen.swift in Sources */,
+				C0F180000000000000000301 /* ContributionScheduleContent.swift in Sources */,
+				C0F180000000000000000401 /* ContributionMapPicker.swift in Sources */,
+				C0F180000000000000000501 /* ContributionPhotoPicker.swift in Sources */,
+				C0F180000000000000000601 /* CoffeePeekNativeThumbnail.swift in Sources */,
+				B251C0510000000000000002 /* ContributionsListNativeScreen.swift in Sources */,
+				B251C0510000000000000003 /* ChangeRequestNativeScreen.swift in Sources */,
+				CD184B270000000000000001 /* NotificationInboxScreen.swift in Sources */,
+				CD184B270000000000000002 /* NotificationInboxHost.swift in Sources */,
+				71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */,
+				5E1FA2300000000000000007 /* ShelfNativeCameraScreen.swift in Sources */,
+				5E1FA2300000000000000006 /* ShelfNativeBagForm.swift in Sources */,
+				5E1FA2300000000000000005 /* ShelfNativeAddScreen.swift in Sources */,
+				5E1FA2300000000000000004 /* ShelfNativeBagScreen.swift in Sources */,
+				5E1FA2300000000000000003 /* ShelfNativeFinishSheet.swift in Sources */,
+				5E1FA2300000000000000002 /* ShelfNativeGridScreen.swift in Sources */,
+				5E1FA2300000000000000001 /* ShelfNativeScreen.swift in Sources */,
+				5E1FA2200000000000000001 /* ShelfArchiveScreen.swift in Sources */,
+				B0510A100000000000000005 /* OwnershipNativeActions.swift in Sources */,
+				B0510A100000000000000004 /* OwnershipNativeQrSheet.swift in Sources */,
+				B0510A100000000000000003 /* OwnershipNativeForms.swift in Sources */,
+				B0510A100000000000000002 /* OwnershipNativeOverview.swift in Sources */,
+				B0510A100000000000000001 /* OwnershipNativeScreen.swift in Sources */,
+				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
+				86C051CE0000000000000001 /* CollectionsWorkspaceScreen.swift in Sources */,
+				B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */,
+				B23122000000000000000021 /* CoffeePeekLocalBackProtection.swift in Sources */,
+				B23122000000000000000011 /* CollectionEditorContent.swift in Sources */,
+				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
+				53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */,
+				53E771650000000000000005 /* SettingsNativeTab.swift in Sources */,
+				53E771650000000000000007 /* CitySettingsScreen.swift in Sources */,
+				53E771650000000000000009 /* LanguageSettingsScreen.swift in Sources */,
+				53E77165000000000000000B /* UsagePolicyScreen.swift in Sources */,
+				B10000000000000000000001 /* BlockedAuthorsScreen.swift in Sources */,
+				C1E6A50B0000000000000001 /* CheckInCreatePickerView.swift in Sources */,
 				A10000000000000000000013 /* CoffeePeekNativeGlass.swift in Sources */,
 				A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */,
 				A10000000000000000000007 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift in Sources */,
 				A10000000000000000000004 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift in Sources */,
+				CC3EB4067BD44B5EAF5746D4 /* NativeRootController.swift in Sources */,
+				41CD23D084804E1C98CC9E2F /* NativeRootModalPresenter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
+		9EFAA51590745D5526C255B5 /* NativeRoaster.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				7358E39742738F1AF7508555 /* ru */,
+				93392B65F66B89565E0DF9D8 /* be */,
+			);
+			name = NativeRoaster.strings;
+			sourceTree = "<group>";
+		};
+		29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				D47404F9E2F7C880C6AFDCA0 /* ru */,
+				07C3A68E7563BFECB15E5D10 /* be */,
+			);
+			name = NativeAccountDeletion.strings;
+			sourceTree = "<group>";
+		};
+		5C13B3110000000000000008 /* NativeShopCheckIns.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5C13B3110000000000000006 /* ru */,
+				5C13B3110000000000000007 /* be */,
+			);
+			name = NativeShopCheckIns.strings;
+			sourceTree = "<group>";
+		};
+		A6C011E60000000000000006 /* ShopMenuGallery.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A6C011E60000000000000004 /* ru */,
+				A6C011E60000000000000005 /* be */,
+			);
+			name = ShopMenuGallery.strings;
+			sourceTree = "<group>";
+		};
 		37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -270,6 +919,221 @@
 				63F9FA5248F9B32DFB6EE1B8 /* be */,
 			);
 			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		DAD91A913BF64AB1A801759B /* ThemeSettings.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A20000000000000000000017 /* ru */,
+				A20000000000000000000018 /* be */,
+			);
+			name = ThemeSettings.strings;
+			sourceTree = "<group>";
+		};
+		B30000000000000000000006 /* ShopReport.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B30000000000000000000004 /* ru */,
+				B30000000000000000000005 /* be */,
+			);
+			name = ShopReport.strings;
+			sourceTree = "<group>";
+		};
+		CD184B270000000000000008 /* NativeNotificationInbox.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CD184B270000000000000006 /* ru */,
+				CD184B270000000000000007 /* be */,
+			);
+			name = NativeNotificationInbox.strings;
+			sourceTree = "<group>";
+		};
+		71C04E5D0000000000000006 /* ContentReport.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				71C04E5D0000000000000004 /* ru */,
+				71C04E5D0000000000000005 /* be */,
+			);
+			name = ContentReport.strings;
+			sourceTree = "<group>";
+		};
+		5E1FA2500000000000000003 /* NativeShelf.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5E1FA2500000000000000002 /* ru */,
+			);
+			name = NativeShelf.strings;
+			sourceTree = "<group>";
+		};
+		5E1FA2200000000000000006 /* NativeShelfArchive.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5E1FA2200000000000000004 /* ru */,
+				5E1FA2200000000000000005 /* be */,
+			);
+			name = NativeShelfArchive.strings;
+			sourceTree = "<group>";
+		};
+		B20000000000000000000006 /* CollectionsLibrary.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B20000000000000000000004 /* ru */,
+				B20000000000000000000005 /* be */,
+			);
+			name = CollectionsLibrary.strings;
+			sourceTree = "<group>";
+		};
+		86C051CE0000000000000006 /* CollectionsWorkspace.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				86C051CE0000000000000004 /* ru */,
+				86C051CE0000000000000005 /* be */,
+			);
+			name = CollectionsWorkspace.strings;
+			sourceTree = "<group>";
+		};
+		53E771650000000000000010 /* SettingsNative.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				53E77165000000000000000E /* ru */,
+				53E77165000000000000000F /* be */,
+			);
+			name = SettingsNative.strings;
+			sourceTree = "<group>";
+		};
+		B10000000000000000000006 /* BlockedAuthors.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B10000000000000000000004 /* ru */,
+				B10000000000000000000005 /* be */,
+			);
+			name = BlockedAuthors.strings;
+			sourceTree = "<group>";
+		};
+		C1E6A50B0000000000000006 /* NativeCheckInCreate.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C1E6A50B0000000000000004 /* ru */,
+				C1E6A50B0000000000000005 /* be */,
+			);
+			name = NativeCheckInCreate.strings;
+			sourceTree = "<group>";
+		};
+		C0FFEE500000000000000008 /* CoffeeDetail.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C0FFEE500000000000000006 /* ru */,
+				C0FFEE500000000000000007 /* be */,
+			);
+			name = CoffeeDetail.strings;
+			sourceTree = "<group>";
+		};
+		A0871E7A000000000000000C /* NativeAuth.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A0871E7A000000000000000A /* ru */,
+				A0871E7A000000000000000B /* be */,
+			);
+			name = NativeAuth.strings;
+			sourceTree = "<group>";
+		};
+		A0871E7B0000000000000008 /* NativeProfile.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A0871E7B0000000000000009 /* ru */,
+				A0871E7B000000000000000A /* be */,
+			);
+			name = NativeProfile.strings;
+			sourceTree = "<group>";
+		};
+		A0871E7C000000000000000C /* NativeOwnProfile.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A0871E7C000000000000000A /* ru */,
+				A0871E7C000000000000000B /* be */,
+			);
+			name = NativeOwnProfile.strings;
+			sourceTree = "<group>";
+		};
+		B251C0510000000000000009 /* NativeContributions.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B251C0510000000000000007 /* ru */,
+				B251C0510000000000000008 /* be */,
+			);
+			name = NativeContributions.strings;
+			sourceTree = "<group>";
+		};
+		817EAB94000000000000000C /* NativePublicProfile.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				817EAB94000000000000000A /* ru */,
+				817EAB94000000000000000B /* be */,
+			);
+			name = NativePublicProfile.strings;
+			sourceTree = "<group>";
+		};
+		F07A11400000000000000006 /* NativePhotoViewer.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F07A11400000000000000004 /* ru */,
+				F07A11400000000000000005 /* be */,
+			);
+			name = NativePhotoViewer.strings;
+			sourceTree = "<group>";
+		};
+		0C1A750256D49685CBF6D16F /* NativeHomeCheckIn.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3D2DD99281245D969A9C04BC /* ru */,
+				2A139ABC193D775C51577878 /* be */,
+			);
+			name = NativeHomeCheckIn.strings;
+			sourceTree = "<group>";
+		};
+		EC640EEA5E659199A22C4935 /* NativeShopCheckIn.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				38A0271F3F63C5C4D0439D14 /* ru */,
+				C8F6F7C0AED4F7CAC866D33C /* be */,
+			);
+			name = NativeShopCheckIn.strings;
+			sourceTree = "<group>";
+		};
+		7E8B5C6A8BD94EDCB3E12F53 /* NativeEditProfile.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B901C8723E094C91B01145A3 /* ru */,
+				AE837BE2E3AD45E6A8F139A0 /* be */,
+			);
+			name = NativeEditProfile.strings;
+			sourceTree = "<group>";
+		};
+		C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				0769FE21141D267C9A925D7F /* ru */,
+				D4CE6039F8E15828368F22A6 /* be */,
+			);
+			name = NativeGuestOnboarding.strings;
+			sourceTree = "<group>";
+		};
+		EA778DBEF66FD480C275D198 /* NativeAppUpdate.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				168991BEEC11C0CB322F684C /* ru */,
+				C4E9615DA2EF35A243B7C779 /* be */,
+			);
+			name = NativeAppUpdate.strings;
+			sourceTree = "<group>";
+		};
+		B0510A300000000000000004 /* NativeOwnership.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B0510A300000000000000002 /* ru */,
+				B0510A300000000000000003 /* be */,
+			);
+			name = NativeOwnership.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -316,8 +1180,9 @@
 				PRODUCT_MODULE_NAME = CoffeePeek;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				SWIFT_STRICT_CONCURRENCY = complete;
 			};
 			name = Debug;
 		};
@@ -347,9 +1212,10 @@
 				PRODUCT_MODULE_NAME = CoffeePeek;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
 			};
 			name = Release;
 		};

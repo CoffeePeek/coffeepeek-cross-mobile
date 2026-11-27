@@ -16,6 +16,9 @@ internal val LocalAnalyticsUnobscured = staticCompositionLocalOf { true }
 private val LocalAnalyticsOverlay = staticCompositionLocalOf<String?> { null }
 private val exposures = FeatureExposureLedger()
 
+internal fun reportNativeFeatureExposure(visit: String, feature: String, placement: String, send: () -> Boolean) =
+    exposures.report(visit, feature, placement, 1f, true, true, 500, send)
+
 /** A name comes only from the route's class, never from serialized route arguments. */
 internal fun analyticsPage(route: String?): String = when (route?.substringBefore('?')?.substringBefore('/')?.substringAfterLast('.')) {
     "Auth", "ForgotPassword", "ResetPassword" -> "login"
@@ -31,7 +34,7 @@ internal fun analyticsPage(route: String?): String = when (route?.substringBefor
     "RoasterDetail" -> "roaster_detail"
     "CreateCheckIn", "ShopCheckInEditor" -> "check_in_create"
     "EditHomeCheckIn" -> "check_in_edit"
-    "VisitedPlaces", "HomeCheckIns" -> "my_check_ins"
+    "HomeCheckInDetail" -> "my_check_ins"
     "EditProfile", "DeleteAccountPending", "Favorites" -> "profile"
     "MyContributions", "ShopChangeRequestDetail" -> "contributions"
     "MyBusiness" -> "business_ownership"
@@ -111,9 +114,13 @@ internal fun Modifier.analyticsExposure(feature: String, placement: String, page
     }
 }
 
-/** Native UIKit tab items have no Compose coordinates; the tab-bar host reports visibility. */
 @Composable
-internal fun TrackNativeCreateActionExposure(visible: Boolean) {
+internal fun TrackNativeCreateActionExposure(visible: Boolean) =
+    TrackNativeFeatureExposure(visible, "check_in", "global_create")
+
+/** Native views report when UIKit has actually made them visible. */
+@Composable
+internal fun TrackNativeFeatureExposure(visible: Boolean, feature: String, placement: String) {
     val service = Analytics.service ?: return
     val state by service.state.collectAsState()
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
@@ -126,8 +133,8 @@ internal fun TrackNativeCreateActionExposure(visible: Boolean) {
         if (!eligible) return@LaunchedEffect
         delay(500)
         val visit = "${state.generation}:${state.visit}:${state.visitSequence}"
-        exposures.report(visit, "check_in", "global_create", 1f, state.foreground, unobscured, 500) {
-            service.track(AnalyticsEvent.FEATURE_EXPOSED, mapOf("feature" to "check_in", "placement" to "global_create"))
+        reportNativeFeatureExposure(visit, feature, placement) {
+            service.track(AnalyticsEvent.FEATURE_EXPOSED, mapOf("feature" to feature, "placement" to placement))
         }
     }
 }

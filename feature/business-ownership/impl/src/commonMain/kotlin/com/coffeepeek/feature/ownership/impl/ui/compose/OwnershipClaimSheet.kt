@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.ownership.impl.ui.compose
 
+import com.coffeepeek.feature.ownership.impl.PlatformOwnershipContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -20,7 +21,8 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 
 @Composable
 internal fun OwnershipClaimSheet(repository: BusinessOwnershipRepository, account: OwnershipAccount,
-    kind: BusinessKind, slug: String, image: OwnershipImage, picker: OwnershipPhotoPicker, dismiss: () -> Unit, login: () -> Unit) {
+    kind: BusinessKind, slug: String, image: OwnershipImage, picker: OwnershipPhotoPicker, dismiss: () -> Unit, login: () -> Unit,
+    nativeModal: Boolean = true) {
     val owner = remember { object : ViewModelStoreOwner { override val viewModelStore = ViewModelStore() } }
     DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
     CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
@@ -34,7 +36,7 @@ internal fun OwnershipClaimSheet(repository: BusinessOwnershipRepository, accoun
             }
         }
         LaunchedEffect(state.generation) { if (state.generation > 1) currentDismiss() }
-        OwnershipClaimSheetContent(state, model::onAction, image, picker)
+        if (!PlatformOwnershipContent(model, account, picker, claim = nativeModal)) OwnershipClaimSheetContent(state, model::onAction, image, picker)
     }
 }
 

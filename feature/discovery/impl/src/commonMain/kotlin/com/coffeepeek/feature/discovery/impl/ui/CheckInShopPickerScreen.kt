@@ -26,7 +26,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.api.MapCanvasCallbacks
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
-import com.coffeepeek.feature.discovery.domain.rules.searchText
 import com.coffeepeek.feature.discovery.impl.map.MapAction
 import com.coffeepeek.feature.discovery.impl.map.MapState
 import com.coffeepeek.feature.discovery.impl.map.MapViewModel
@@ -79,8 +78,8 @@ internal fun CheckInShopPickerContent(
     reduceMotion: Boolean = false, openSettings: () -> Unit = {}, mapContent: @Composable (Modifier) -> Unit = {},
 ) {
     val list = rememberLazyListState()
-    val applied = state.pickerResultCriteria
-    LaunchedEffect(searchText(applied?.text.orEmpty()), applied?.filters?.nearbyOnly == true) { list.scrollToItem(0) }
+    val results = state.checkInShopPickerResults()
+    LaunchedEffect(results.query, results.nearby) { list.scrollToItem(0) }
     Scaffold(modifier = modifier, topBar = { PickerHeader(onClose) },
         containerColor = MaterialTheme.colorScheme.background) { insets ->
         Column(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets)) {
@@ -147,8 +146,9 @@ private fun PickerFilters(state: SearchState, showMap: Boolean, onShowMap: (Bool
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         CoffeePeekFilterChip(
             selected = (state.filters.nearbyOnly || state.nearbyRequested) && !showMap, onClick = {
+                val action = pickerNearbyAction(showMap, state.filters.nearbyOnly)
                 onShowMap(false)
-                if (!showMap || !state.filters.nearbyOnly) onAction(SearchAction.ToggleNearby)
+                action?.let(onAction)
             }, label = stringResource(Res.string.discovery_picker_nearby), leadingIcon = CoffeePeekIcons.Location)
         CoffeePeekFilterChip(selected = showMap, onClick = { onShowMap(!showMap) },
             label = stringResource(if (showMap) Res.string.discovery_picker_list else Res.string.discovery_picker_map),

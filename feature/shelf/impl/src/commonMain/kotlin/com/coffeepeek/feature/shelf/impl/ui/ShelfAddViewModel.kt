@@ -43,6 +43,7 @@ internal class ShelfAddViewModel(
                 throw cancelled
             } catch (_: Exception) { null }
             when (readiness) {
+                BagScannerReadiness.Disabled -> updateState { copy(scanner = Disabled) }
                 is BagScannerReadiness.NeedsDownload -> updateState { copy(scanner = NeedsDownload(readiness.downloadBytes)) }
                 BagScannerReadiness.Ready -> ready()
                 null -> updateState { copy(scanner = DownloadFailed) }
@@ -99,7 +100,7 @@ internal class ShelfAddViewModel(
 
     private fun openCamera() {
         val state = currentState
-        if (state.saving || state.step == ShelfAddStep.Camera) return
+        if (state.saving || state.scanner == Disabled || state.step == ShelfAddStep.Camera) return
         beforeCamera = state.step.takeIf { it != ShelfAddStep.Scanning && it != ShelfAddStep.Revealing } ?: ShelfAddStep.Intro
         updateState { copy(step = ShelfAddStep.Camera) }
     }
@@ -113,7 +114,7 @@ internal class ShelfAddViewModel(
     }
 
     private fun scan(photo: ShelfPhoto) {
-        if (currentState.saving) return
+        if (currentState.saving || currentState.scanner == Disabled) return
         scan?.cancel()
         updateState { copy(step = if (scanner == Ready) ShelfAddStep.Scanning else ShelfAddStep.Preparing,
             photo = photo, stagesDone = emptySet(), liveFrame = null, result = null, failure = null, cardLanding = false) }

@@ -1,23 +1,26 @@
 // swift-tools-version: 5.9
 import PackageDescription
 
-// ONNX Runtime for the shelf scanner's iosMain. The runtime's own package declares no linker settings, so its Objective-C
-// bindings and the CoreML execution provider would leave Foundation, CoreML and the Objective-C runtime unresolved.
+// ONNX Runtime 1.24.2 for the shelf scanner's iosMain. The local Objective-C bindings and the official binary archive
+// retain the OnnxRuntimeBindings module while avoiding a Git checkout of the upstream Swift package.
 let package = Package(
     name: "ShelfOnnxRuntime",
     platforms: [.iOS(.v15)],
     products: [.library(name: "ShelfOnnxRuntime", targets: ["ShelfOnnxRuntime"])],
-    dependencies: [
-        // The Microsoft repository returns 404. Pin the mirror to the original 1.24.2 commit from Package.resolved.
-        .package(
-            url: "https://github.com/GuLP-AAC/onnxruntime-swift-package-manager.git",
-            revision: "b7fb7f7dea8a2469e6335d95a61b8f36d0dc83b2"
-        ),
-    ],
     targets: [
+        .binaryTarget(
+            name: "onnxruntime",
+            url: "https://github.com/CoffeePeek/coffeepeek-cross-mobile/releases/download/ios-onnxruntime-1.24.2/pod-archive-onnxruntime-c-1.24.2.zip",
+            checksum: "f7100a992d2a8135168c8afd831e6a58b465349101982aa58b3e11d36e600b54"
+        ),
+        .target(
+            name: "OnnxRuntimeBindings",
+            dependencies: ["onnxruntime"],
+            cxxSettings: [.define("SPM_BUILD")]
+        ),
         .target(
             name: "ShelfOnnxRuntime",
-            dependencies: [.product(name: "onnxruntime", package: "onnxruntime-swift-package-manager")],
+            dependencies: ["OnnxRuntimeBindings"],
             linkerSettings: [
                 .linkedFramework("Foundation"),
                 .linkedFramework("CoreML"),
@@ -25,5 +28,6 @@ let package = Package(
                 .linkedLibrary("c++"),
             ]
         ),
-    ]
+    ],
+    cxxLanguageStandard: .cxx17
 )

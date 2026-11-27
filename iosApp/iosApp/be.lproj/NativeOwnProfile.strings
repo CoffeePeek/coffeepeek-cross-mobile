@@ -1,0 +1,96 @@
+"brew_aeropress" = "Аэрапрэс";
+"brew_batch-brew" = "Batch Brew";
+"brew_batch_drip" = "Фільтр batch";
+"brew_cezve" = "Турка";
+"brew_cezve-turkish-coffee" = "Cezve (Turkish Coffee)";
+"brew_chemex" = "Chemex";
+"brew_cold-brew" = "Cold Brew";
+"brew_espresso" = "Эспрэса";
+"brew_french_press" = "Френч-прэс";
+"brew_hario-v60" = "Hario V60";
+"brew_moka-pot" = "Moka Pot";
+"brew_moka_pot" = "Гейзерная кававарка";
+"brew_other" = "Іншае";
+"brew_pour_over" = "Пуровер";
+"history_activity_at_home" = "Дома";
+"history_activity_collapse" = "Згарнуць каляндар";
+"history_activity_empty_day" = "У гэты дзень чэкінаў не было";
+"history_activity_expand" = "Разгарнуць каляндар";
+"history_activity_failed" = "Не ўдалося загрузіць актыўнасць";
+"history_activity_loading" = "Загрузка актыўнасці…";
+"history_activity_open" = "Адкрыць чэкіны";
+"history_next_month" = "Наступны месяц";
+"history_previous_month" = "Папярэдні месяц";
+"history_profile_day_count" = "Чэкіны: %ld";
+"history_select_day" = "Выбраць дату";
+"history_shop" = "Кавярня";
+"history_weekday_0" = "Пн";
+"history_weekday_1" = "Аў";
+"history_weekday_2" = "Ср";
+"history_weekday_3" = "Чц";
+"history_weekday_4" = "Пт";
+"history_weekday_5" = "Сб";
+"history_weekday_6" = "Нд";
+"profile_actions" = "Дзеянні з профілем";
+"profile_cancel" = "Адмена";
+"profile_check_in_dose" = "%@ г";
+"profile_check_in_likes" = "Лайкі: %ld";
+"profile_check_in_seconds" = "%ld с";
+"profile_check_in_separator" = "·";
+"profile_check_in_taste" = "%ld/5";
+"profile_check_ins_empty" = "Пакуль няма чэкінаў";
+"profile_check_ins_failed" = "Не ўдалося загрузіць чэкіны";
+"profile_collections_settings" = "Налады падборак";
+"profile_edit" = "Рэдагаваць профіль";
+"profile_favorite_shop" = "Кавярня";
+"profile_followers_empty" = "Пакуль няма падпісчыкаў";
+"profile_followers_failed" = "Не ўдалося загрузіць падпісчыкаў";
+"profile_load_failed" = "Не ўдалося загрузіць профіль";
+"profile_load_more" = "Загрузіць яшчэ";
+"profile_loading" = "Загрузка";
+"profile_logout_message" = "Вы ўпэўнены? Спатрэбіцца паўторны ўваход.";
+"profile_logout_title" = "Выйсці з уліковага запісу?";
+"profile_menu_blocked_authors" = "Заблакіраваныя аўтары";
+"profile_menu_logout" = "Выйсці";
+"profile_menu_shop_changes" = "Праўкі кавярняў";
+"profile_menu_submitted_roasters" = "Адпраўленыя абсмажчыкі";
+"profile_menu_submitted_shops" = "Адпраўленыя кавярні";
+"profile_native_photo" = "Фатаграфія %ld з %ld";
+"profile_native_rating" = "Сярэдняя адзнака: %@ з 5";
+"profile_open_avatar" = "Адкрыць аватар";
+"profile_open_coffee" = "Адкрыць каву ў каталогу";
+"profile_retry_full" = "Паспрабаваць зноў";
+"profile_section_all_check_ins" = "Усе: Чэкіны";
+"profile_section_all_collections" = "Усе: Падборкі";
+"profile_section_check_ins" = "Чэкіны";
+"profile_section_favorites" = "Падборкі";
+"profile_section_shelf" = "Паліца";
+"profile_shelf_bag" = "Пачка з паліцы";
+"profile_stat_check_ins" = "Чэкіны";
+"profile_stat_followers" = "Падпісчыкі";
+"profile_stat_roasters" = "Абсмажчыкі";
+"profile_stat_shops" = "Кавярні";
+"profile_title" = "Профіль";
+"profile_update_failed" = "Не ўдалося абнавіць профіль";
+
+"profile_check_ins_clear_date" = "Скінуць дату";
+"profile_check_in_open" = "Адкрыць чэкін";
+
+"profile_connections_followers_one" = "%d падпісчык";
+"profile_connections_followers_few" = "%d падпісчыкі";
+"profile_connections_followers_many" = "%d падпісчыкаў";
+"profile_connections_following_one" = "%d падпіска";
+"profile_connections_following_few" = "%d падпіскі";
+"profile_connections_following_many" = "%d падпісак";
+
+"profile_followers" = "Падпісчыкі";
+
+"profile_following_title" = "Падпіскі";
+
+"profile_following_empty" = "Пакуль няма падпісак";
+
+"profile_following_failed" = "Не ўдалося загрузіць падпіскі";
+
+"profile_close" = "Закрыць";
+
+"profile_open_user" = "Адкрыць профіль";

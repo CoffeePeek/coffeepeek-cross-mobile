@@ -17,6 +17,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class PublicAuthorPostsTest {
@@ -39,7 +40,7 @@ class PublicAuthorPostsTest {
 
     private fun assertPublicRead(page: PublicAuthorPostPage) {
         assertEquals("next", page.nextCursor)
-        assertEquals(listOf("shop", "home", "private", "unknown"), page.items.map { it.id })
+        assertEquals(listOf("shop", "home", "private", "unknown", "without-bag"), page.items.map { it.id })
         val shop = page.items.first()
         assertTrue(shop.isPublicApproved)
         assertEquals("https://api.example/avatar", shop.authorAvatarUrl)
@@ -50,10 +51,25 @@ class PublicAuthorPostsTest {
         assertEquals("Special", shop.drink?.customName)
         assertEquals(3, shop.helpfulCount)
         assertTrue(shop.isHelpfulByCurrentUser)
-        assertTrue(page.items[1].isHome)
-        assertEquals("prepared", page.items[1].home?.preparedOn)
+        assertHomeRead(page)
         assertFalse(page.items[2].isPublicApproved)
         assertFalse(page.items[3].isPublicApproved)
+    }
+
+    private fun assertHomeRead(page: PublicAuthorPostPage) {
+        val home = page.items[1]
+        assertTrue(home.isHome)
+        assertEquals("prepared", home.home?.preparedOn)
+        assertEquals("Ethiopia", home.home?.beanName)
+        assertEquals("Roaster", home.home?.roasterName)
+        assertEquals("ethiopia", home.home?.coffeeProductSlug)
+        assertEquals("https://api.example/bag/thumb", home.home?.shelfBagCardUrl)
+        assertTrue(home.originals.isEmpty())
+        val withoutBag = page.items.last().home
+        assertEquals("Personal beans", withoutBag?.beanName)
+        assertNull(withoutBag?.shelfBagCardUrl)
+        assertNull(withoutBag?.roasterName)
+        assertNull(withoutBag?.coffeeProductSlug)
     }
 
     @Test fun invalidAddressFailsWithoutRequestsAndCursorFailureKeepsRestartSignal() = runTest {
@@ -82,8 +98,11 @@ class PublicAuthorPostsTest {
         "rating":{"place":3,"service":4,"coffee":5},"customDrinkName":"Special","helpfulCount":"3","isHelpfulByCurrentUser":true,
         "photos":[{"url":"/photo","variants":[]}]}},
         {"checkIn":{"id":"home","author":{"slug":"anna"},"kind":"Home","visibility":"Public","moderationState":"Approved",
-        "home":{"preparedOn":"prepared","beanName":"Ethiopia","doseGrams":18,"tasteScore":5}}},
+        "home":{"preparedOn":"prepared","beanName":"Ethiopia","doseGrams":18,"tasteScore":5,
+        "roasterName":"Roaster","coffeeProductSlug":"ethiopia"},"shelfBagPhotoUrl":"/bag",
+        "shelfBagPhotoVariants":[{"purpose":"thumb","contentType":"image/jpeg","width":240,"height":320,"sizeBytes":9,"url":"/bag/thumb"}]}},
         {"checkIn":{"id":"private","visibility":"Private","moderationState":"Approved"}},
-        {"checkIn":{"id":"unknown","visibility":"Public","moderationState":"FutureValue"}}
+        {"checkIn":{"id":"unknown","visibility":"Public","moderationState":"FutureValue"}},
+        {"checkIn":{"id":"without-bag","kind":"Home","home":{"preparedOn":"prepared","beanName":"Personal beans"}}}
         ],"nextCursor":"next"}}"""
 }

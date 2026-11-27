@@ -58,6 +58,7 @@ private suspend fun handleSavedEvent(event: SavedCollectionsEvent, model: SavedC
         SavedCollectionsEvent.Back -> callbacks.back()
         SavedCollectionsEvent.SignIn -> callbacks.signIn()
         SavedCollectionsEvent.CancelExport -> Unit
+        is SavedCollectionsEvent.Saved -> if (model.isCurrentSave(event)) callbacks.saved()
         is SavedCollectionsEvent.Editor -> editor(event.id)
         is SavedCollectionsEvent.Place -> if (event.value.kind == CollectionPlaceKind.CoffeeShop) callbacks.openShop(event.value.slug)
             else callbacks.openRoaster(event.value.slug)
@@ -66,7 +67,7 @@ private suspend fun handleSavedEvent(event: SavedCollectionsEvent, model: SavedC
     }
 }
 
-private suspend fun shareSavedImages(event: SavedCollectionsEvent.Export, model: SavedCollectionsViewModel,
+internal suspend fun shareSavedImages(event: SavedCollectionsEvent.Export, model: SavedCollectionsViewModel,
     snapshots: CollectionsRepository, decode: CollectionPhotoDecoder, callbacks: CollectionsCallbacks, resources: CollectionPosterResources) {
     var failed = false
     try {
@@ -79,7 +80,7 @@ private suspend fun shareSavedImages(event: SavedCollectionsEvent.Export, model:
 }
 
 @Composable
-private fun SavedCollectionPoster(state: SavedCollectionsState, action: (SavedCollectionsAction) -> Unit,
+internal fun SavedCollectionPoster(state: SavedCollectionsState, action: (SavedCollectionsAction) -> Unit,
     snapshots: CollectionsRepository, decode: CollectionPhotoDecoder, modifier: Modifier) {
     val collection = state.collection?.toSharedPoster() ?: return
     CollectionsScreenContent(CollectionsState(publicView = true, loading = false, busy = state.busy,

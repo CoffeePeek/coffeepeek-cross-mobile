@@ -28,6 +28,14 @@ internal class SessionShopCheckInEntry(
     private val photos: ShopCheckInPhotoPicker,
     private val onCheckInCreated: () -> Unit,
 ) : ShopCheckInCreateEntry {
+    internal fun nativeForm(context: com.coffeepeek.feature.shop.api.ShopDetailContext, callbacks: ShopCheckInNativeCallbacks): NativeShopCheckInForm {
+        val lease = ShopCheckInSession(sessions, repository, onCheckInCreated)
+        val historyLease = CheckInHistorySession(sessions)
+        val draft = lease.userId?.takeIf { lease.isCurrent() }?.let { drafts.forShop(context.shopId, context.shopSlug, it) }
+        val form = draft?.let { ShopCheckInNativeForm(context.shopId, context.shopSlug, context.shopName, context.shopAddress,
+            lease, it, dates, photos, HistoryShopCheckInPublicationReader(historyLease.bind(history)), lease::isCurrent, callbacks) }
+        return NativeShopCheckInForm(form, lease, historyLease)
+    }
     @Composable
     override fun Content(
         shopId: String,
@@ -60,18 +68,34 @@ internal class SessionShopCheckInEntry(
             }
             return
         }
-        val entry = remember(lease) {
-            createShopCheckInCreateEntry(lease, { _, _ -> boundDrafts }, dates, photos,
-                analytics = { AppShopCheckInAnalytics(lease::isCurrent) },
-                publication = HistoryShopCheckInPublicationReader(historyLease.bind(history)))
+        val form = ShopCheckInNativeForm(shopId, shopSlug, shopName, shopAddress, lease, boundDrafts, dates, photos,
+            HistoryShopCheckInPublicationReader(historyLease.bind(history)), lease::isCurrent,
+            ShopCheckInNativeCallbacks(onDismiss, onChangeShop, { if (lease.isCurrent()) onSubmitted() },
+                { if (lease.isCurrent()) onGoToFeed() }, { if (lease.isCurrent()) onOpenHistory() }))
+        SessionShopCheckInContent(form)
+    }
+}
+
+internal class NativeShopCheckInForm(val form: ShopCheckInNativeForm?, private val lease: ShopCheckInSession,
+    private val history: CheckInHistorySession,
+) {
+    fun close() {
+        lease.revoke()
+        history.revoke()
+    }
+}
+
+@Composable
+private fun SessionShopCheckInContent(form: ShopCheckInNativeForm) {
+    AnalyticsOverlay {
+        if (!PlatformShopCheckInForm(form)) {
+            val entry = remember(form.repository) {
+                createShopCheckInCreateEntry(form.repository, { _, _ -> form.drafts }, form.dates, form.photos,
+                    analytics = { AppShopCheckInAnalytics(form.isCurrent) }, publication = form.publication)
+            }
+            entry.Content(form.shopId, form.shopSlug, form.shopName, form.shopAddress,
+                form.callbacks.dismiss, form.callbacks.changeShop, form.callbacks.submitted,
+                form.callbacks.goToFeed, form.callbacks.openHistory)
         }
-        AnalyticsOverlay { entry.Content(
-            shopId, shopSlug, shopName, shopAddress,
-            onDismiss = onDismiss,
-            onChangeShop = onChangeShop,
-            onSubmitted = { if (lease.isCurrent()) onSubmitted() },
-            onGoToFeed = { if (lease.isCurrent()) onGoToFeed() },
-            onOpenHistory = { if (lease.isCurrent()) onOpenHistory() },
-        ) }
     }
 }

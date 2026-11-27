@@ -181,7 +181,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
                 }
                 NavHost(
                     navController = bottomNavController,
-                    startDestination = if (businessMode) Navigator.Screen.BusinessGraph else Navigator.Screen.FeedGraph,
+                    startDestination = rememberInitialMainGraph(businessMode),
                     modifier = Modifier.fillMaxSize(),
                     enterTransition = {
                         slideIntoContainer(tabDirection(), tween(if (reduceMotion) 0 else 300, easing = FastOutSlowInEasing))
@@ -287,6 +287,12 @@ private fun createNavItem(onCreate: () -> Unit): FloatingNavItem {
         selected = false, onClick = onCreate, isAction = true,
         modifier = Modifier.analyticsExposure("check_in", "global_create", page),
     )
+}
+
+@Composable
+private fun rememberInitialMainGraph(businessMode: Boolean): Navigator.Screen = remember {
+    // A mode switch navigates the existing graph instead of rebuilding its start destination.
+    if (businessMode) Navigator.Screen.BusinessGraph else Navigator.Screen.FeedGraph
 }
 
 @Composable

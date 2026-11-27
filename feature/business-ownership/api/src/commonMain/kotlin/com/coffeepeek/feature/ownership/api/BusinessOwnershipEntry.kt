@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import kotlinx.coroutines.flow.StateFlow
 
 /** Platform input/rendering only. HTTP and domain implementation types never cross this entry. */
 data class OwnershipPickedPhoto(val fileName: String, val contentType: String, val bytes: ByteArray)
@@ -15,6 +16,12 @@ interface BusinessOwnershipEntry {
     fun Content(onBack: () -> Unit, onLogin: () -> Unit, initialKind: String? = null, initialSlug: String? = null, initialId: String? = null)
     @Composable fun ProfileChanges(): Long
     @Composable fun Session(): BusinessSessionState
+    /** One application-owned collector; cancellation ends account observation. */
+    suspend fun observeSessionChanges()
+    suspend fun refreshSession()
+    val profileChanges: StateFlow<Long>
+    val accountSwitchState: StateFlow<BusinessSessionState>
+    suspend fun switchAccountMode()
     @Composable fun AccountSwitch()
     @Composable fun Tab()
     @Composable fun ProfileActions(kind: String, id: String, slug: String, onSuggest: () -> Unit, onOwnerEdit: () -> Unit,

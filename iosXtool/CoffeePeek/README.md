@@ -1,54 +1,46 @@
-# CoffeePeek with xtool
+# Shared native iOS sources and xtool launcher
 
-Use the `iosArm64` debug framework or the native `CoffeePeek.app` from the
-`iOS Compose Framework` GitHub Actions workflow. The native app artifact is an
-unsigned macOS-built validation bundle; installation on a phone still needs a
-development signature. The framework path below remains the easiest route with
-`xtool` and signs locally on the connected device.
+Reviewed against the repository on 2026-11-27. `Sources/CoffeePeek` contains the
+SwiftUI/UIKit feature screens and native bridges shared by the Xcode application
+and the SwiftPM/xtool launcher. It is not a second business implementation:
+feature state/repositories/writers remain in KMP. The active native root is
+registered by both bootstraps before `MainViewController` is constructed.
 
-1. Extract the downloaded artifact ZIP. Verify the tar archive against its
-   SHA-256 file (the checksum currently refers to `artifacts/<archive>`).
-2. From the repository root, extract the tar archive into
-   `composeApp/build/bin/iosArm64/debugFramework/`. This directory must contain
-   `ComposeApp.framework/ComposeApp`.
-3. Download `ios-launch-resources` from the **iOS build verification** workflow
-   at the same source revision. Extract its `Assets.car` into
-   `iosXtool/CoffeePeek/.build/launch-resources/`, then prepare resources on Linux:
+Use [the Xcode guide](../../docs/IOS_SETUP.md) for the normal application and
+[the xcross guide](../../docs/IOS_XCROSS.md) for the scannerless Windows Debug path.
+Do not assume a historical “iOS Compose Framework” workflow/artifact still exists:
+the current workflows are `ios-verify.yml` and `ios-testflight.yml`.
 
-   ```bash
-   bash iosXtool/CoffeePeek/prepare-resources.sh
-   ```
+## SwiftPM/xtool prerequisites
 
-   You can pass the downloaded `Assets.car` path as the script's first argument
-   instead. On macOS with Xcode, preparation compiles the catalog directly.
-   The compiled catalog preserves both `LaunchLogo` appearances and the named
-   `LaunchBackground` color for the native launch screen and SwiftUI splash.
-   Loose PNGs cannot provide these; preparation removes older staged copies.
+The package targets iOS 17+, imports the linked KMP package and expects a matching
+`composeApp/build/bin/iosArm64/debugFramework/ComposeApp.framework`. Framework,
+Swift sources, resources and package resolution must come from the same source
+revision. `Package.swift` and its resolved dependencies are authoritative; a
+framework alone does not package/sign an application.
 
-4. Build, sign, and install on a connected, trusted iPhone:
+From the repository root:
 
-   ```bash
-   cd iosXtool/CoffeePeek
-   xtool dev
-   ```
+```bash
+bash iosXtool/CoffeePeek/prepare-resources.sh
+```
 
-The iOS target now links MapLibre Native through Swift Package Manager and
-uses the same OpenFreeMap style as Android. The Swift package is resolved by
-the native macOS CI job; keep the checkout at the same commit as the framework
-artifact when running `xtool`.
+This invokes the launch-catalog/auth preparation and
+`:composeApp:assembleIosArm64MainResources --max-workers=6`, then stages Compose
+resources under `.build/compose-resources/composeResources/`. On macOS, actool
+compiles the shared launch asset catalog. Elsewhere, supply the `Assets.car` from
+the same revision's `ios-launch-resources` CI artifact as the first script argument.
+Keep the compiled catalog; loose PNGs lose appearance metadata. `xtool.yml` copies
+resources/localizations/privacy and merges the generated `.build/Info.plist`.
 
-The preparation script stages the resources under
-`.build/compose-resources/composeResources/`, matching the static framework's
-iOS resource reader. Run it again after resource changes or cleaning `.build`.
-`xtool.yml` copies this directory into the app and merges
-`Info.plist`, including the API URL and privacy descriptions. Google Sign-In
-is not configured in this launcher yet.
+After resolving the package and configuring an appropriate development signature,
+`xtool dev` from this directory builds/signs/installs to the explicitly selected
+trusted device. Inspect that tool's target selection before deployment; a generic
+command must not choose another connected phone or overwrite a newer app.
+Do not uninstall/clear data to recover installation. Successful verification or
+installation alone does not establish startup, OAuth, push, Keychain or scanning.
 
-An installation ending with `Verifying 100%` does not prove the UI has launched.
-Open CoffeePeek on the phone to check it. For command-line launch, obtain the
-prefixed identifier using `xtool ds identifiers list`, then run
-`xtool launch <identifier>`. If debugserver launch fails, manual launch is
-still necessary to verify runtime behavior.
-
-The framework is generated on macOS CI; Kotlin/Native on Linux can compile
-KLIBs and prepare resources but cannot link this Apple framework.
+The current source includes `SocialSignInProvider` and GoogleSignIn; actual
+availability depends on Debug policy, IDs, URL scheme and signature/capabilities.
+Do not describe provider setup as absent solely because a button is hidden.
+No xtool build, install or device acceptance was run for this docs update.

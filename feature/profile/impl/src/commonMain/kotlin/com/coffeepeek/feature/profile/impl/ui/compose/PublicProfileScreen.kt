@@ -8,8 +8,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import com.coffeepeek.feature.profile.api.OwnProfileActivity
+import com.coffeepeek.feature.profile.api.OwnProfileHistory
 import com.coffeepeek.feature.profile.api.OwnProfileShelf
+import com.coffeepeek.feature.profile.api.OwnProfileSectionRequest
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,8 +19,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.Lifecycle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileContribution
@@ -37,12 +38,14 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 /** Owner-specific content and destinations supplied by the application composition boundary. */
 internal class OwnProfileExtras(
     val onOpenFavorites: () -> Unit,
-    val activity: OwnProfileActivity,
     val onOpenContributions: (ProfileContribution) -> Unit,
     val topBarActions: @Composable () -> Unit,
     val favoritesPreview: @Composable (header: @Composable () -> Unit) -> Unit,
+    val checkInCount: Int,
+    val history: OwnProfileHistory,
     val bottomContentPadding: Dp,
     val shelf: OwnProfileShelf?,
+    val collectionsRequest: OwnProfileSectionRequest?,
 )
 
 internal class PublicProfileCallbacks(
@@ -67,6 +70,9 @@ internal fun PublicProfileScreen(
     checkInsOnly: Boolean = false, own: OwnProfileExtras? = null,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        if (own != null || state.isOwnProfile) vm.onAction(PublicProfileAction.RefreshFollowingCount)
+    }
     val visibility by vm.authorVisibility.collectAsStateWithLifecycle(initialValue = vm.currentVisibility())
     var photos by remember(slug) { mutableStateOf<ProfilePhotos?>(null) }
     val pending = !visibility.ready || state.profile?.let { !it.isBlockedByViewer && visibility.hides(it.authorId, it.slug) } == true

@@ -18,6 +18,7 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistorySource
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistoryTimelineItem
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.HistoryCalendarContext
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.HistoryCalendarProvider
+import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyCalendarReadWindow
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -125,12 +126,7 @@ internal class CombinedHistoryViewModel private constructor(
                 suspendInvisibleReads()
                 loadVisible()
             }
-            is CombinedHistoryAction.SelectDate -> {
-                val date = action.date
-                if (date == null || currentState.month.containsDate(date) && date <= currentState.today) {
-                    select(currentState.month, date.takeUnless { it == currentState.selectedDate })
-                }
-            }
+            is CombinedHistoryAction.SelectDate -> selectDate(action.date)
             is CombinedHistoryAction.ChangeMonth -> {
                 if (action.offset == 0) return
                 val month = try { currentState.month.plusMonths(action.offset) }
@@ -182,10 +178,18 @@ internal class CombinedHistoryViewModel private constructor(
         if (photos.canOpen(index)) emit(CheckInHistoryEvent.OpenPhoto(photos.previews.toList(), index, photos.originals.toList()))
     }
 
+    private fun selectDate(date: String?) {
+        val month = date?.let(HistoryMonth::fromDate) ?: currentState.month
+        if (date == null || month.containsDate(date) && date <= currentState.today) {
+            select(month, date.takeUnless { it == currentState.selectedDate })
+        }
+    }
+
     private fun select(month: HistoryMonth, date: String?) {
         val previous = currentState
         if (previous.month == month && previous.selectedDate == date) return
-        if (previous.month != month) {
+        if (historyCalendarReadWindow(previous.month, previous.today, previous.selectedDate) !=
+            historyCalendarReadWindow(month, previous.today, date)) {
             shopCalendar.cancel(); homeCalendar.cancel()
             updateState { copy(shopCalendar = CombinedHistoryLoadState(emptyMap()), homeCalendar = CombinedHistoryLoadState(emptyMap()),
                 homeCalendarPhotos = emptyMap()) }
@@ -304,16 +308,16 @@ internal class CombinedHistoryViewModel private constructor(
 
     private fun loadShopCalendar() {
         if (!includes(HistorySource.Shop)) return
-        val month = currentState.month
+        val window = historyCalendarReadWindow(currentState.month, currentState.today, currentState.selectedDate)
         val snapshot = context
         read(shopCalendar,
             start = { updateState { copy(shopCalendar = shopCalendar.copy(isLoading = true, hasError = false)) } },
             load = {
-                shopReader.period(snapshot.period(month)).getOrThrow().distinctBy { it.id }.map { entry ->
+                shopReader.period(window.period(snapshot)).getOrThrow().distinctBy { it.id }.map { entry ->
                     val date = requireNotNull(snapshot.localDate(entry.effectiveVisitedAt))
                     requireNotNull(HistoryMonth.fromDate(date))
                     HistoryTimelineItem.Shop(entry, date)
-                }.filter { month.containsDate(it.date) }.groupBy { it.date }
+                }.filter { window.contains(it.date) }.groupBy { it.date }
             },
             success = { rows -> updateState { copy(shopCalendar = shopCalendar.copy(content = rows, hasLoaded = true)) } },
             failure = { updateState { copy(shopCalendar = shopCalendar.copy(hasError = true)) } },
@@ -323,13 +327,13 @@ internal class CombinedHistoryViewModel private constructor(
 
     private fun loadHomeCalendar() {
         if (!includes(HistorySource.Home)) return
-        val month = currentState.month
+        val window = historyCalendarReadWindow(currentState.month, currentState.today, currentState.selectedDate)
         read(homeCalendar,
             start = { updateState { copy(homeCalendar = homeCalendar.copy(isLoading = true, hasError = false)) } },
             load = {
-                val days = homeReader.calendar(HomeHistoryDateRange.month(month)).getOrThrow()
+                val days = homeReader.calendar(window.dates).getOrThrow()
                 check(days.distinctBy { it.preparedOn }.size == days.size) { "Duplicate Home calendar dates" }
-                val visible = days.filter { month.containsDate(it.preparedOn) }
+                val visible = days.filter { window.contains(it.preparedOn) }
                 visible.associate { it.preparedOn to it.brewCount } to visible.associate { it.preparedOn to it.photos }
             },
             success = { (counts, photos) -> updateState { copy(homeCalendar = homeCalendar.copy(content = counts, hasLoaded = true),

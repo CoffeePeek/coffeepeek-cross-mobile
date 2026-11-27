@@ -188,4 +188,7 @@
     <string name="shop_checkin_error_shop_gone">Кавярня больш недаступная. Выберыце іншую</string>
     <string name="shop_checkin_error_photos_too_large">Фатаграфіі занадта вялікія. Паменшце іх памер</string>
     <string name="shop_checkin_error_too_many_requests">Занадта шмат запытаў. Паспрабуйце пазней</string>
+    <string name="shop_detail_dismiss">Закрыць</string>
+    <string name="shop_detail_load_error">Не ўдалося загрузіць кавярню</string>
+    <string name="shop_detail_load_error_body">Праверце злучэнне і паспрабуйце яшчэ раз.</string>
 </resources>

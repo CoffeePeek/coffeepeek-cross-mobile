@@ -11,7 +11,7 @@ It extends the multiplatform lifecycle ViewModel but contains no action queue,
 custom scope, navigation, DI, global loading/error policy, Android API or
 Compose UI. Each action runs independently, so a slow action cannot block a
 later navigation intent; features must guard duplicate or conflicting work.
-The legacy app BaseViewModel remains untouched.
+The transitional application BaseViewModel remains separate; new MVI screens use this typed base.
 
 - Owner: cross-feature presentation ViewModel contract only.
 - Allowed dependencies: Kotlin, kotlinx.coroutines Flow and the multiplatform
@@ -25,7 +25,7 @@ The legacy app BaseViewModel remains untouched.
   `composeApp`, another feature implementation, or the visual design-system.
   This is a shared ABI, not a package inside the first feature.
 
-The first subclass is favorites. Event-less screens can use `Nothing` as the
+Event-less screens can use `Nothing` as the
 event type; do not invent event classes. `updateState` delegates to the existing
 `kotlinx.coroutines.flow.update` extension, rather than duplicating its
 compare-and-set logic. Call `sendEvent` from a lifecycle-owned coroutine so

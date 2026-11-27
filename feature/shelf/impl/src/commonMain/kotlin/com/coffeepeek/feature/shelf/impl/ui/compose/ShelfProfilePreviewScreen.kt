@@ -42,6 +42,8 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.component.ShelfPublicPhoto
 import com.coffeepeek.feature.shelf.impl.ui.compose.component.SHELF_COLUMNS
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 private val ShelfProfileBagHeight = 136.dp
@@ -102,9 +104,9 @@ private fun ShelfProfileBags(items: List<PublicShelfItem>, onOpen: (PublicShelfI
 @Composable
 private fun ShelfProfileBagRow(items: List<PublicShelfItem>, onOpen: (PublicShelfItem) -> Unit,
     photo: @Composable (PublicShelfItem, Modifier) -> Unit) {
+    val haze = rememberHazeState()
     Box(Modifier.fillMaxWidth().height(ShelfProfileBagHeight + ShelfLedgeHeight - ShelfLedgeOverlap)) {
-        ShelfLedge(Modifier.offset(y = ShelfProfileBagHeight - ShelfLedgeOverlap))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.fillMaxWidth().hazeSource(haze), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             repeat(SHELF_COLUMNS) { index ->
                 val item = items.getOrNull(index)
                 if (item == null) Spacer(Modifier.weight(1f)) else PublicShelfBag(item, { onOpen(item) }, Modifier.weight(1f)) {
@@ -112,6 +114,7 @@ private fun ShelfProfileBagRow(items: List<PublicShelfItem>, onOpen: (PublicShel
                 }
             }
         }
+        ShelfLedge(Modifier.offset(y = ShelfProfileBagHeight - ShelfLedgeOverlap), haze)
     }
 }
 

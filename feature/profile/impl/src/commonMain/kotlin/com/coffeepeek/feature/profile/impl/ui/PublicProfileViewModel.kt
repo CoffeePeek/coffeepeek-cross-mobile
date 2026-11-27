@@ -16,6 +16,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckInPage
 import com.coffeepeek.feature.profile.domain.PublicProfileConnection
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
+import com.coffeepeek.feature.profile.domain.PublicProfileConnectionsPage
 import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.feature.profile.domain.PublicProfileUnavailable
 import com.coffeepeek.feature.profile.domain.isOwnPublicProfile
@@ -46,6 +47,7 @@ internal class PublicProfileViewModel(
     private val likes: ProfileCheckInLikes,
     private val visibility: ProfileAuthorVisibility = ProfileAuthorVisibility.None,
     private val snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
+    private val includeCheckIns: Boolean = true,
 ) : MviViewModel<PublicProfileState, PublicProfileAction, PublicProfileEvent>(cachedState(slug, accounts, visibility, snapshots)) {
     private var initialized = false
     private var hasResumed = false
@@ -56,6 +58,7 @@ internal class PublicProfileViewModel(
     private var favoritesJob: Job? = null
     private var activityJob: Job? = null
     private var connectionsJob: Job? = null
+    private var followingCountJob: Job? = null
     private var ownProfileJob: Job? = null
     private var nextCursor: String? = cachedSnapshot(slug, accounts, visibility, snapshots)?.nextCheckInCursor
     private val loadedCheckInCursors = mutableSetOf<String>()
@@ -91,7 +94,7 @@ internal class PublicProfileViewModel(
         if (!sameAuthor) nextCursor = null
         return copy(isLoading = false, profile = retained, error = null, isOwnProfile = isOwn,
             isFollowing = !isOwn && received.isFollowing, checkIns = if (sameAuthor) checkIns else emptyList(),
-            hasMoreCheckIns = sameAuthor && hasMoreCheckIns)
+            hasMoreCheckIns = sameAuthor && hasMoreCheckIns, followingCount = followingCount.takeIf { sameAuthor })
     }
 
     private fun sameAuthor(first: PublicProfile, second: PublicProfile): Boolean =
@@ -108,6 +111,7 @@ internal class PublicProfileViewModel(
         when (action) {
             PublicProfileAction.Initialize -> if (!initialized) { initialized = true; start() }
             PublicProfileAction.Refresh -> refresh()
+            PublicProfileAction.RefreshFollowingCount -> refreshFollowingCount()
             PublicProfileAction.ToggleFollow -> toggleFollow()
             PublicProfileAction.RetryFavorites -> retryFavorites()
             is PublicProfileAction.ChangeActivityMonth -> changeActivityMonth(action.month)
@@ -115,10 +119,7 @@ internal class PublicProfileViewModel(
             is PublicProfileAction.OpenConnections -> openConnections(action.kind)
             PublicProfileAction.CloseConnections -> closeConnections()
             PublicProfileAction.RetryConnections -> loadConnections(reset = connectionsPage == 0)
-            PublicProfileAction.LoadMoreConnections -> {
-                val current = currentState
-                if (current.hasMoreConnections && current.connectionsError == null) loadConnections(reset = false)
-            }
+            PublicProfileAction.LoadMoreConnections -> moreConnections()
             else -> handleCheckInAction(action)
         }
     }
@@ -137,6 +138,15 @@ internal class PublicProfileViewModel(
             }
             else -> Unit
         }
+    }
+
+    private fun refreshFollowingCount() {
+        if (!currentState.isLoading) loadFollowingCount()
+    }
+
+    private fun moreConnections() {
+        val current = currentState
+        if (current.hasMoreConnections && current.connectionsError == null) loadConnections(reset = false)
     }
 
     private fun start() {
@@ -251,6 +261,7 @@ internal class PublicProfileViewModel(
     private fun cancelRefreshJobs() {
         profileJob?.cancel(); checkInsJob?.cancel(); followJob?.cancel()
         favoritesJob?.cancel(); activityJob?.cancel(); connectionsJob?.cancel()
+        followingCountJob?.cancel()
     }
 
     private suspend fun loadProfile(requestGeneration: Int, requestAccount: String?) {
@@ -272,16 +283,35 @@ internal class PublicProfileViewModel(
         updateState { refreshedProfileState(profile, isOwnProfile(profile)) }
         if (profile.isBlockedByViewer || visibility.current().hides(profile.authorId, profile.slug)) {
             updateState { copy(profile = profile.copy(isBlockedByViewer = true, favorites = emptyList(), activity = null),
-                checkIns = emptyList(), connections = emptyList(), isFollowing = false, hasMoreCheckIns = false) }
+                checkIns = emptyList(), connections = emptyList(), isFollowing = false, hasMoreCheckIns = false, followingCount = null) }
             snapshots.clear()
             return
         }
         rememberSnapshot()
-        loadCheckIns(reset = true)
+        if (includeCheckIns) loadCheckIns(reset = true)
         retryFavorites()
         retryActivity()
+        loadFollowingCount()
         currentState.connectionKind?.let(::openConnections)
     }
+
+    private fun loadFollowingCount() {
+        val profile = currentState.profile?.takeUnless { it.isBlockedByViewer } ?: return
+        val requestGeneration = generation
+        val requestAccount = account
+        followingCountJob?.cancel()
+        followingCountJob = viewModelScope.launch {
+            val result = data.getConnections(profile.slug, PublicProfileConnectionKind.Following, 1, 1)
+            currentCoroutineContext().ensureActive()
+            if (!isCurrent(requestGeneration, requestAccount)) return@launch
+            result.onSuccess { updateState { withConnectionCount(PublicProfileConnectionKind.Following, it.totalCount) } }
+                .onFailure { if (it is CancellationException) throw it }
+        }
+    }
+
+    private fun PublicProfileState.withConnectionCount(kind: PublicProfileConnectionKind, count: Int): PublicProfileState =
+        if (kind == PublicProfileConnectionKind.Following) copy(followingCount = count.coerceAtLeast(0))
+        else copy(profile = profile?.let { it.copy(stats = it.stats.copy(followers = count.coerceAtLeast(0))) })
 
     private fun applyProfileFailure(error: Throwable) {
         val message = if (error is PublicProfileUnavailable) PublicProfileError.Unavailable else PublicProfileError.Load
@@ -422,16 +452,24 @@ internal class PublicProfileViewModel(
             val failureMessage = if (result.isFailure) PublicProfileError.Connections else null
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount) || listGeneration != connectionsGeneration) return@launch
-            result.onSuccess { loaded ->
-                connectionsPage = loaded.page
-                updateState { copy(connections = (if (reset) loaded.items else connections + loaded.items).distinctBy(PublicProfileConnection::slug),
-                    isLoadingConnections = false, isLoadingMoreConnections = false,
-                    hasMoreConnections = loaded.items.isNotEmpty() && loaded.page < 10_000 && loaded.page.toLong() * loaded.pageSize < loaded.totalCount) }
-            }.onFailure { updateState { copy(isLoadingConnections = false, isLoadingMoreConnections = false, connectionsError = failureMessage) } }
+            result.onSuccess { applyConnectionsPage(it, reset, kind) }
+                .onFailure { updateState { copy(isLoadingConnections = false, isLoadingMoreConnections = false, connectionsError = failureMessage) } }
+        }
+    }
+
+    private fun applyConnectionsPage(loaded: PublicProfileConnectionsPage, reset: Boolean, kind: PublicProfileConnectionKind) {
+        if (kind == PublicProfileConnectionKind.Following) followingCountJob?.cancel()
+        connectionsPage = loaded.page
+        updateState {
+            copy(connections = (if (reset) loaded.items else connections + loaded.items).distinctBy(PublicProfileConnection::slug),
+                isLoadingConnections = false, isLoadingMoreConnections = false,
+                hasMoreConnections = loaded.items.isNotEmpty() && loaded.page < 10_000 &&
+                    loaded.page.toLong() * loaded.pageSize < loaded.totalCount).withConnectionCount(kind, loaded.totalCount)
         }
     }
 
     private fun requestCheckIns(reset: Boolean) {
+        if (!includeCheckIns) return
         val state = currentState
         if (state.isLoading || state.isLoadingCheckIns || state.isLoadingMoreCheckIns) return
         if (!reset && (!state.hasMoreCheckIns || state.checkInsError != null)) return
@@ -490,6 +528,7 @@ internal class PublicProfileViewModel(
     }
 
     private fun loadCheckIns(reset: Boolean) {
+        if (!includeCheckIns) return
         val profile = currentState.profile?.takeUnless { it.isBlockedByViewer } ?: return
         val cursor = if (reset) null else nextCursor
         val requestGeneration = generation
@@ -498,6 +537,7 @@ internal class PublicProfileViewModel(
         checkInsJob = viewModelScope.launch {
             likeJobs.values.toList().joinAll()
             val result = withTimeoutOrNull(15_000) { checkIns.page(profile.slug, cursor) }
+            result?.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount)) return@launch
             val page = result?.getOrNull()

@@ -1,7 +1,6 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,7 +32,6 @@ import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileCheckInCalendar
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileLoadingSkeleton
-import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
@@ -92,17 +90,20 @@ private fun PublicProfileLoadedContent(state: PublicProfileState, profile: Publi
         checkIns = {},
         checkInsList = { modifier, header ->
             PublicProfileCheckInsTab(state, viewingOwn, authorActions, slots, callbacks,
-                checkInList, modifier, own?.bottomContentPadding ?: 20.dp, own?.activity, header)
+                checkInList, modifier, own?.bottomContentPadding ?: 20.dp, header)
         },
         collections = { PublicProfileCollections(profile, viewingOwn, slots, own) },
+        onOpenCollections = own?.onOpenFavorites ?: slots.onOpenOwnCollections.takeIf { viewingOwn },
         shelf = { slots.shelfPreview(profile.slug, viewingOwn) },
         modifier = Modifier.fillMaxSize().then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
-        ownerShelf = own?.shelf, bottomPadding = own?.bottomContentPadding ?: 20.dp,
+        ownerShelf = own?.shelf, ownerHistory = own?.history, bottomPadding = own?.bottomContentPadding ?: 20.dp,
+        ownerCollections = own?.collectionsRequest,
     ) { selectCheckIns ->
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Spacer(Modifier.height(2.dp))
             PublicProfileIdentity(state, profile, viewingOwn, slots, callbacks, own)
-            ProfileCheckInCalendar(state, profile, slots.image, own?.activity, callbacks.onAction) { date ->
+            if (own != null) own.history.calendar()
+            else ProfileCheckInCalendar(state, profile, slots.image, callbacks.onAction) { date ->
                 callbacks.onAction(PublicProfileAction.SelectCheckInDate(date))
                 if (date != null) selectCheckIns()
             }
@@ -122,6 +123,8 @@ private fun PublicProfileIdentity(state: PublicProfileState, profile: PublicProf
         onShopsClick = if (viewingOwn) ({ contributions(ProfileContribution.Shops) }) else null,
         onRoastersClick = if (viewingOwn) ({ contributions(ProfileContribution.Roasters) }) else null,
         onFollowersClick = { callbacks.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers)) },
+        followingCount = state.followingCount,
+        onFollowingClick = { callbacks.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Following)) },
         onAvatarClick = { profile.avatarUrl?.let { callbacks.onPhotoClick(listOf(it), listOf(it), 0) } })
 }
 
@@ -136,15 +139,8 @@ private fun PublicProfileRefreshErrors(state: PublicProfileState, viewingOwn: Bo
 @Composable
 private fun PublicProfileCollections(profile: PublicProfile, viewingOwn: Boolean, slots: ProfileSlots, own: OwnProfileExtras?) {
     when {
-        own != null -> own.favoritesPreview {
-            ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = own.onOpenFavorites)
-        }
-        viewingOwn -> Column {
-            Box(Modifier.padding(horizontal = 16.dp)) {
-                ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = slots.onOpenOwnCollections)
-            }
-            slots.ownerCollection()
-        }
+        own != null -> own.favoritesPreview {}
+        viewingOwn -> slots.ownerCollection()
         else -> slots.featuredCollection(profile.slug)
     }
 }

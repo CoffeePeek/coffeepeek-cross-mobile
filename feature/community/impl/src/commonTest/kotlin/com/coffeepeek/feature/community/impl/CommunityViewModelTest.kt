@@ -56,6 +56,23 @@ class CommunityViewModelTest {
     private fun CommunityViewModel.send(action: CommunityAction, scope: TestScope) { onAction(action); scope.runCurrent() }
     private fun page(vararg ids: String, next: String? = null) = FeedPage(ids.map { entry(post(it)) }, next)
 
+    @Test fun nativeAccountEpochSurvivesRefreshAndScopeChangeButNotAccountReplacement() = runTest(dispatcher) {
+        val account = FakeAccount("one")
+        val vm = model(account = account)
+        val initial = vm.state.value
+        vm.send(CommunityAction.Refresh(), this)
+        assertTrue(vm.state.value.sessionGeneration > initial.sessionGeneration)
+        assertEquals(initial.accountEpoch, vm.state.value.accountEpoch)
+        vm.send(CommunityAction.SelectTimeline(CommunityTimeline.Mine), this)
+        assertEquals(initial.accountEpoch, vm.state.value.accountEpoch)
+        account.switchTo("two")
+        runCurrent()
+        assertEquals(initial.accountEpoch + 1, vm.state.value.accountEpoch)
+        account.switchTo("two")
+        runCurrent()
+        assertEquals(initial.accountEpoch + 1, vm.state.value.accountEpoch)
+    }
+
     @Test fun confirmedSaveSurvivesReadFailureAndIsReconciledWithoutADuplicate() = runTest(dispatcher) {
         val saved = createCommunitySavedPosts()
         val repo = FakeRepository().apply { feed = { _, _, _ -> Result.failure(Exception("offline")) } }

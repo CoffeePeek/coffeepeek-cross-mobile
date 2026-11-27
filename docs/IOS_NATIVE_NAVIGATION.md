@@ -1,79 +1,51 @@
-# iOS navigation bar
+# Native iOS navigation
 
-## Scope and ownership
+Current source contract, reviewed 2026-11-27. Application composition owns shared
+routing policy; UIKit owns native tabs, pushed controllers, gestures and modal
+transitions. The active boundary is `MainViewController` → `IosNativeRoot` →
+`CoffeePeekRootController` in `NativeRootController.swift`, not the retired
+Compose AppContent/NativeScreenController host.
 
-The application composition module owns the root navigation. Android uses the
-existing Compose `FloatingBottomNavBar`. iOS hosts a native `UITabBarController`
-with five UINavigationController stacks; the system owns tab selection and bar
-appearance. iOS glass icon buttons use `UIButtonConfiguration.glass()`.
+## Root and routes
 
-Detail transitions now use a native UINavigationController and sheets use
-UISheetPresentationController. Business contracts, repositories, and navigation
-routes are shared. See [IOS_NATIVE_EXPERIENCE.md](IOS_NATIVE_EXPERIENCE.md) for
-the migration, ownership, and device verification requirements.
+The native tab controller has five slots, including the create action, and
+retains its navigation controllers. `Navigator` publishes routes, selected-tab
+requests and map focus. `IosRootState`/generation-aware commands describe the
+requested state; UIKit acknowledges completed transitions before Kotlin advances
+routing. Direct selection/reselection and programmatic routing retain their
+explicit shared policies; do not invent a second Swift navigation history.
 
-## Integration
+Route controllers retain feature session ownership and visibility. Native back,
+interactive swipe cancellation and local draft protection must agree with shared
+navigation state. A detail can hide the tab bar; map expansion has its own bar
+policy. Safe-area/clearance is supplied by the native host and must not be added
+again using Android floating-bar padding.
 
-- `Navigator` publishes shared detail/authentication routes. UIKit dispatches
-  them into the active tab's stack; Android retains its Compose graph.
-- Each native tab retains its own root content, including the discovery map.
-- `Navigator.pendingTabSelection` selects tabs for actions such as
-  showing a shop on the map; pending map focus remains owned by `Navigator`.
-- `AppContent` supplies each Compose controller with the shared theme and
-  image configuration. It does not create another root navigator or DI container.
-- Direct tab-bar selection preserves the destination stack. Programmatic tab
-  entry (including "show on map") returns to that tab's root.
-- UIKit reserves bar/safe-area space; shared floating clearance is zero. The
-  Compose host consumes the insets already reserved by UIKit.
-- CpTopBar forwards detail headers/actions to the native navigation item.
-  Feed, profile and settings use shared left-aligned root headings. Custom hero
-  headers keep their existing layout. CpSearchField uses the shared Compose field.
+`IosRootModals` and `NativeRootModalPresenter` arbitrate global UI and wait for an
+attached, stable presenter. Busy forms retain dismiss guards. Close/cancel must
+close only their own presentation and dispose the correct session once. Account
+replacement invalidates stale navigation and private modal callbacks; token
+refresh for the same account does not discard every stack/draft.
 
-## Appearance and limits
+## Appearance
 
-On Android, the bar keeps its Compose appearance from `LiquidGlass.kt`. On
-iOS 26 and later, UIKit supplies the native Liquid Glass tab bar. On iOS 17
-and 18, the root `UITabBar` uses `UIBlurEffect.Style.systemMaterial` for both
-its standard and scroll edge appearances so scrolling content has a material
-behind the tab labels. Glass icon buttons on those versions share the same
-material. Prominent buttons use their accent fill. Transparent UIKit controls
-are placed above the Compose surface so their backgrounds show the screen beneath them. Opaque
-map and root controller hosts remain below Compose overlays. Theme and content
-color are propagated explicitly; see [the interop audit](IOS_COMPOSE_INTEROP_AUDIT.md).
-The tab controller owns the bottom safe area at its natural height. Detail
-pushes hide its bar. The discovery root keeps the bar while expanding the map.
+On supported systems native controls/tab chrome use system Liquid Glass; older
+supported iOS versions use the configured material/filled fallback. The app's
+minimum is iOS 17 (`Shared.xcconfig`), not the old iOS 15 Compose fallback.
+Native root/feature backgrounds use CoffeePeek's theme, and Swift applies the
+selected appearance to the owning window/controller. Native glass is presentation,
+not permission to duplicate actions or accessibility elements.
 
-Automatic scroll-driven tab minimization is not implemented: Compose scroll
-containers do not expose a native UIScrollView to UIKit. This change does not
-claim to provide every scroll-edge effect. Native detail navigation is now
-handled by each tab's UIKit navigation controller. See
-[the staged migration plan](ios-native-ui-migration.md) for remaining work.
+Do not infer all scroll-edge/minimization effects from the existence of a native
+tab controller. Review the actual Swift host and each scroll container. Feature
+content, keyboard and full-bleed hero safe areas need their own layout checks.
 
-## Verification and deployment
+## Verification
 
-On 2026-11-12, at `c5b498e0f` plus the tab material patch, the Kotlin/Native
-tab setup compiled as KLIBs for device and simulator. The function body limit
-check passed. Linking and visual checks still require Xcode. Scroll Settings in
-both themes on iOS 18 and confirm the native glass appearance on iOS 26.
-
-Historical checks before the native interaction migration passed:
-
-```bash
-./gradlew :composeApp:compileKotlinIosArm64 :composeApp:compileDebugKotlinAndroid
-xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration Debug \
-  -destination 'platform=iOS Simulator,id=83E409DF-61B0-47D8-9D04-C9CAB89D35A1' \
-  CODE_SIGNING_ALLOWED=NO -quiet build
-```
-
-The app was installed and launched on an iPhone 17 simulator running iOS 27.
-All four tabs opened, the map rendered, and the shop header buttons appeared
-without rectangular backgrounds. A physical iOS 26 device check is still
-required.
-
-Further device checks:
-
-1. Confirm the appearance and touch response on iOS 26 hardware.
-2. Return to feed/map and confirm their state survives tab switches.
-3. Use "show on map" from a shop; confirm the selected tab and focus.
-4. Open authentication, sign in/out, and verify the root navigation resets safely.
-5. Change theme, rotate, and check content clearance, VoiceOver, and keyboard behavior.
+Use the existing navigation/root/session contracts plus the iOS workflow's full
+Kotlin/Swift link. Check device tab retention, show-on-map focus, cold/warm links,
+back/swipe cancellation, create/editor return and account transitions in both
+themes/larger text. A local source/contract audit does not certify native touch
+routing or real sign-in. No device or build ran for this documentation update.
+See [root/session contracts](IOS_NATIVE_ROOT_SESSION_CONTRACTS.md),
+[exit gates](IOS_NATIVE_EXIT_PLAN.md) and [setup](IOS_SETUP.md).

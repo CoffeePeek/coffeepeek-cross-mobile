@@ -3,8 +3,8 @@
 ## Purpose
 
 CoffeePeek evolves toward a feature-based Clean Architecture for Kotlin
-Multiplatform. Today Android uses Compose and iOS hosts the shared Compose UI in
-SwiftUI; native iOS screens remain a future per-feature choice. The goal is
+Multiplatform. Android uses Compose. iOS renders SwiftUI/UIKit screens and native
+navigation, consuming shared Kotlin feature sessions, data and business rules. The goal is
 predictable ownership, isolated changes, testable logic, and controlled Gradle
 dependencies — not the maximum number of modules or classes.
 
@@ -16,9 +16,12 @@ consumers and removal of `modules/`, not merely when new routes are selected.
 `composeApp` keeps startup, root DI, platform configuration and root navigation;
 business UI, presentation state and ViewModels belong to feature implementations.
 Reusable UI and platform infrastructure belong to the appropriate core owner.
-The migration log is in [feature/LEGACY_EXIT_PLAN.md](feature/LEGACY_EXIT_PLAN.md).
+The current remaining-boundary checklist is in [feature/LEGACY_EXIT_PLAN.md](feature/LEGACY_EXIT_PLAN.md).
 
 ## Current state
+
+Documentation reviewed against develop on 2026-11-27. This does not certify a
+production deployment or fresh device acceptance.
 
 The current layout of the repository, including what is shared and what is platform-specific, is described in
 [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md). It replaces the earlier transitional layout snapshot that stood here.
@@ -42,13 +45,15 @@ application composition
 
 The agreed migration target is api/domain/data/impl Gradle boundaries per
 business feature, created progressively under singular feature/. A feature di
-Gradle module is not required for each feature; favorites Koin assembly and its
-temporary legacy compatibility bridge now live in composeApp/androidMain.
+Gradle module is not required for each feature; favorites Koin assembly and
+server-state adapters live in composeApp common/platform composition.
 Root Koin assembly and platform bridges normally belong in composeApp packages.
 The split provides a small cross-feature ABI, independently testable domain/data and
 hidden presentation/composition. Do not scaffold all future features or force
 domain/data onto infrastructure modules with no business responsibilities.
-The existing core modules and legacy layout remain authoritative until migrated.
+The actual core modules and source sets remain authoritative; modules/ is removed.
+Favorites currently retains domain/data only: its standalone screen and api/impl
+modules were removed, while Collections owns the active library UI.
 
 ## Dependency model
 
@@ -68,7 +73,7 @@ within one feature:
 
 application composition:
     composeApp DI → api, domain, data factories, impl entry factory
-    composeApp bridges → legacy storage/contracts (temporary, platform-owned)
+    composeApp bridges → public feature contracts and platform services
 ```
 
 Allowed dependencies:
@@ -77,7 +82,7 @@ Allowed dependencies:
 |---|---|
 | Application composition | Required features and core modules |
 | Feature UI | Its own domain/api and needed core infrastructure |
-| Feature impl composition | Its api/domain and data wiring entry points |
+| Feature impl composition | Its own api/domain and needed core; application composition supplies data factories |
 | Feature data | Its own domain and needed core infrastructure |
 | Feature domain | Kotlin and deliberately allowed domain dependencies |
 | Feature API | Minimal public dependencies only |
@@ -143,8 +148,9 @@ be `internal` extension functions rather than artificial mapper interfaces.
 Function-size review limits are 40 non-blank, non-comment body lines for a
 Composable and 20 for an ordinary function. Nested blocks count; signatures do
 not. Extract cohesive components/helpers, not compressed formatting. Apply to
-new/substantively changed functions without mass-rewriting unrelated code or
-adding an automated lint/build limit.
+new/substantively changed functions without mass-rewriting unrelated code.
+The root verifyFunctionBodyLimits task enforces new/grown violations; its
+baseline freezes existing debt and must not be extended by hand.
 
 UI owns ViewModels, immutable UI state, actions/events, presentation models,
 screens, feature components, and feature navigation builders. Compose renders
@@ -251,8 +257,8 @@ DI must not circumvent Gradle boundaries or fetch another feature's internal
 class. Dagger/Hilt is not part of the current KMP composition strategy.
 
 For favorites, domain/data use manual constructor/factory injection. Android
-application composition owns Koin assembly and temporary adapters to the existing
-server-backed shop/roaster/drink source; the earlier Room foundation is not the
+application composition owns Koin assembly and adapters to the
+server-backed feature/favorites source; the earlier Room foundation is not the
 active writer. Impl UI sees its own domain only and does not perform Koin lookups.
 Other features define their own domain ports; application composition adapts them
 to favorites contracts. Cross-feature dependencies use only intentionally public API.
@@ -269,17 +275,15 @@ iosApp      native Swift/SwiftUI application, lifecycle, navigation, integration
 ```
 
 `commonMain` does not mean “non-UI”: Compose Multiplatform UI may live there.
-The current iOS SwiftUI shell hosts the shared Compose framework; it does not
-yet provide native SwiftUI versions of migrated screens. A native screen may
-later use shared domain/data through a deliberate public bridge without copying
-business rules.
-Roasters uses one commonMain Compose implementation and shared application
-adapters on Android and iOS; its native app navigation and platform callbacks
-stay application-owned. Other features retain their existing migration scope.
+The active iOS application renders SwiftUI/UIKit screens and native navigation,
+consuming Kotlin feature sessions, state and data through public bridges.
+Compose interop remains available for explicit hosts; the existence of a shared
+Compose implementation does not establish which entry is active on iOS.
+See docs/IOS_NATIVE_NAVIGATION.md and docs/IOS_NATIVE_ROOT_SESSION_CONTRACTS.md.
 Only Android-specific Compose/API code belongs in `androidMain`. Native SwiftUI
-always belongs in `iosApp`, not `iosMain` or shared feature modules. Prefer
-shared code where library support permits; use `expect`/`actual` only for a real
-platform difference.
+belongs to the iOS app boundary. Xcode and xtool share Swift sources under
+`iosXtool/CoffeePeek/Sources/CoffeePeek`. Use `expect`/`actual` for real platform
+differences.
 
 ## Incremental migration
 
@@ -327,43 +331,21 @@ Before adding a Gradle module, answer all of these:
 
 If any answer is unclear, keep a package boundary and revisit later.
 
-## Author-blocking migration slice
+## Author-blocking ownership
 
-`feature/author-blocking/{api,domain,data,impl}` owns author-block HTTP DTOs and pagination,
-repository state, account invalidation, mutation reconciliation, visibility snapshots and
-presentation coordination. It moved from `composeApp/.../authorblocking`, then from the old
-top-level `features/author-blocking`, and now follows the same four-module layout as the other
-owners. The repository implementation and ViewModel are `internal`; consumers use
-`com.coffeepeek.feature.authorblocking.api` only: author identities, visibility/action contracts,
-the presenter/state entry point and the `AuthorBlockingAccount` port.
-
-The account port replaces the old dependency on the legacy `SessionRepository`: the application
-adapts its session (`SessionAuthorBlockingAccount`) into an opaque account key that is null when
-nobody is signed in. `domain` depends on coroutines only, `api` on coroutines, `data` on
-`api`/`domain`, Ktor and serialization, and `impl` composes them behind
-`createAuthorBlockingFeature(client, account)`. Nothing depends on `composeApp`, another feature
-implementation, Compose, lifecycle, Koin, navigation or platform APIs. The presentation
-coordinator's scope is owned by the feature's explicit `close()`.
-
-`AuthorBlockingHost` and `BlockedAuthorsScreen` still live in `composeApp` as Cp UI
-rendering/navigation adapters over the public presenter; moving them into `impl` on
-`core/design-system` is the remaining slice. New author-blocking business logic belongs in the
-feature modules, never in these adapters.
-
-Privacy behaviour is retained: session changes clear visibility and pending confirmations, stale
-responses cannot cross account generations, incomplete page loads stay closed, and a timed-out
-mutation reconciles before another write. Avatar URL resolution clears the list request's
-pagination query and fragment before preserving the avatar URL's own query/fragment. Module tests
-cover those cases; application integration tests cover feed visibility and the Compose
-menu/rendering adapters. Verify `:feature:author-blocking:data:testDebugUnitTest`,
-`:feature:author-blocking:impl:testDebugUnitTest`, the application flavor tests and Android
-instrumented compilation; Kotlin/Native compilation verifies the shared dependency boundary for iOS.
+`feature/author-blocking/{api,domain,data,impl}` owns repository state,
+pagination, account invalidation, reconciliation and presentation. Its host and
+blocked-author Compose screens are inside `impl`; native iOS uses the public
+presenter/entry contract. Composition supplies a `SessionReader` account adapter,
+platform hooks and routes. No author-block HTTP or business UI belongs in root.
+Privacy, boundaries and remaining manual gates are in
+[feature/author-blocking/README.md](feature/author-blocking/README.md).
 
 ## Verification checklist
 
 Android execution environments are explicit: Sandbox is the agent's default local fake
 environment in a separate `com.coffeepeek.sandbox` package; ordinary Debug uses
-the live configured backend and `com.coffeepeek` storage, with Google sign-in
+the live configured backend and separate `com.coffeepeek.debug` storage, with Google sign-in
 disabled. Direct/Play are delivery flavors, not mock/live selectors. See
 `composeApp/ANDROID_RUN_MODES.md`. Build-only configurations never authorize
 deployment, and Sandbox acceptance does not establish live-backend readiness.

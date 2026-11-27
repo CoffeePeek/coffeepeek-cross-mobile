@@ -79,7 +79,7 @@ internal class MapViewModel(
     private var heatmapArea: MapBounds? = null
 
     init {
-        viewModelScope.launch { location.current.collect { point -> if (point != null) changeUserLocation(point) } }
+        viewModelScope.launch { location.current.collect(::changeUserLocation) }
         viewModelScope.launch { account.accountKey.distinctUntilChanged().collect(::onAccount) }
         viewModelScope.launch { favorites.ids.distinctUntilChanged().collect(::onFavorites) }
     }
@@ -161,6 +161,7 @@ internal class MapViewModel(
     }
 
     private fun onLocationDenied() {
+        if (location.current.value != null) location.refresh()
         permissionRequestPending = false
         locateAfterPermission = false
         analytics.geolocation(PLACEMENT, userTriggered = currentState.locationPermissionRequest > 0, outcome = GeolocationOutcome.Unavailable)
@@ -306,8 +307,8 @@ internal class MapViewModel(
 
     // ---- viewport carousel and distance origin ----
 
-    private fun changeUserLocation(point: Coordinates) {
-        if (criteriaSupplied || !point.isValid) return
+    private fun changeUserLocation(point: Coordinates?) {
+        if (criteriaSupplied || point?.isValid == false) return
         syncCriteria(currentState.criteria.copy(origin = point))
     }
 

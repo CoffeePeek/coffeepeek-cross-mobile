@@ -5,7 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.admin.di.media.PlatformPhotoViewer
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.rememberReviewDisplayDate
 import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
@@ -78,14 +78,14 @@ internal fun profileSlots(): ProfileSlots {
         ownerCollection = { ProfileOwnerCollection() },
         onOpenOwnCollections = ::openProfileCollections,
         onOwnContributions = ::openProfileContributions,
+        onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
         image = { url, description, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
-        photoViewer = { previews, originals, index, onDismiss -> CoffeePeekPhotoViewer(CoffeePeekPhotoViewerImages(previews, originals), index, onDismiss) },
+        photoViewer = { previews, originals, index, onDismiss -> PlatformPhotoViewer(CoffeePeekPhotoViewerImages(previews, originals), index, onDismiss) },
         logoImage = { url, description, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Fit, contentDescription = description) },
         displayDate = { rememberReviewDisplayDate(it) },
         progressiveImage = { preview, detail, modifier, scale, onSize -> CoffeePeekImage(data = preview, highQualityData = detail,
             modifier = modifier, contentScale = scale, showLoader = true, onDecodedSize = onSize) },
         reportCheckIn = { Navigator.navigate(Navigator.Screen.ReportCheckIn(it)) },
-        onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
         photoPrefetch = { listState, items -> PrefetchListPhotos(listState, items) },
     )
 }

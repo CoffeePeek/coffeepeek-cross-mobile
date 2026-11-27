@@ -1,60 +1,29 @@
-# Android debug runtime packaging checks
+# Android packaged runtime checks
 
-Both debug app variants automatically run `VerifyApkRuntimeClassesTask` after
-assembly. The task follows each variant's APK artifact provider and reads DEX
-class definitions for the startup composition classes. Merely finding a class
-descriptor in a DEX string/type table is insufficient: a missing class may still
-be referenced by another class, which is exactly what produces a startup
-`NoClassDefFoundError`.
+Reviewed 2026-11-27 against `VerifyApkRuntimeClassesTask`, its unit tests and `composeApp/build.gradle.kts`.
 
-The check is limited to unminified debug variants. Release R8 can legitimately
-rename or inline these classes, so the same name-based check must not be applied
-to release APKs.
+Direct/Play Debug assembly finalizers inspect the actual APK's DEX class definitions for required startup composition classes. A descriptor in a string/type table is only a reference, not a class definition; successful compilation alone does not exclude `NoClassDefFoundError` at startup. Sandbox assembly checks its required runtime classes plus manifest isolation. Ordinary Debug rejects Sandbox/mock-engine definitions.
 
-## Incident and recovery
+Name-based startup checks apply to unminified variants. Release R8 may rename/inline classes, so this exact check is not applied to Release.
 
-On 2026-10-08, `CheckInApiService` and its generated classes existed in the Kotlin
-compiler output and runtime JAR, but 14 of those files were missing from
-`modules/network/build/intermediates/runtime_library_classes_dir/debug/` (the module has since been removed; the same applies to any library module such as `core/network`).
-The freshly assembled Direct APK also lacked the service's DEX definition,
-despite a successful build. The library dependency was already present in the
-application's common source set; changing Koin registration or adding a duplicate
-dependency would not address that discrepancy.
+## Diagnose a failure
 
-Rebuilding the generated network/app outputs without build-cache reuse restored
-the missing class:
+1. Record source SHA, variant, APK path, original failure and missing class definition.
+2. Trace the class through compiler outputs, runtime JAR, library intermediates and final DEX. Confirm the dependency/source set before changing DI or duplicating dependencies.
+3. If evidence points to stale generated output, rebuild only affected module/app outputs without cache reuse. For example, when network outputs are implicated:
 
 ```shell
-./gradlew --no-daemon :core:network:clean :composeApp:clean \
-  :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug --no-build-cache
+./gradlew :core:network:clean :composeApp:clean :composeApp:assembleDirectDebug --no-build-cache --max-workers=6
 ```
 
-This removes generated build outputs, not sources, application data or the global
-Gradle cache. Use the current variant APK paths under `direct/debug` or
-`play/debug`; an older `apk/debug/composeApp-debug.apk` is not the current flavored
-artifact. Do not uninstall the app or clear its data as a packaging workaround.
+Run sequentially. This cleans generated outputs; do not delete global caches, uninstall, clear user data or downgrade an installed APK as a shortcut. Recheck the final APK definition and report the first failure alongside a successful retry. A stale-output symptom does not establish the upstream cache/packaging root cause.
 
-After the rebuild, DEX inspection confirmed the service definition and an
-in-place installation on the Pixel 7 from the crash log successfully launched
-the application. The same process remained alive and had no new crash-buffer
-entry. This startup smoke check does not verify every authenticated feature.
+For an actual packaging/DI crash, a non-destructive startup smoke test on the agreed device remains necessary after compatible in-place installation. Follow [Android run modes](../composeApp/ANDROID_RUN_MODES.md). Startup survival does not prove authentication or all feature flows.
 
-The new build guard catches this symptom in future local and CI debug assemblies.
-It detects incomplete packaging; it does not establish which upstream
-incremental-build/cache component produced the stale output.
+## Artifact identity
 
-## Local backend verification
+- Debug: `composeApp/build/outputs/apk/direct/debug/composeApp-direct-debug.apk` or the corresponding `play/debug` path.
+- Sandbox: `composeApp/build/outputs/apk/direct/sandbox/composeApp-direct-sandbox.apk`.
+- An old unflavored `apk/debug/composeApp-debug.apk` is not the current artifact.
 
-On 2026-10-09, the old Railway URL from the setup template returned
-`404 Application not found`. The repository's existing iOS configuration already
-named `https://api.coffeepeek.by/`; public shop-list and city requests to that
-address returned successful JSON envelopes and HTTP 200. Local Android
-`local.properties` now uses that address and remains ignored/untracked.
-
-Both generated Android BuildConfig variants contain the new address. Direct/Play
-assembly, runtime-class checks, all debug unit tests, application tests and lint
-passed after rebuilding. The Direct APK was updated in place on the Pixel 7,
-started successfully and had no new crash-buffer entry. Device HTTP logs show
-requests to the new API, but response/rendering and authenticated flows are not
-yet confirmed by that startup check. No production writes or account resets
-were performed; Google Sign-In remains disabled without a Web Client ID.
+The historical packaging incident and its device result are retained in Git history. This document states the current guard and diagnostic procedure, without reusing an old successful run as fresh acceptance.

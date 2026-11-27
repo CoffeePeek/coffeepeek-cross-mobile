@@ -149,7 +149,8 @@ internal fun HomeCheckInEditorScreenContent(
             }
             HomeCheckInEditorSaveError(state)
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2),
+                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6)) {
                 HomeCheckInEditorPrimaryFields(state, enabled, formatDate, media, pickerLoading, onAction,
                     { focus.clearFocus(); keyboard?.hide(); showDatePicker = true },
                     { focus.clearFocus(); keyboard?.hide(); onAddPhotos(it) })
@@ -175,8 +176,8 @@ private fun HomeCheckInEditorBeanPickerContent(state: HomeCheckInEditorState, me
 
 @Composable
 private fun HomeCheckInEditorHeader(state: HomeCheckInEditorState, onClose: () -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp),
-        verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4)
+        .padding(bottom = CoffeePeekDimens.spacing4), verticalAlignment = Alignment.CenterVertically) {
         Text(stringResource(if (state.entry == null) Res.string.home_check_in_home else Res.string.home_check_in_editor_title),
             Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         IconButton(onClick = onClose, enabled = !state.isSaving, modifier = Modifier.size(CoffeePeekDimens.minimumTouchTarget)) {
@@ -187,7 +188,7 @@ private fun HomeCheckInEditorHeader(state: HomeCheckInEditorState, onClose: () -
 
 @Composable
 private fun HomeCheckInEditorLoadStatus(state: HomeCheckInEditorState, onRetry: () -> Unit, modifier: Modifier) {
-    Column(modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4), horizontalAlignment = Alignment.CenterHorizontally) {
         if (state.isLoading) CoffeePeekLoader(stringResource(Res.string.home_check_in_loading))
         state.loadIssue?.let {
             Text(if (it == HomePreparationIssue.RequestFailed || it == HomePreparationIssue.InvalidResponse)
@@ -207,7 +208,8 @@ private fun HomeCheckInEditorSaveError(state: HomeCheckInEditorState) {
     else if (state.saveIssue != null && state.failedOperation == HomePreparationOperation.PhotoUpload)
         stringResource(Res.string.home_check_in_photo_upload_failed)
     else state.saveIssue?.editorText()
-    summary?.let { HomeCheckInEditorErrorSummary(it, Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)) }
+    summary?.let { HomeCheckInEditorErrorSummary(it, Modifier.padding(horizontal = CoffeePeekDimens.spacing4)
+        .padding(bottom = CoffeePeekDimens.spacing4)) }
 }
 
 @Composable
@@ -215,8 +217,8 @@ private fun HomeCheckInEditorFooter(state: HomeCheckInEditorState, enabled: Bool
     onAction: (HomeCheckInEditorAction) -> Unit, onSave: () -> Unit) {
     // Leave the available height to the form while typing, including in iOS full-screen dialogs.
     if (WindowInsets.ime.getBottom(LocalDensity.current) > 0) return
-    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(CoffeePeekDimens.spacing4),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         HomeCheckInEditorVisibility(state.draft.visibility == HomePreparationVisibility.Public, enabled) {
             onAction(HomeCheckInEditorAction.VisibilityChanged(if (it) HomePreparationVisibility.Public else HomePreparationVisibility.Private))
         }
