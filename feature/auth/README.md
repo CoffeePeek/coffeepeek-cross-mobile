@@ -118,6 +118,12 @@ build/test результаты фиксируются в PR; реальные O
 порядка разрешения с Compose-рендерером находятся в androidUnitTest. Все три
 DI-проверки сохраняются, Native selector общей проверки остаётся включённым.
 
+App build на `aeb1c853c` выявил отсутствующий `UsernameSelectionNativeScreen.swift`
+в Xcode Compile Sources (`makeUsernameSelectionController` не был виден target).
+Файл подключён к существующему app target. Новая non-UI проверка всех именованных
+native factory sources воспроизводит этот пропуск до исправления; после подключения
+все 46 tools/ios checks проходят.
+
 - [Общие модели и Android UI](impl/src/), [HTTP и токены](data/src/commonMain/),
   [контракты](domain/src/commonMain/).
 - [Нативные экраны](../../iosXtool/CoffeePeek/Sources/CoffeePeek/) и
