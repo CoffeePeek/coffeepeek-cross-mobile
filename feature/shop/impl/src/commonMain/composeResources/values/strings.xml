@@ -126,9 +126,8 @@
     <string name="shop_checkin_form_date_confirm">Готово</string>
     <string name="shop_checkin_form_cancel">Отмена</string>
     <string name="shop_checkin_form_drink">Напиток</string>
-    <string name="shop_checkin_form_drink_none">Не выбран</string>
     <string name="shop_checkin_form_drink_other">Другое</string>
-    <string name="shop_checkin_form_drink_custom">Название напитка</string>
+    <string name="shop_checkin_form_drinks_empty">В каталоге пока нет напитков</string>
     <string name="shop_checkin_form_drinks_error">Не удалось загрузить напитки</string>
     <string name="shop_checkin_form_retry">Повторить</string>
     <string name="shop_checkin_form_photos">Фото</string>
@@ -137,7 +136,6 @@
     <string name="shop_checkin_form_public">Сделать публичным</string>
     <string name="shop_checkin_form_public_hint">Добавить в ленту. Если выключено, чекин виден только вам.</string>
     <string name="shop_checkin_form_submit">Опубликовать</string>
-    <string name="shop_checkin_form_change_shop">Изменить</string>
     <string name="shop_checkin_today">Сегодня</string>
     <string name="shop_checkin_form_sending">Отправляем чекин…</string>
     <string name="shop_checkin_form_success_published">Чекин добавлен</string>
@@ -191,4 +189,9 @@
     <string name="shop_detail_dismiss">Закрыть</string>
     <string name="shop_detail_load_error">Не удалось загрузить кофейню</string>
     <string name="shop_detail_load_error_body">Проверьте подключение и попробуйте снова.</string>
+    <string name="shop_checkin_step_experience">Оценки и впечатления</string>
+    <string name="shop_checkin_step_details">Детали чекина</string>
+    <string name="shop_checkin_step_progress">Шаг %1$d из %2$d</string>
+    <string name="shop_checkin_step_next">Далее</string>
+    <string name="shop_checkin_step_back">Назад</string>
 </resources>

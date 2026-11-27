@@ -15,12 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
@@ -65,7 +67,7 @@ internal fun CheckInShopPickerScreen(
     }
     CoffeePeekBackHandler(onBack = onBack)
     CheckInShopPickerContent(state, showMap, { showMap = it }, search::onAction, onClose, modifier, host.reduceMotion(),
-        host.openLocationSettings) { mapModifier ->
+        host.openLocationSettings, onBack = onBack) { mapModifier ->
         MapScreen(map, host, select, 0.dp, null, {}, mapModifier,
             onOpenFilters = null, onSearchAction = search::onAction, showSearchField = false)
     }
@@ -75,12 +77,13 @@ internal fun CheckInShopPickerScreen(
 internal fun CheckInShopPickerContent(
     state: SearchState, showMap: Boolean, onShowMap: (Boolean) -> Unit,
     onAction: (SearchAction) -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier,
-    reduceMotion: Boolean = false, openSettings: () -> Unit = {}, mapContent: @Composable (Modifier) -> Unit = {},
+    reduceMotion: Boolean = false, openSettings: () -> Unit = {}, onBack: () -> Unit = onClose,
+    mapContent: @Composable (Modifier) -> Unit = {},
 ) {
     val list = rememberLazyListState()
     val results = state.checkInShopPickerResults()
     LaunchedEffect(results.query, results.nearby) { list.scrollToItem(0) }
-    Scaffold(modifier = modifier, topBar = { PickerHeader(onClose) },
+    Scaffold(modifier = modifier, topBar = { PickerHeader(onBack, onClose) },
         containerColor = MaterialTheme.colorScheme.background) { insets ->
         Column(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets)) {
             PickerSearchControls(state, showMap, onShowMap, onAction)
@@ -127,16 +130,19 @@ private fun PickerLocationNotice(state: SearchState, reduceMotion: Boolean, onAc
 }
 
 @Composable
-private fun PickerHeader(onClose: () -> Unit) {
-    val close = stringResource(Res.string.discovery_picker_close)
-    CoffeePeekTopBar(stringResource(Res.string.discovery_picker_title), close,
-        nativeAction = CoffeePeekHeaderAction(close, onClose),
-        actions = {
-            CoffeePeekGlassIconButton(onClick = onClose,
-                contentDescription = stringResource(Res.string.discovery_picker_close_description)) {
-                CoffeePeekIcon(CoffeePeekIcons.Close, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface)
-            }
+private fun PickerHeader(onBack: () -> Unit, onClose: () -> Unit) {
+    val close = stringResource(Res.string.discovery_picker_close_description)
+    Column(Modifier.fillMaxWidth().semantics {
+        customActions = listOf(CustomAccessibilityAction(close) {
+            onClose()
+            true
         })
+    }) {
+        CoffeePeekTopBar(stringResource(Res.string.discovery_picker_title),
+            stringResource(Res.string.discovery_search_cancel), onBack = onBack)
+        CoffeePeekCheckInProgress(step = 1, total = 3, stepLabel = stringResource(Res.string.discovery_picker_step, 1, 3),
+            modifier = Modifier.fillMaxWidth().padding(bottom = CoffeePeekDimens.spacing2))
+    }
 }
 
 @Composable

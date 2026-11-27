@@ -29,28 +29,39 @@ internal fun HomeCheckInEditorPrimaryFields(
     onAction: (HomeCheckInEditorAction) -> Unit, onDate: () -> Unit,
     onAddPhotos: (Int) -> Unit,
 ) {
-    val draft = state.draft
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        HomeCheckInEditorDetailsFields(state, enabled, formatDate, onAction, onDate)
+        HomeCheckInEditorExperienceFields(state, enabled, media, pickerLoading, onAction, onAddPhotos)
+    }
+}
+
+@Composable
+internal fun HomeCheckInEditorDetailsFields(state: HomeCheckInEditorState, enabled: Boolean,
+    formatDate: (String) -> String, onAction: (HomeCheckInEditorAction) -> Unit, onDate: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         HomeCheckInEditorField(stringResource(Res.string.home_check_in_prepared_date),
             state.fieldErrors[HomePreparationField.Date]?.editorText()) {
-            HomeCheckInEditorSelect(formatDate(draft.preparedOn.orEmpty()), CoffeePeekIcons.Calendar,
+            HomeCheckInEditorSelect(formatDate(state.draft.preparedOn.orEmpty()), CoffeePeekIcons.Calendar,
                 stringResource(Res.string.home_check_in_choose_date), enabled,
                 state.fieldErrors[HomePreparationField.Date]?.editorText(), onClick = onDate)
         }
-        HomeCheckInEditorField(stringResource(Res.string.home_check_in_drink),
-            state.fieldErrors[HomePreparationField.Drink]?.editorText()) {
-            HomeCheckInEditorInput(draft.customDrinkName ?: state.entry?.drinkName.takeIf { draft.drinkSlug != null }.orEmpty(),
-                { onAction(HomeCheckInEditorAction.DrinkNameChanged(it)) }, stringResource(Res.string.home_check_in_drink),
-                stringResource(Res.string.home_check_in_drink_hint), enabled,
-                state.fieldErrors[HomePreparationField.Drink]?.editorText(), maxLength = 100)
-        }
+        HomeCheckInEditorDrinkField(state, enabled, onAction)
+    }
+}
+
+@Composable
+internal fun HomeCheckInEditorExperienceFields(state: HomeCheckInEditorState, enabled: Boolean,
+    media: HomeCheckInEditorMedia, pickerLoading: Boolean, onAction: (HomeCheckInEditorAction) -> Unit,
+    onAddPhotos: (Int) -> Unit) {
+    val draft = state.draft
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         HomeCheckInEditorField("", state.fieldErrors[HomePreparationField.Rating]?.editorText()) {
             HomeCheckInEditorRating(draft.tasteScore, enabled, media.ratingArtwork) {
                 onAction(HomeCheckInEditorAction.TasteRatingTapped(it))
             }
         }
         HomeCheckInEditorField(stringResource(Res.string.home_check_in_editor_note),
-            state.fieldErrors[HomePreparationField.Note]?.editorText()) {
+            state.fieldErrors[HomePreparationField.Note]?.editorText(), counter = "${draft.text.orEmpty().length}/1000") {
             HomeCheckInEditorInput(draft.text.orEmpty(), { onAction(HomeCheckInEditorAction.NoteChanged(it)) },
                 stringResource(Res.string.home_check_in_editor_note), stringResource(Res.string.home_check_in_note_hint),
                 enabled, state.fieldErrors[HomePreparationField.Note]?.editorText(), multiline = true, maxLength = 1000)

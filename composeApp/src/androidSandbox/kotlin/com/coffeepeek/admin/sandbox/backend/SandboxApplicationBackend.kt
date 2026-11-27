@@ -252,7 +252,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             SandboxCities.Several -> ok(JsonArray(listOf(city("minsk", "Минск"), city("brest", "Брест"), city("grodno", "Гродно"))))
         }
         if (path == "/api/v1/app-version" && method == HttpMethod.Get) return appVersion()
-        if (path == "/api/catalogs/drinks") return ok(drinks())
+        if (path == "/api/catalogs/drinks") return ok(checkInDrinks())
         if (path == "/api/menu/drinks") return ok(buildJsonObject { put("drinks", drinks()) })
         if (path == "/api/catalogs/brew-methods") return ok(JsonArray(listOf(catalog("hario-v60", "Hario V60"), catalog("aeropress", "AeroPress"))))
         if (path == "/api/catalogs/equipments") return ok(JsonArray(if (populated) listOf(catalog("espresso-machine", "Эспрессо-машина"), catalog("grinder", "Кофемолка")) else emptyList()))
@@ -632,6 +632,21 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         } }
     }
     private fun drinks() = JsonArray(listOf(buildJsonObject { put("slug", "cappuccino"); put("nameRu", "Капучино"); put("nameEn", "Cappuccino"); put("category", "Coffee"); put("price", 8) }))
+    private fun checkInDrinks() = buildJsonArray {
+        val options = listOf(
+            Triple("espresso", "Эспрессо", "Espresso"),
+            Triple("americano", "Американо", "Americano"),
+            Triple("cappuccino", "Капучино", "Cappuccino"),
+            Triple("flat-white", "Флэт уайт", "Flat white"),
+            Triple("filter", "Фильтр-кофе", "Filter coffee"),
+            Triple("espresso-tonic", "Эспрессо-тоник", "Espresso tonic"),
+            Triple("hot-chocolate", "Горячий шоколад", "Hot chocolate"),
+            Triple("tea", "Чай", "Tea"),
+        )
+        options.forEach { (slug, nameRu, nameEn) ->
+            add(buildJsonObject { put("slug", slug); put("nameRu", nameRu); put("nameEn", nameEn) })
+        }
+    }
     private fun photo() = buildJsonObject { put("id", "sample"); put("url", "/media/sample"); put("fullUrl", "${SandboxBackend.BASE_URL}/media/sample") }
     private fun catalog(slug: String, name: String) = buildJsonObject { put("slug", slug); put("name", name); put("address", address(slug, "/catalog/$slug")) }
     private fun city(slug: String, name: String) = buildJsonObject {

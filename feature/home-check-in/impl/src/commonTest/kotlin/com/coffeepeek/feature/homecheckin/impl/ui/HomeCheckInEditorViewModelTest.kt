@@ -62,6 +62,7 @@ class HomeCheckInEditorViewModelTest {
         var methodsCalls = 0
         var methodsGate: CompletableDeferred<Unit>? = null
         var methodsResult = Result.success(listOf(HomeCheckInBrewMethod("hario-v60", "Hario V60")))
+        var drinksResult = Result.success(listOf(HomeCheckInDrinkOption("cappuccino", "Капучино", "Cappuccino")))
         val queries = mutableListOf<String>()
         var search: suspend (String) -> Result<List<HomeCheckInBeanOption>> = {
             Result.success(listOf(HomeCheckInBeanOption("bean", "Эфиопия", "Обжарщик")))
@@ -76,6 +77,7 @@ class HomeCheckInEditorViewModelTest {
             queries += query
             return search(query)
         }
+        override suspend fun drinkOptions() = drinksResult
         var bags = Result.success(listOf(HomeCheckInShelfBag("bag-1", "Кения с полки", "Sibaristica")))
         override suspend fun shelfBags(): Result<List<HomeCheckInShelfBag>> = bags
     }
@@ -297,17 +299,35 @@ class HomeCheckInEditorViewModelTest {
         assertTrue(repo.creates.isEmpty())
     }
 
-    @Test fun textLimitsCommaDoseAndEmptyCustomDrinkMatchTheCurrentForm() = runTest(dispatcher) {
+    @Test fun textLimitsCommaDoseAndDrinkSelectionMatchTheCurrentForm() = runTest(dispatcher) {
         val vm = model(); runCurrent()
         vm.act(HomeCheckInEditorAction.DoseChanged("18,25"), HomeCheckInEditorAction.NoteChanged("n".repeat(1001)),
-            HomeCheckInEditorAction.DrinkNameChanged("d".repeat(101))); runCurrent()
+            HomeCheckInEditorAction.DrinkSelected("cappuccino")); runCurrent()
         assertEquals("18.25", vm.state.value.draft.doseGrams)
         assertEquals(1000, vm.state.value.draft.text!!.length)
-        assertEquals(100, vm.state.value.draft.customDrinkName!!.length)
-        assertEquals("other", vm.state.value.draft.drinkSlug)
-        vm.act(HomeCheckInEditorAction.DrinkNameChanged(" "), HomeCheckInEditorAction.NoteChanged(""), HomeCheckInEditorAction.DoseChanged("")); runCurrent()
+        assertNull(vm.state.value.draft.customDrinkName)
+        assertEquals("cappuccino", vm.state.value.draft.drinkSlug)
+        vm.act(HomeCheckInEditorAction.DrinkSelected("other"), HomeCheckInEditorAction.DrinkSelected("unlisted")); runCurrent()
+        assertEquals("cappuccino", vm.state.value.draft.drinkSlug)
+        vm.act(HomeCheckInEditorAction.DrinkSelected(null), HomeCheckInEditorAction.NoteChanged(""), HomeCheckInEditorAction.DoseChanged("")); runCurrent()
         assertNull(vm.state.value.draft.customDrinkName); assertNull(vm.state.value.draft.drinkSlug)
         assertNull(vm.state.value.draft.text); assertNull(vm.state.value.draft.doseGrams)
+    }
+
+    @Test fun drinksCanRetryAndSendCatalogSlugWithoutCustomName() = runTest(dispatcher) {
+        val repo = Repository()
+        val catalog = Catalog().apply { drinksResult = Result.failure(IllegalStateException("Unavailable")) }
+        val vm = model(repo, catalog); runCurrent()
+        assertTrue(vm.state.value.drinksFailed)
+        val drink = HomeCheckInDrinkOption("espresso", "Эспрессо", "Espresso")
+        catalog.drinksResult = Result.success(listOf(drink, HomeCheckInDrinkOption("other", "Другое", "Other"), drink))
+        vm.onAction(HomeCheckInEditorAction.RetryDrinks); runCurrent()
+        assertEquals(listOf(drink), vm.state.value.drinks)
+        assertFalse(vm.state.value.drinksFailed)
+        vm.onAction(HomeCheckInEditorAction.DrinkSelected(drink.slug)); runCurrent()
+        vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
+        assertEquals(drink.slug, repo.creates.single().drinkSlug)
+        assertNull(repo.creates.single().customDrinkName)
     }
 
     @Test fun localValidationCollectsAllErrorsAndOnlyChangedFieldsAreRevalidated() = runTest(dispatcher) {

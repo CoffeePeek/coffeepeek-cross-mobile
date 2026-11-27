@@ -33,8 +33,7 @@ class IosCheckInShopPicker internal constructor(private val factory: NativeCheck
     private val identity = accounts.discoveryAccount()
     private val mutableState = MutableStateFlow(IosCheckInShopPickerState())
     private var closed = false
-    private val navigation = CheckInShopPickerNavigation(::isCurrent,
-        { Navigator.popThenNavigate(Navigator.Screen.ShopCheckInEditor(it)) }, Navigator::popBack)
+    private val navigation = CheckInShopPickerNavigation(::isCurrent, Navigator::popThenNavigate, Navigator::popBack)
 
     init {
         observeLabels()
@@ -64,10 +63,11 @@ class IosCheckInShopPicker internal constructor(private val factory: NativeCheck
         host.viewModelScope.launch { language.observe().collectLatest {
             val environment = getSystemResourceEnvironment()
             val title = nativeDiscoveryPickerTitle()
+            val stepLabel = nativeDiscoveryPickerStepLabel()
             val failure = getString(environment, Res.string.shop_session_unavailable)
             val retry = getString(environment, Res.string.shop_session_retry)
             val close = getString(environment, Res.string.check_in_create_close)
-            mutableState.update { it.copy(title = title, failure = failure, retry = retry, close = close) }
+            mutableState.update { it.copy(title = title, failure = failure, retry = retry, close = close, stepLabel = stepLabel) }
         } }
     }
 
@@ -141,5 +141,5 @@ class IosCheckInShopPicker internal constructor(private val factory: NativeCheck
 
 data class IosCheckInShopPickerState(
     val discovery: IosDiscovery? = null, val failed: Boolean = false, val title: String = "",
-    val failure: String = "", val retry: String = "", val close: String = "",
+    val failure: String = "", val retry: String = "", val close: String = "", val stepLabel: String = "",
 )

@@ -122,7 +122,7 @@ private struct CheckInShopPickerHost: View {
             if let source = model.state.discovery {
                 CheckInShopPickerContent(source: source).id(ObjectIdentifier(source)).ignoresSafeArea(.container)
             } else {
-                CheckInShopPickerStatus(title: model.state.title, failure: model.state.failure,
+                CheckInShopPickerStatus(title: model.state.title, stepLabel: model.state.stepLabel, failure: model.state.failure,
                     retry: model.state.retry, close: model.state.close, failed: model.state.failed,
                     onRetry: { model.picker.retry() }, onClose: { model.picker.dismiss() })
             }
@@ -162,6 +162,7 @@ private struct CheckInShopPickerContent: UIViewControllerRepresentable {
 
 private struct CheckInShopPickerStatus: View {
     let title: String
+    let stepLabel: String
     let failure: String
     let retry: String
     let close: String
@@ -172,6 +173,7 @@ private struct CheckInShopPickerStatus: View {
     var body: some View {
         VStack(spacing: 0) {
             CoffeePeekNativeNavigationHeader(title: title, backLabel: close, back: onClose)
+            ShopCheckInNativeProgress(step: 1, total: 3, caption: stepLabel).padding(.bottom, 8)
             VStack(spacing: 16) {
                 if failed {
                     Text(failure).multilineTextAlignment(.center)
@@ -187,13 +189,13 @@ private struct CheckInShopPickerStatus: View {
 }
 
 #Preview("Picker unavailable light") {
-    CheckInShopPickerStatus(title: "Выберите кофейню", failure: "Не удалось проверить сессию.",
+    CheckInShopPickerStatus(title: "Выбор кофейни", stepLabel: "Шаг 1 из 3", failure: "Не удалось проверить сессию.",
         retry: "Повторить", close: "Закрыть", failed: true, onRetry: {}, onClose: {})
         .preferredColorScheme(.light)
 }
 #Preview("Picker unavailable dark") {
-    CheckInShopPickerStatus(title: "Выберите кофейню", failure: "Не удалось проверить сессию.",
-        retry: "Повторить", close: "Закрыть", failed: true, onRetry: {}, onClose: {})
+    CheckInShopPickerStatus(title: "Выбар кавярні", stepLabel: "Крок 1 з 3", failure: "Не ўдалося праверыць сесію.",
+        retry: "Паўтарыць", close: "Закрыць", failed: true, onRetry: {}, onClose: {})
         .preferredColorScheme(.dark)
 }
 

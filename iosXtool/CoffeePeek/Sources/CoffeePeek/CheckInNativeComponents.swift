@@ -31,13 +31,21 @@ struct CheckInNativeField<Content: View>: View {
     let title: String
     var error: String? = nil
     var style: CheckInNativeFormStyle = .standard
+    var counter: String? = nil
     @ViewBuilder let content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: style == .home ? 4 : 8) {
             if !title.isEmpty {
-                if style == .home { label.foregroundStyle(CoffeePeekNativeStyle.secondary) }
-                else { label }
+                HStack(spacing: 8) {
+                    if style == .home { label.foregroundStyle(CoffeePeekNativeStyle.secondary) }
+                    else { label }
+                    if let counter {
+                        Spacer(minLength: 0)
+                        Text(counter).font(CoffeePeekNativeStyle.font(12)).monospacedDigit()
+                            .foregroundStyle(CoffeePeekNativeStyle.secondary).fixedSize()
+                    }
+                }
             }
             content
             if let error { errorLabel(error) }
@@ -108,8 +116,8 @@ private func homeInputsPreview() -> some View {
     let strings = CheckInNativeStrings(languageTag: "ru", table: "NativeHomeCheckIn")
     return VStack(spacing: 20) {
         CheckInNativeField(title: strings["home_check_in_drink"], style: .home) {
-            CheckInNativeInput(title: strings["home_check_in_drink"], placeholder: strings["home_check_in_drink_hint"],
-                value: .constant(""), style: .home)
+            CoffeePeekNativeDrinkChips(options: [.init(id: "filter", title: "Фильтр-кофе")],
+                selected: "filter", changed: { _ in })
         }
         CheckInNativeField(title: strings["home_check_in_editor_note"], style: .home) {
             CheckInNativeInput(title: strings["home_check_in_editor_note"], placeholder: strings["home_check_in_note_hint"],
@@ -131,13 +139,16 @@ struct CheckInNativeRating: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title).font(CoffeePeekNativeStyle.font(17, weight: "SemiBold"))
+                .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
             HStack(spacing: 8) {
                 ForEach(1...5, id: \.self) { score in
                     Button { select(score) } label: {
                         Image(systemName: score <= (value ?? 0) ? "star.fill" : "star")
-                            .font(.system(size: 24)).frame(maxWidth: .infinity, minHeight: 44)
+                            .font(.system(size: 24))
+                            .foregroundStyle(score <= (value ?? 0) ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.secondary)
+                            .frame(maxWidth: .infinity, minHeight: 44)
                     }
-                    .buttonStyle(.plain).foregroundStyle(CoffeePeekNativeStyle.accent)
+                    .buttonStyle(.plain)
                     .accessibilityLabel(label(score))
                     .accessibilityAddTraits(value == score ? .isSelected : [])
                 }
@@ -244,3 +255,125 @@ private func nativeRatingsPreview() -> some View {
 
 #Preview("Native ratings light") { nativeRatingsPreview().preferredColorScheme(.light) }
 #Preview("Native ratings dark") { nativeRatingsPreview().preferredColorScheme(.dark) }
+
+/// Shared presentation for the shop picker and editor; the feature owns the flow.
+struct ShopCheckInNativeProgress: View {
+    let step: Int
+    let total: Int
+    let caption: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<max(0, total), id: \.self) { index in
+                Capsule().fill(index < step ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.border)
+                    .frame(height: 8)
+            }
+        }.frame(maxWidth: 200).frame(maxWidth: .infinity)
+            .accessibilityElement(children: .ignore).accessibilityLabel(caption)
+    }
+}
+
+#Preview("Shop check-in progress light") {
+    ShopCheckInNativeProgress(step: 2, total: 3, caption: "Шаг 2 из 3")
+        .padding().preferredColorScheme(.light)
+}
+#Preview("Shop check-in progress dark") {
+    ShopCheckInNativeProgress(step: 2, total: 3, caption: "Крок 2 з 3")
+        .padding().preferredColorScheme(.dark)
+}
+
+struct CoffeePeekNativeDrinkOption: Identifiable {
+    let id: String
+    let title: String
+}
+
+/// Optional single selection; a selected legacy value can only be cleared.
+struct CoffeePeekNativeDrinkChips: View {
+    let options: [CoffeePeekNativeDrinkOption]
+    let selected: String?
+    var legacyTitle: String? = nil
+    let changed: (String?) -> Void
+    @Environment(\.layoutDirection) private var direction
+
+    var body: some View {
+        CoffeePeekNativeChipLayout(rightToLeft: direction == .rightToLeft) {
+            if let legacyTitle, !options.contains(where: { $0.id == selected }) {
+                chip(legacyTitle, selected: true) { changed(nil) }
+            }
+            ForEach(options) { option in
+                chip(option.title, selected: selected == option.id) {
+                    changed(selected == option.id ? nil : option.id)
+                }
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func chip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title).font(CoffeePeekNativeStyle.font(15, weight: selected ? "Semibold" : "Medium"))
+                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 16).padding(.vertical, 10).frame(minHeight: 44)
+                .foregroundStyle(selected ? CoffeePeekNativeStyle.onAccent : CoffeePeekNativeStyle.foreground)
+                .background(selected ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.surface, in: Capsule())
+                .overlay(Capsule().strokeBorder(selected ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.border))
+                .contentShape(Capsule())
+        }.buttonStyle(.plain).accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+private struct CoffeePeekNativeChipLayout: Layout {
+    var rightToLeft = false
+    private let spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? subviews.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
+        let items = placements(subviews, width: max(0, width))
+        return CGSize(width: width, height: items.map { $0.maxY }.max() ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let items = placements(subviews, width: bounds.width)
+        for (index, item) in items.enumerated() {
+            let x = rightToLeft ? bounds.width - item.maxX : item.minX
+            subviews[index].place(at: CGPoint(x: bounds.minX + x, y: bounds.minY + item.minY),
+                anchor: .topLeading, proposal: ProposedViewSize(width: item.width, height: item.height))
+        }
+    }
+
+    private func placements(_ subviews: Subviews, width: CGFloat) -> [CGRect] {
+        var result: [CGRect] = []
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        for view in subviews {
+            let ideal = view.sizeThatFits(.unspecified)
+            let size = view.sizeThatFits(ProposedViewSize(width: min(width, ideal.width), height: nil))
+            if x > 0 && x + size.width > width {
+                x = 0
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            result.append(CGRect(origin: CGPoint(x: x, y: y), size: size))
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
+        return result
+    }
+}
+
+private struct CoffeePeekNativeDrinkChipsPreview: View {
+    @State private var selected: String? = "flat-white"
+    var body: some View {
+        CoffeePeekNativeDrinkChips(options: [
+            .init(id: "espresso", title: "Эспрессо"), .init(id: "cappuccino", title: "Капучино"),
+            .init(id: "flat-white", title: "Флэт уайт"), .init(id: "filter", title: "Фильтр-кофе")
+        ], selected: selected, changed: { selected = $0 })
+        .padding(16).background(CoffeePeekNativeStyle.background)
+    }
+}
+
+#Preview("Drink chips light") { CoffeePeekNativeDrinkChipsPreview().preferredColorScheme(.light) }
+#Preview("Drink chips dark") { CoffeePeekNativeDrinkChipsPreview().preferredColorScheme(.dark) }
+#Preview("Drink chips large text") {
+    CoffeePeekNativeDrinkChipsPreview().frame(width: 320).dynamicTypeSize(.accessibility3).preferredColorScheme(.dark)
+}

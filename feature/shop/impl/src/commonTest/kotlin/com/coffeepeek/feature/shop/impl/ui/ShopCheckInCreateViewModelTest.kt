@@ -236,14 +236,14 @@ class ShopCheckInCreateViewModelTest {
 
     @Test fun restoresProcessDraftAndKeepsEditsOnDismissWhileGuardingPhotoLimit() = runTest(dispatcher) {
         val drafts = Drafts().apply {
-            snapshot = ShopCheckInDraftSnapshot(initial.copy(text = "Restored", visibility = ShopCheckInVisibility.Private))
+            snapshot = ShopCheckInDraftSnapshot(initial.copy(text = "Restored", visibility = ShopCheckInVisibility.Private,
+                drinkSlug = "other", customDrinkName = "Tonic"))
         }
         val viewModel = viewModel(drafts = drafts)
         runCurrent()
         assertEquals("Restored", viewModel.state.value.input.text)
         assertEquals(ShopCheckInVisibility.Private, viewModel.state.value.input.visibility)
-        viewModel.onAction(ShopCheckInFormAction.DrinkChanged("other"))
-        viewModel.onAction(ShopCheckInFormAction.CustomDrinkChanged("Tonic"))
+        viewModel.onAction(ShopCheckInFormAction.DrinkChanged("unlisted"))
         val photo = ShopCheckInPhoto(byteArrayOf(1), "one.jpg")
         viewModel.onAction(ShopCheckInFormAction.PhotosAdded(listOf(photo, photo) + (2..7).map { ShopCheckInPhoto(byteArrayOf(it.toByte()), "$it.jpg") }))
         runCurrent()

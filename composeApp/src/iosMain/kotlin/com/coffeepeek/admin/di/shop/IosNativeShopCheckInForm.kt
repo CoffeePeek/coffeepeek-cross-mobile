@@ -11,9 +11,9 @@ import kotlinx.coroutines.launch
 
 /** The feature's existing account-bound form; only the native picker/presentation lifetime is new. */
 internal fun nativeShopCheckInForm(entry: SessionShopCheckInEntry, context: ShopDetailContext, language: LanguagePort,
-    accounts: SessionReader, callbacks: ShopCheckInNativeCallbacks, revoked: () -> Unit,
+    accounts: SessionReader, callbacks: ShopCheckInNativeCallbacks, shopSelectionIncluded: Boolean = false, revoked: () -> Unit,
 ): IosShopCheckInEditor? {
-    val owner = entry.nativeForm(context, callbacks)
+    val owner = entry.nativeForm(context, callbacks, shopSelectionIncluded)
     val form = owner.form ?: return null.also { owner.close() }
     var photos: IosNativePhotoPicker? = null
     val editor = IosShopCheckInEditor(form, language, { photos?.let(::nativePhotoController) }, { callbacks })

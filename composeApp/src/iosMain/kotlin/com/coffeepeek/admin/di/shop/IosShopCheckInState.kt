@@ -34,6 +34,8 @@ data class IosShopCheckInState(
     val failureKey: String?,
     val serverMessage: String?,
     val validationKey: String?,
+    val changingShop: Boolean = false,
+    val shopSelectionIncluded: Boolean = false,
 )
 
 data class IosShopCheckInDrink(val slug: String, val name: String)

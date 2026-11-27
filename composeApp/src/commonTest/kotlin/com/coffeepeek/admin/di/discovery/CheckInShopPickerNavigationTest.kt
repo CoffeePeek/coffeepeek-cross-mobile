@@ -1,10 +1,11 @@
 package com.coffeepeek.admin.di.discovery
 
 import com.coffeepeek.admin.di.shop.CheckInFlowHandoff
+import com.coffeepeek.admin.ui.Navigator
 import kotlin.test.*
 
 class CheckInShopPickerNavigationTest {
-    private val opened = mutableListOf<String>()
+    private val opened = mutableListOf<Navigator.Screen.ShopCheckInEditorFromPicker>()
     private var closed = 0
     private var current = true
     private val navigation = CheckInShopPickerNavigation({ current }, opened::add) { closed++ }
@@ -15,14 +16,14 @@ class CheckInShopPickerNavigationTest {
         navigation.select("coffee")
         navigation.select("another")
         navigation.close(back = true)
-        assertEquals(listOf("coffee"), opened)
+        assertEquals(listOf(Navigator.Screen.ShopCheckInEditorFromPicker("coffee")), opened)
         assertEquals(0, closed)
     }
 
     @Test fun emptySelectionDoesNotConsumeTheDestination() {
         navigation.select(" ")
         navigation.select("coffee")
-        assertEquals(listOf("coffee"), opened)
+        assertEquals(listOf(Navigator.Screen.ShopCheckInEditorFromPicker("coffee")), opened)
     }
 
     @Test fun explicitCloseAndBackAreTerminal() {

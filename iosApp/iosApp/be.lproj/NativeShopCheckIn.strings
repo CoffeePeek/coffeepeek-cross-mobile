@@ -21,9 +21,8 @@
 "shop_checkin_form_date_confirm" = "Гатова";
 "shop_checkin_form_cancel" = "Адмена";
 "shop_checkin_form_drink" = "Напой";
-"shop_checkin_form_drink_none" = "Не выбраны";
 "shop_checkin_form_drink_other" = "Іншае";
-"shop_checkin_form_drink_custom" = "Назва напою";
+"shop_checkin_form_drinks_empty" = "У каталогу пакуль няма напояў";
 "shop_checkin_form_drinks_error" = "Не ўдалося загрузіць напоі";
 "shop_checkin_form_retry" = "Паўтарыць";
 "shop_checkin_form_photos" = "Фота";
@@ -31,7 +30,6 @@
 "shop_checkin_form_public" = "Зрабіць публічным";
 "shop_checkin_form_public_hint" = "Дадаць у стужку. Калі выключана, чэкін бачны толькі вам.";
 "shop_checkin_form_submit" = "Апублікаваць";
-"shop_checkin_form_change_shop" = "Змяніць";
 "shop_checkin_today" = "Сёння";
 "shop_checkin_form_sending" = "Адпраўляем чэкін…";
 "shop_checkin_form_success_published" = "Чэкін дададзены";
@@ -72,3 +70,10 @@
 "shop_checkin_photo_move_after" = "Перамясціць фота пазней";
 "coffeepeek_photos_manage_hint" = "Націсніце, каб паглядзець. Утрымлівайце і перацягвайце, каб змяняць парадак.";
 "coffeepeek_photo_description" = "Фота %1$d з %2$d";
+
+// Native editor step navigation.
+"shop_checkin_step_progress" = "Крок %1$d з %2$d";
+"shop_checkin_step_impressions" = "Ацэнкі і ўражанні";
+"shop_checkin_step_details" = "Дэталі чэкіна";
+"shop_checkin_step_continue" = "Далей";
+"shop_checkin_step_back" = "Назад";

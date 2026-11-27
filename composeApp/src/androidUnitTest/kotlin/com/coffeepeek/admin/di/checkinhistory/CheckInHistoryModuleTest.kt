@@ -1,6 +1,8 @@
 package com.coffeepeek.admin.di.checkinhistory
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
+import com.coffeepeek.admin.di.shop.AndroidShopCheckInDateFormatter
+import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.core.network.ApiClients
@@ -67,6 +69,7 @@ class CheckInHistoryModuleTest {
             single<SessionReader> { sessions }
         }, historyCatalogs(), homeCheckInModule(apiBaseUrl = "https://fixture.invalid"),
             checkInHistoryModule(apiBaseUrl = "https://fixture.invalid"),
+            shopCheckInModule(AndroidShopCheckInDateFormatter()) { error("History must not access shop drafts") },
             shelfModule("https://fixture.invalid", context = { error("Resolving the graph must not touch Context") }))
     }
 

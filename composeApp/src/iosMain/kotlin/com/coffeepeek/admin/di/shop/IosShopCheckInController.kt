@@ -17,7 +17,8 @@ object IosShopCheckInControllers {
 internal class IosNativeShopCheckInFactory(private val accounts: SessionReader, private val details: ShopDetailsRepository,
     private val forms: SessionShopCheckInEntry, private val language: LanguagePort,
 ) {
-    fun controller(id: String) = IosShopCheckInControllers.controller(IosShopCheckInRoute(accounts, details, forms, language, id))
+    fun controller(id: String, shopSelectionIncluded: Boolean = false) =
+        IosShopCheckInControllers.controller(IosShopCheckInRoute(accounts, details, forms, language, id, shopSelectionIncluded))
 }
 
 @Composable
@@ -27,5 +28,5 @@ internal fun iosShopCheckInContent(): (String) -> UIViewController {
     val forms = koinInject<ShopCheckInCreateEntry>() as SessionShopCheckInEntry
     val language = koinInject<LanguagePort>()
     val factory = remember(accounts, details, forms, language) { IosNativeShopCheckInFactory(accounts, details, forms, language) }
-    return factory::controller
+    return { id -> factory.controller(id) }
 }

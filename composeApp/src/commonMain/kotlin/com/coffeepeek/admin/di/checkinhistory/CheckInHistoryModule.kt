@@ -6,6 +6,7 @@ import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.feature.checkinhistory.data.repository.createCheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
 import org.koin.dsl.module
 
 /** Resolving this graph neither opens an account lease nor reads credentials; Content owns the lease. */
@@ -14,7 +15,7 @@ internal fun checkInHistoryModule(apiBaseUrl: String = Constants.BASE_URL) = mod
     single<HomeHistoryReader> { HomeHistoryReaderAdapter(get()) }
     single { AppCheckInHistoryCalendar() }
     single<HistoryHomeEditorFactory> {
-        historyHomeEditorFactory(get(), get(), get(), ShelfHomeCheckInBags(get()))
+        historyHomeEditorFactory(get(), get(), get(), get<ShopCheckInRepository>()::getDrinkOptions, ShelfHomeCheckInBags(get()))
     }
     single { FeatureHomeCheckInDetailRenderer(get(), get()) }
     single { FeatureProfileActivityRenderer(get(), get(), get(), get()) }

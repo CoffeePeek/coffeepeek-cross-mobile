@@ -14,6 +14,7 @@ internal class ShopCheckInNativeForm(
     val dates: ShopCheckInDateFormatter, val photos: ShopCheckInPhotoPicker,
     val publication: ShopCheckInPublicationReader, val isCurrent: () -> Boolean,
     val callbacks: ShopCheckInNativeCallbacks,
+    val shopSelectionIncluded: Boolean,
 )
 
 internal class ShopCheckInNativeCallbacks(

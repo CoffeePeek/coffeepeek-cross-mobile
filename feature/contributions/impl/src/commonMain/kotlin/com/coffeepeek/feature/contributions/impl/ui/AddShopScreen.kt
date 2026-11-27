@@ -87,7 +87,7 @@ internal fun AddShopContent(state: AddShopState, host: AddShopHost, callbacks: A
         state.signedIn == false -> FormSignInPrompt(
             stringResource(Res.string.contributions_shop_title), stringResource(Res.string.contributions_shop_sign_in_prompt), callbacks.onBack, callbacks.onSignIn, modifier,
         )
-        submit == SubmitState.Done -> AddShopSuccess(state, host, callbacks.onBack, modifier)
+        submit == SubmitState.Done -> AddShopSuccess(host, callbacks.onBack, modifier)
         submit == SubmitState.Sending -> SubmissionStatusScreen(
             stringResource(Res.string.contributions_shop_title), SubmissionStatus.Sending, stringResource(Res.string.contributions_shop_sending_title),
             stringResource(Res.string.contributions_shop_sending_description), callbacks.onBack, host.feedback, modifier,

@@ -3,9 +3,15 @@ package com.coffeepeek.feature.homecheckin.impl.ui.data
 /** Intentionally public composition ports, not API-module/domain re-exports or another backend. */
 interface HomeCheckInEditorCatalog {
     suspend fun brewMethods(): Result<List<HomeCheckInBrewMethod>>
+    suspend fun drinkOptions(): Result<List<HomeCheckInDrinkOption>>
     suspend fun searchBeans(query: String): Result<List<HomeCheckInBeanOption>>
     /** The owner's bags on the shelf, in shelf order; none where the shelf is unavailable. */
     suspend fun shelfBags(): Result<List<HomeCheckInShelfBag>> = Result.success(emptyList())
+}
+
+data class HomeCheckInDrinkOption(val slug: String, val nameRu: String, val nameEn: String) {
+    internal fun displayName(language: String = "ru"): String =
+        (if (language == "en") nameEn.ifBlank { nameRu } else nameRu.ifBlank { nameEn }).ifBlank { slug }
 }
 
 data class HomeCheckInBrewMethod(val code: String, val name: String, val previousCodes: Set<String> = emptySet())

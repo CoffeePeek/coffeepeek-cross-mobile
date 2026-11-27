@@ -3,6 +3,7 @@ package com.coffeepeek.feature.homecheckin.impl.ui.compose.model
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInBeanOption
 import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInBrewMethod
+import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInDrinkOption
 import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInShelfBag
 
 internal data class HomeCheckInEditorState(
@@ -20,6 +21,9 @@ internal data class HomeCheckInEditorState(
     val methods: List<HomeCheckInBrewMethod> = emptyList(),
     val methodsLoading: Boolean = false,
     val methodsIssue: HomePreparationIssue? = null,
+    val drinks: List<HomeCheckInDrinkOption> = emptyList(),
+    val drinksLoading: Boolean = false,
+    val drinksFailed: Boolean = false,
     val isBeanPickerOpen: Boolean = false,
     val beanQuery: String = "",
     val beanSelectionName: String? = null,

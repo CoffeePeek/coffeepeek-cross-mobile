@@ -27,6 +27,7 @@ import kotlin.time.Instant
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.impl.ui.data.*
+import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 import org.jetbrains.compose.resources.painterResource
 
 /** Application composition reuses the current catalogue, platform picker, artwork and consent-aware tracker. */
@@ -35,13 +36,14 @@ internal fun appHomeCheckInEditor(
     repository: HomePreparationRepository,
     picker: CoffeePicker,
     methods: BrewMethodCatalog,
+    drinks: suspend () -> Result<List<ShopConsumedDrinkOption>>,
     source: CheckInSource,
     inheritedTracker: CheckInTracker? = null,
     shelfBags: ShelfHomeCheckInBags? = null,
 ): HomeCheckInEditorEntry {
     var handoff = inheritedTracker
     return platformHomeCheckInEntry(AppHomeCheckInRepository(lease, repository),
-        AppHomeCheckInCatalog(lease, picker, methods, shelfBags),
+        AppHomeCheckInCatalog(lease, picker, methods, drinks, shelfBags),
         { lease.isLoggedIn && lease.isCurrent() }, appHomeCheckInDates(),
         appHomeCheckInMedia(),
         AppHomeCheckInPhotoPicker(),

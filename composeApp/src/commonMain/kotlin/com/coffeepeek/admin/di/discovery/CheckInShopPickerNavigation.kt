@@ -1,11 +1,12 @@
 package com.coffeepeek.admin.di.discovery
 
 import com.coffeepeek.admin.di.shop.CheckInFlowHandoff
+import com.coffeepeek.admin.ui.Navigator
 
 /** One selection/close per live destination; disposed or replaced callbacks cannot change navigation. */
 internal class CheckInShopPickerNavigation(
     private val isCurrent: () -> Boolean,
-    private val open: (String) -> Unit,
+    private val open: (Navigator.Screen.ShopCheckInEditorFromPicker) -> Unit,
     private val dismiss: () -> Unit,
 ) {
     private var ended = false
@@ -14,7 +15,7 @@ internal class CheckInShopPickerNavigation(
         if (ended || !isCurrent() || slug.isBlank()) return
         ended = true
         CheckInFlowHandoff.continueToShop()
-        open(slug)
+        open(Navigator.Screen.ShopCheckInEditorFromPicker(slug))
     }
 
     fun close(back: Boolean) {

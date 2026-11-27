@@ -109,7 +109,7 @@ struct DiscoveryNativeScreen: View {
                 chips.transition(headerTransition)
             }
         }
-        .padding(.top, 12)
+        .padding(.top, state.picker ? 0 : 12)
         .padding(.bottom, 8)
         .background { CoffeePeekNativeStyle.background.opacity(state.mapExpanded ? 0 : 1) }
         .overlay(alignment: .bottom) {
@@ -142,12 +142,11 @@ struct DiscoveryNativeScreen: View {
     }
 
     private var pickerHeader: some View {
-        HStack(spacing: 12) {
-            icon("chevron.left", label: text("cancel")) { actions.call("back") }
-            Text(text("title")).font(CoffeePeekNativeStyle.font(20, weight: "SemiBold", relativeTo: .title3))
-                .frame(maxWidth: .infinity)
-            icon("xmark", label: text("close")) { actions.call("close") }
-        }.padding(.horizontal, 16)
+        VStack(spacing: 0) {
+            CoffeePeekNativeNavigationHeader(title: text("title"), backLabel: text("cancel"), back: { actions.call("back") })
+            ShopCheckInNativeProgress(step: 1, total: 3, caption: text("step-label"))
+        }
+        .accessibilityAction(named: Text(text("close"))) { actions.call("close") }
     }
 
     private var listDrag: some Gesture {
@@ -312,7 +311,8 @@ struct DiscoveryNativeScreen: View {
                 LazyVStack(alignment: .leading, spacing: 16) { landingContent }
                     .transition(catalogueRowsTransition)
             } else {
-                LazyVStack(alignment: .leading, spacing: 16) { listContent }
+                LazyVStack(alignment: .leading, spacing: state.picker ? 12 : 16) { listContent }
+                    .padding(.top, state.picker ? 16 : 0)
                     .transition(catalogueRowsTransition)
             }
         }
@@ -391,7 +391,11 @@ struct DiscoveryNativeScreen: View {
         if !state.picker && state.emptyReason != nil && state.shops.isEmpty {
             emptySearchContent
         } else {
-            ForEach(state.recent + state.shops, id: \.id) { shop in shopRow(shop) }
+            ForEach(state.recent, id: \.id) { shop in shopRow(shop) }
+            if state.picker && !state.recent.isEmpty && !state.shops.isEmpty {
+                section(text("shops"), action: nil)
+            }
+            ForEach(state.shops, id: \.id) { shop in shopRow(shop) }
             searchStatus
             pagination
             if state.canSuggestShop { contribution }
@@ -525,7 +529,8 @@ struct DiscoveryNativeScreen: View {
 
     private func section(_ title: String, action: String?) -> some View {
         HStack {
-            Text(title).font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
+            Text(title).font(CoffeePeekNativeStyle.font(state.picker ? 15 : 22, weight: "SemiBold",
+                                                       relativeTo: state.picker ? .subheadline : .title2))
                 .accessibilityAddTraits(.isHeader)
             Spacer()
             if let action { showAllButton(action) }
@@ -730,12 +735,13 @@ func discoveryPreviewState(picker: Bool = false, expanded: Bool = false, canCont
         canLoadMore: false, failed: false, loadMoreFailed: false, canSuggestShop: emptyReason != nil, emptyReason: emptyReason,
         locationNotice: nil, settingsNeeded: false, favoriteFailure: false, continueCheckIn: canContinue,
         shops: emptyReason != nil ? [] : picker ? discoveryPickerPreviewShops(nearby: pickerNearby)
-            : allShops ? discoveryCataloguePreviewShops() : [shop], recent: [],
+            : allShops ? discoveryCataloguePreviewShops() : [shop],
+        recent: picker && emptyReason == nil ? [discoveryPreviewShop(id: "recent-preview", title: "CoffeePeek", distance: "")] : [],
         mapShops: [shop], selectedShopId: "preview", suggestions: [],
         showSuggestions: false, searchFailed: false, searchLoading: false, selectedZone: nil, zonesVisible: true,
         heatmapVisible: false, heatmapLoading: false, heatmapFailed: false, viewportFailed: false, truncated: false,
         chips: discoveryPreviewChips(selected: picker ? (pickerNearby ? "nearby" : "") : "open-only"), activeFilterCount: 1,
-        labels: ["title": "Выберите кофейню", "search": "Поиск кофеен и обжарщиков…", "shops": "Кофейни",
+        labels: ["title": "Выбор кофейни", "step-label": "Шаг 1 из 3", "search": "Поиск кофеен и обжарщиков…", "shops": "Кофейни",
             "roasters": "Обжарщики", "show-all": "Показать все", "open": "ОТКРЫТО", "new": "Новая",
             "nearby": "Рядом со мной", "map": "На карте", "list": "Списком", "filters": "Фильтры",
             "continue": "Продолжить чекин"].merging(discoveryEmptyPreviewLabels) { _, next in next },
@@ -857,7 +863,10 @@ private func discoveryScreenPreview(picker: Bool = false, expanded: Bool = false
 #Preview("Discovery transitions dark") { DiscoveryInteractionPreview(picker: false).preferredColorScheme(.dark) }
 #Preview("Picker transitions light") { DiscoveryInteractionPreview().preferredColorScheme(.light) }
 #Preview("Picker transitions dark") { DiscoveryInteractionPreview().preferredColorScheme(.dark) }
-#Preview("Picker large text") {
+#Preview("Picker large text light") {
+    DiscoveryInteractionPreview().preferredColorScheme(.light).environment(\.dynamicTypeSize, .accessibility2)
+}
+#Preview("Picker large text dark") {
     DiscoveryInteractionPreview().preferredColorScheme(.dark).environment(\.dynamicTypeSize, .accessibility2)
 }
 

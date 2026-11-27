@@ -29,15 +29,14 @@ internal fun HomeCheckInEditorRating(
 ) {
     val shape = RoundedCornerShape(CoffeePeekDimens.radiusMd)
     Row(Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
-        .border(1.dp, MaterialTheme.colorScheme.outline, shape).padding(horizontal = CoffeePeekDimens.spacing2,
-            vertical = CoffeePeekDimens.spacing3),
+        .border(1.dp, MaterialTheme.colorScheme.outline, shape).padding(CoffeePeekDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         artwork(Modifier.size(56.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusSm)))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
             Text(stringResource(Res.string.home_check_in_taste_question), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
             CoffeePeekRating((rating ?: 0).toDouble(), size = CoffeePeekRatingSize.Large,
-                onRatingChange = onRate, enabled = enabled,
+                onRatingChange = onRate, enabled = enabled, spreadChoices = true,
                 inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 starDescription = { stringResource(Res.string.home_check_in_choose_rating, it) })
         }

@@ -9,6 +9,7 @@ import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.impl.ui.data.*
+import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 import kotlinx.coroutines.CancellationException
 
 /** Current catalogue implementation stays app-owned; late/revoked results never escape its lease. */
@@ -16,6 +17,7 @@ internal class AppHomeCheckInCatalog(
     private val lease: CheckInHistorySession,
     private val picker: CoffeePicker,
     private val methods: BrewMethodCatalog,
+    private val drinks: suspend () -> Result<List<ShopConsumedDrinkOption>>,
     private val shelfBags: ShelfHomeCheckInBags? = null,
 ) : HomeCheckInEditorCatalog {
     override suspend fun brewMethods() = lease.withCurrentAccount {
@@ -26,6 +28,9 @@ internal class AppHomeCheckInCatalog(
     }
     override suspend fun searchBeans(query: String) = lease.withCurrentAccount {
         picker.search(query).map { rows -> rows.map { HomeCheckInBeanOption(it.slug, it.name, it.roasterName) } }.homeCatalogResult()
+    }
+    override suspend fun drinkOptions() = lease.withCurrentAccount {
+        drinks().map { rows -> rows.map { HomeCheckInDrinkOption(it.slug, it.nameRu, it.nameEn) } }.homeCatalogResult()
     }
     override suspend fun shelfBags() = shelfBags?.let { bags -> lease.withCurrentAccount { bags.load().homeCatalogResult() } }
         ?: Result.success(emptyList())

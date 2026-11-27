@@ -12,12 +12,12 @@ internal sealed interface ShopCheckInFormAction {
     data class VisitDateChanged(val isoTimestamp: String) : ShopCheckInFormAction
     data class VisibilityChanged(val visibility: ShopCheckInVisibility) : ShopCheckInFormAction
     data class DrinkChanged(val slug: String?) : ShopCheckInFormAction
-    data class CustomDrinkChanged(val value: String) : ShopCheckInFormAction
     data class PhotosAdded(val photos: List<ShopCheckInPhoto>) : ShopCheckInFormAction
     data class RemovePhoto(val index: Int) : ShopCheckInFormAction
     data class MovePhoto(val from: Int, val to: Int) : ShopCheckInFormAction
     data object Submit : ShopCheckInFormAction
     data object Dismiss : ShopCheckInFormAction
+    data object ChangeShop : ShopCheckInFormAction
     data object AskDiscard : ShopCheckInFormAction
     data object CancelDiscard : ShopCheckInFormAction
     data object Discard : ShopCheckInFormAction
