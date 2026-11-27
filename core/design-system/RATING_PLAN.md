@@ -182,3 +182,50 @@ pending device notes above are historical and superseded by this final result.
 No main/develop merge, live-account/backend acceptance, iOS visual test, actual
 TalkBack session or IDE preview rendering is included. Those are not claimed as
 passed merely because the common Native compilation and fake UI tests pass.
+
+
+## Compact editable stars — PR #430 recovery, 2026-11-27
+
+The owner-approved compact layout supersedes the earlier editable 48 dp target
+policy for this control: each editable target follows its configured star glyph
+(24 dp in the large rating cards), with 4 dp spacing and a row packed from the
+start. Read-only fractional fill, precise value text, localization, enabled and
+selected semantics are preserved. Narrow containers keep horizontal scrolling;
+the existing paired light/dark previews now include a 96 dp editable example.
+The helper remains design-system-owned and adds no dependency or feature state.
+
+Recovery preserves original #430 and #431 history. The earlier #431 merge into
+the closed #430 branch is reversed on this checkpoint so its final diff only
+contains ratings. The original navigation-removal patch is reapplied as the
+next checkpoint after #430 reaches develop; no merged work is discarded.
+
+Verification plan: existing design-system rating/value/sizing unit contracts,
+affected Home Check-In/Shop/Community compilation, function-body limits and a
+directSandbox application assembly with packaged DEX and isolation checks. Root
+coordinates the single host Gradle slot and records actual suite/build results.
+No UI/instrumented/screenshot tests, device launch or live-account write are part
+of this plan. Previews are fake and remain unrendered here; manual compact/narrow
+layout, larger text and screen-reader review remain device gates. Native shared
+compilation is a CI gate, not claimed from a host-skipped Windows task.
+
+
+Caption contract review: an editable rating may also provide `valueText`. Its
+scrolling star strip must not consume the row before the caption is measured.
+Only that combination now gives the stars `weight(1f, fill = false)`, so Row
+measures the caption first and the stars use their remaining viewport while
+retaining their natural packed width. The no-caption layout stays packed. This
+follows the [RowScope weight measurement contract](https://developer.android.com/reference/kotlin/androidx/compose/foundation/layout/RowScope#weight(kotlin.Float,kotlin.Boolean)).
+Both light/dark previews include editable captions at normal and 96 dp widths.
+These previews are authored, not rendered acceptance; root compilation and the
+existing unit/contract checks remain the planned validation. No UI tests were
+added.
+
+Root verification, 2026-11-27 (Windows/JDK 17), source e149e584a:
+Design-system JVM unit tests executed 82 cases across 22 suites, zero failures,
+errors or skips. Function limits passed (125 recorded, zero new). Direct Sandbox
+assembly compiled the affected feature consumers and passed packaged runtime-class
+and isolation checks. Artifact: com.coffeepeek.sandbox, 1.2.2.3425-sandbox / 3425.
+Lint has zero errors and nine pre-existing warnings in unchanged Android platform
+wrappers (eight ComposableNaming, one non-lambda offset); the rating source adds
+no lint warning. No device, rendered preview, live account or UI/instrumented test
+ran. Native/macOS compilation remains a remote gate on the final head.
