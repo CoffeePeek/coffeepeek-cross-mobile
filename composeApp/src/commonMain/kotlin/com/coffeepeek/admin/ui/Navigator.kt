@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -219,6 +220,8 @@ private fun RootNavHost(
         @Serializable data object CollectionsLibrary : Screen
         @Serializable data class CollectionEditor(val id: String? = null) : Screen
         @Serializable data class SavedPublicCollection(val id: String) : Screen
+        // Keep this type and its name for Android tasks saved before history moved into the profile.
+        @Serializable data object VisitedPlaces : Screen
         @Serializable data class HomeCheckInDetail(val id: String) : Screen
         @Serializable data object ShelfArchive : Screen
         @Serializable data object ShelfAddBag : Screen
@@ -682,7 +685,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     composable<Screen.CollectionsLibrary> { CollectionsLibraryDestination() }
                     composable<Screen.CollectionEditor> { backStack -> CollectionEditorDestination(backStack.toRoute<Screen.CollectionEditor>().id) }
                     composable<Screen.SavedPublicCollection> { backStack -> SavedPublicCollectionDestination(backStack.toRoute<Screen.SavedPublicCollection>().id) }
-                    homeCheckInRoutes()
+                    homeCheckInRoutes(nav)
                     composable<Screen.ShelfArchive> { koinInject<ShelfScreenRenderer>().Archive() }
                     composable<Screen.ShelfAddBag> { koinInject<ShelfScreenRenderer>().AddBag() }
                     composable<Screen.ShelfBag> { backStack ->
@@ -698,7 +701,16 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
         }
     }
 
-    private fun androidx.navigation.NavGraphBuilder.homeCheckInRoutes() {
+    private fun androidx.navigation.NavGraphBuilder.homeCheckInRoutes(nav: NavHostController) {
+        composable<Screen.VisitedPlaces> { entry ->
+            LaunchedEffect(entry) {
+                entry.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                    if (nav.currentBackStackEntry === entry && nav.popBackStack<Screen.Main>(inclusive = false)) {
+                        openProfileCheckIns()
+                    }
+                }
+            }
+        }
         composable<Screen.HomeCheckInDetail> { entry ->
             HomeCheckInDetailDestination(entry.toRoute<Screen.HomeCheckInDetail>().id)
         }
