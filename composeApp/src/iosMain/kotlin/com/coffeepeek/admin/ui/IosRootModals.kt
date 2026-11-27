@@ -10,6 +10,9 @@ import com.coffeepeek.admin.di.IosNativeControllerFactories
 import com.coffeepeek.admin.di.appupdate.AppConfigUpdateEnvironment
 import com.coffeepeek.admin.di.appupdate.IosAppUpdate
 import com.coffeepeek.admin.di.authorblocking.*
+import com.coffeepeek.admin.di.auth.IosUsernameSelection
+import com.coffeepeek.admin.di.auth.IosUsernameSelectionControllers
+import com.coffeepeek.feature.auth.api.UsernameSelectionGate
 import com.coffeepeek.admin.di.collections.*
 import com.coffeepeek.admin.di.homecheckin.*
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
@@ -71,8 +74,10 @@ internal class IosRootModals(private val root: IosNativeRoot, private val depend
     private var globalDialog: IosRootPresentation? = null
     private var authorDialog: IosRootPresentation? = null
     private var authorKey: Any? = null
+    private var usernameDialog: IosRootPresentation? = null
 
     init {
+        observeUsernameSelection()
         scope.launch { combine(lifecycle.state, Navigator.nativeOpenedLink, updates.state, requests.state, revision) {
             state, link, update, request, _ -> RootModalInputs(state, link, update.showPrompt, update.update, request)
         }.collect(::updatePrimary) }
@@ -105,6 +110,7 @@ internal class IosRootModals(private val root: IosNativeRoot, private val depend
         authorDialog?.closeSource?.invoke()
         globalDialog = null
         authorDialog = null
+        usernameDialog = null
         val previous = output.value
         output.value = IosRootModalState()
         listOfNotNull(previous.primary, previous.blocking).forEach { retire(it, finish = false) }
@@ -266,12 +272,23 @@ internal class IosRootModals(private val root: IosNativeRoot, private val depend
         updateBlocking()
     }
     private fun updateBlocking() {
-        val next = globalDialog ?: authorDialog
+        val next = usernameDialog ?: globalDialog ?: authorDialog
         val previous = output.value.blocking
         if (previous === next) return
         previous?.let(::retire)
         output.update { it.copy(blocking = next) }
         finishUnclaimed()
+    }
+    private fun observeUsernameSelection() {
+        val gate = dependencies.get<UsernameSelectionGate>()
+        scope.launch { gate.state.collect { setup ->
+            if (setup.blocksApp && usernameDialog == null) {
+                val source = IosUsernameSelection(gate, language)
+                usernameDialog = IosRootPresentation(correlationId("username-selection"), true,
+                    { IosUsernameSelectionControllers.controller(source) }, source::close, canDismiss = { false })
+            } else if (!setup.blocksApp) usernameDialog = null
+            updateBlocking()
+        } }
     }
     private suspend fun globalDialog(message: String?, loading: Boolean): IosGlobalDialog? {
         if (message == null && !loading) return null

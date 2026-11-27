@@ -63,4 +63,16 @@
     <string name="auth_social_diag_domain">; домен %1$s</string>
     <string name="auth_social_diag_oauth">; OAuth %1$s</string>
     <string name="auth_social_diag">%1$s (код %2$s%3$s%4$s)</string>
+    <string name="auth_username_title">Выберите ник</string>
+    <string name="auth_username_description">Под этим ником вас увидят в чекинах, отзывах и профиле</string>
+    <string name="auth_username_label">Ник</string>
+    <string name="auth_username_rules">От 3 до 30 символов. Начните с буквы; используйте буквы, цифры, точку или подчёркивание</string>
+    <string name="auth_username_link_notice">Можно оставить текущий ник. При смене ника ссылка на профиль изменится</string>
+    <string name="auth_username_continue">Продолжить</string>
+    <string name="auth_username_retry">Повторить</string>
+    <string name="auth_username_sign_out">Выйти из аккаунта</string>
+    <string name="auth_username_invalid">Проверьте длину и символы ника</string>
+    <string name="auth_username_taken">Этот ник уже занят. Выберите другой</string>
+    <string name="auth_username_conflict">Ник уже подтверждён на другом устройстве. Продолжите с текущим ником</string>
+    <string name="auth_username_unavailable">Не удалось проверить профиль. Проверьте соединение и повторите попытку</string>
 </resources>

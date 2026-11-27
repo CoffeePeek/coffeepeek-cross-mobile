@@ -18,6 +18,7 @@
     <string name="sandbox_update_failure">Сбой проверки</string>
     <string name="sandbox_auth_title">Вход и регистрация</string>
     <string name="sandbox_auth_works">Работает</string>
+    <string name="sandbox_auth_username_selection">Выбор ника</string>
     <string name="sandbox_auth_wrong_password">Неверный пароль</string>
     <string name="sandbox_auth_email_taken">Email занят</string>
     <string name="sandbox_auth_registration_failure">Сбой регистрации</string>

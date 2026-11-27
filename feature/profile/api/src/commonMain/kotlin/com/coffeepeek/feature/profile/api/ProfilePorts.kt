@@ -37,6 +37,8 @@ interface ProfileAccountPort {
     fun observeActiveAccount(): Flow<String?>
 
     fun cachedOwnProfile(): OwnProfile?
+    /** Drop stale presentation data after an account change completed outside the edit form. */
+    fun invalidateOwnProfile() = Unit
 
     /** The shared in-memory profile; `null` while signed out or not loaded yet. */
     fun observeOwnProfile(): Flow<OwnProfile?>

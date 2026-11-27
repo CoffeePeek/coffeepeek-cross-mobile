@@ -24,6 +24,16 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ProfileAccountRepositoryTest {
+    @Test fun externalUsernameCompletionInvalidatesTheCachedOwnProfile() = runTest {
+        val f = ProfileAccountFixture(backgroundScope)
+        try {
+            assertEquals("Anna", f.data.accounts.loadOwnProfile(false).getOrThrow().userName)
+            f.data.accounts.invalidateOwnProfile()
+            assertNull(f.data.accounts.cachedOwnProfile())
+            f.handler = { accountResponse(profileJson("chosen_name")) }
+            assertEquals("chosen_name", f.data.accounts.loadOwnProfile(false).getOrThrow().userName)
+        } finally { f.close() }
+    }
     @Test fun ownProfileAcceptsTheCapitalizedPreviousEnvelope() = runTest {
         val f = ProfileAccountFixture(backgroundScope)
         try {

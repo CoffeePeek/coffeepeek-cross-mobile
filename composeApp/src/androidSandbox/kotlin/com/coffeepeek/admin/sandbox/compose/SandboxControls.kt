@@ -70,13 +70,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
             Text(stringResource(R.string.sandbox_auth_title), style = MaterialTheme.typography.labelMedium)
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 SandboxAuthPolicy.entries.forEach { mode ->
-                    val label = when (mode) {
-                        SandboxAuthPolicy.Works -> R.string.sandbox_auth_works
-                        SandboxAuthPolicy.WrongPassword -> R.string.sandbox_auth_wrong_password
-                        SandboxAuthPolicy.EmailTaken -> R.string.sandbox_auth_email_taken
-                        SandboxAuthPolicy.RegistrationFailure -> R.string.sandbox_auth_registration_failure
-                        SandboxAuthPolicy.RecoveryFailure -> R.string.sandbox_auth_recovery_failure
-                    }
+                    val label = mode.label()
                     FilterChip(authPolicy == mode, { onAuthPolicy(mode) }, { Text(stringResource(label)) }, enabled = enabled)
                 }
             }
@@ -136,4 +130,13 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 }
 @PreviewLightDark @Composable private fun SandboxControlsPreview() = CoffeePeekTheme {
     SandboxControls(SandboxScenario.Ready, true, {}, {}, {})
+}
+
+private fun SandboxAuthPolicy.label() = when (this) {
+    SandboxAuthPolicy.Works -> R.string.sandbox_auth_works
+    SandboxAuthPolicy.UsernameSelectionRequired -> R.string.sandbox_auth_username_selection
+    SandboxAuthPolicy.WrongPassword -> R.string.sandbox_auth_wrong_password
+    SandboxAuthPolicy.EmailTaken -> R.string.sandbox_auth_email_taken
+    SandboxAuthPolicy.RegistrationFailure -> R.string.sandbox_auth_registration_failure
+    SandboxAuthPolicy.RecoveryFailure -> R.string.sandbox_auth_recovery_failure
 }

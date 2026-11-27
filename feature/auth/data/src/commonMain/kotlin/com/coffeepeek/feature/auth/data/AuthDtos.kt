@@ -13,6 +13,7 @@ internal data class Envelope<T>(
     @SerialName("isSuccess") @JsonNames("IsSuccess") val isSuccess: Boolean = false,
     @SerialName("message") @JsonNames("Message") val message: String? = null,
     @SerialName("data") @JsonNames("Data") val data: T? = null,
+    val errorCode: String? = null,
 )
 
 @Serializable

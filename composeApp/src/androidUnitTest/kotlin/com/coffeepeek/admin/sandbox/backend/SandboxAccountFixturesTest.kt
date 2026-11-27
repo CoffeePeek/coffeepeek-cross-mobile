@@ -64,9 +64,9 @@ class SandboxAccountFixturesTest {
     @Test fun profileChangesPersistInFakeBackendAndResetRestoresFixtures() = runTest { withSandboxFixture(temporary) { backend, client ->
         val data = createProfileAccountData(client.client, client.uploadClient, LocalSandboxSession(), backgroundScope)
         assertEquals("sandbox@example.invalid", data.accounts.loadOwnProfile(true).getOrThrow().email)
-        data.edit.updateUsername("Local Tester").getOrThrow()
+        data.edit.updateUsername("Local_Tester").getOrThrow()
         data.edit.updateAbout("Local biography").getOrThrow()
-        assertEquals("Local Tester", data.accounts.loadOwnProfile(true).getOrThrow().userName)
+        assertEquals("Local_Tester", data.accounts.loadOwnProfile(true).getOrThrow().userName)
         assertEquals("Local biography", data.accounts.loadOwnProfile(true).getOrThrow().about)
         backend.reset(true)
         assertEquals("Sandbox", data.accounts.loadOwnProfile(true).getOrThrow().userName)

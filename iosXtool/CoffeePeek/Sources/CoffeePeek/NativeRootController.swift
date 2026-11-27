@@ -10,6 +10,7 @@ func makeCoffeePeekRootController(root: IosNativeRoot) -> UIViewController {
 
 @MainActor
 func configureCoffeePeekNativeNavigation() {
+    IosUsernameSelectionControllers.shared.configure(factory: makeUsernameSelectionController)
     IosNativeRootControllers.shared.configure(factory: makeCoffeePeekRootController)
     IosDiscoveryRouteControllers.shared.configure(factory: makeDiscoveryRouteController)
     NativeLocalBackProtection.shared.configure(update: { controller, protected in

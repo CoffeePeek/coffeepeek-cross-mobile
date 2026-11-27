@@ -9,7 +9,7 @@ import org.koin.dsl.module
 
 /** Both platforms route shop and roaster hearts through the same membership picker. */
 internal fun collectionFavoritesModule() = module {
-    single { CollectionPickerRequests(get(), CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)) }
+    single { CollectionPickerRequests(get(), CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate), get()) }
     single<CollectionPickerPrompts> { get<CollectionPickerRequests>() }
     single<FavoriteCollectionsPrompt> { CollectionFavoritesPrompt(get()) }
     single<RoasterFavorites> { CollectionPromptRoasterFavorites(ServerRoasterFavorites(get(), get(), get()), get(), get()) }
