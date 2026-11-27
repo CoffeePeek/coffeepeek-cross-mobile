@@ -7,13 +7,15 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ReleaseVersioningTest(unittest.TestCase):
-    def test_android_formats_version_with_shared_build_number_offset(self):
+    def test_android_uses_shared_marketing_version_and_separate_build_number(self):
         config = (ROOT / 'iosApp/Configuration/Shared.xcconfig').read_text(encoding='utf-8')
         offset = int(re.search(r'^BUILD_NUMBER_OFFSET = ([0-9]+)$', config, re.MULTILINE).group(1))
         self.assertGreaterEqual(offset, 1000)
         gradle = (ROOT / 'composeApp/build.gradle.kts').read_text(encoding='utf-8')
         self.assertIn('file("iosApp/Configuration/Shared.xcconfig")', gradle)
-        self.assertRegex(gradle, r'val appVersionName: Provider<String> = appVersionCode\.map \{ "[0-9]+\.[0-9]+\.[0-9]+\.\$it" \}')
+        self.assertIn('val appVersionName: Provider<String> = appVersionConfig.map { config ->', gradle)
+        self.assertIn('^MARKETING_VERSION = ', gradle)
+        self.assertNotRegex(gradle, r'appVersionCode\.map \{ "[0-9]+\.[0-9]+\.[0-9]+\.\$it" \}')
         self.assertIn('gitCommitCount.zip(appBuildNumberOffset) { count, offset -> count + offset }', gradle)
         self.assertNotIn('"--all"', gradle)
         self.assertIn('commandLine("git", "rev-list", "--count", "HEAD")', gradle)
@@ -41,7 +43,7 @@ class ReleaseVersioningTest(unittest.TestCase):
 
     def test_ios_build_is_an_integer_commit_count_and_archive_checks_both_versions(self):
         config = (ROOT / 'iosApp/Configuration/Shared.xcconfig').read_text(encoding='utf-8')
-        self.assertRegex(config, r'(?m)^MARKETING_VERSION = [0-9]+\.[0-9]+(?:\.[0-9]+)?$')
+        self.assertRegex(config, r'(?m)^MARKETING_VERSION = [0-9]+\.[0-9]+\.[0-9]+$')
         workflow = (ROOT / '.github/workflows/ios-testflight.yml').read_text(encoding='utf-8')
         self.assertIn('COMMIT_COUNT=$(git rev-list --count HEAD)', workflow)
         self.assertIn('IOS_BUILD_NUMBER=$((BUILD_NUMBER_OFFSET + COMMIT_COUNT))', workflow)

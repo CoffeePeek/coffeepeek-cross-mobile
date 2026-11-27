@@ -31,7 +31,7 @@ Secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_AL
 
 ## Версии и повторные запуски
 
-Версия Android вычисляется в `composeApp/build.gradle.kts`: сейчас `1.2.2.N`, где `N` — `versionCode`. iOS marketing version задаётся отдельно: сейчас `2.0` в `iosApp/Configuration/Shared.xcconfig`. Разные marketing versions допустимы; не предполагайте их равенство по старому плану.
+Публичная версия iOS и Android читается из `MARKETING_VERSION` в `iosApp/Configuration/Shared.xcconfig`: сейчас `2.0.0`. Android `versionName` берётся из этого значения в `composeApp/build.gradle.kts`; номер сборки хранится отдельно в `versionCode` / `CFBundleVersion`.
 
 Общий номер сборки — `BUILD_NUMBER_OFFSET + git rev-list --count HEAD`; текущий offset `1100` читается из `Shared.xcconfig`. iOS хранит этот номер в `CFBundleVersion`, Android — в `versionCode` и суффиксе версии. Это конфигурация исходников, не номер последней опубликованной сборки. Повтор того же SHA не повышает номер. Сверяйте artifact metadata и выбранный SHA, не переписывайте историю `main`; при сбое канала повторяйте его failed jobs.
 

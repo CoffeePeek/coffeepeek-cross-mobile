@@ -221,7 +221,10 @@ val appBuildNumberOffset = appVersionConfig.map { config ->
         .find(config)?.groupValues?.get(1)?.toInt() ?: error("BUILD_NUMBER_OFFSET is required")
 }
 val appVersionCode: Provider<Int> = gitCommitCount.zip(appBuildNumberOffset) { count, offset -> count + offset }
-val appVersionName: Provider<String> = appVersionCode.map { "1.2.0.$it" }
+val appVersionName: Provider<String> = appVersionConfig.map { config ->
+    Regex("(?m)^MARKETING_VERSION = ([0-9]+\\.[0-9]+\\.[0-9]+)$")
+        .find(config)?.groupValues?.get(1) ?: error("MARKETING_VERSION must use major.minor.patch")
+}
 
 tasks.register<PrintValueTask>("printVersionName") {
     group = "versioning"
