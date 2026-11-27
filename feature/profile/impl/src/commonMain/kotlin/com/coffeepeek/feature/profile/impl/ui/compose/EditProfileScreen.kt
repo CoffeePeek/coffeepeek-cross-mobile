@@ -23,6 +23,7 @@ import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_label
 import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_long
 import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_placeholder
 import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_short
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_error_username_invalid
 import com.coffeepeek.feature.profile.impl.resources.profile_loading
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -292,6 +293,7 @@ private fun UsernameError.message(): String = stringResource(when (this) {
     UsernameError.Empty -> Res.string.profile_edit_username_empty
     UsernameError.TooShort -> Res.string.profile_edit_username_short
     UsernameError.TooLong -> Res.string.profile_edit_username_long
+    UsernameError.Invalid -> Res.string.profile_edit_error_username_invalid
 })
 
 @Composable

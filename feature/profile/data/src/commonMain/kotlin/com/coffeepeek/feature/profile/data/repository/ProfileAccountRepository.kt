@@ -49,6 +49,9 @@ internal class ProfileAccountRepository(
     }
     override fun observeCacheScope() = sessions.observeSession().map { cacheScope() }.distinctUntilChanged()
     override fun cachedOwnProfile() = synchronize(activeAccount()).profile
+    override fun invalidateOwnProfile() {
+        cache.update { it.copy(profile = null, generation = it.generation + 1) }
+    }
     override fun observeOwnProfile() = combine(cache, sessions.observeSession()) { stored, session ->
         stored.profile.takeIf { stored.owner == key(session) && stored.login == sessions.accountGeneration() }
     }.distinctUntilChanged()

@@ -141,17 +141,12 @@ private fun appModule(
     single<AppUpdateRenderer> { appUpdateRendererFactory() }
     single<NotificationsRenderer> { notificationsRendererFactory() }
     single<AuthScreenRenderer> { authRendererFactory() }
+    includes(com.coffeepeek.admin.di.auth.usernameSelectionModule())
     single<CommunityScreenRenderer> { communityRendererFactory() }
     single<CheckInDetailScreenRenderer> { checkInDetailRendererFactory() }
     single<ContributionsScreenRenderer> { contributionsRendererFactory() }
     discoveryBindings(discoveryRendererFactory)
     includes(com.coffeepeek.admin.di.community.communityModule())
-    single<com.coffeepeek.feature.auth.api.LocalUserData> { com.coffeepeek.admin.di.auth.UserSessionLocalUserData(get()) }
-    single<com.coffeepeek.feature.auth.api.AuthAnalytics> { com.coffeepeek.admin.di.auth.AppAuthAnalytics() }
-    single<com.coffeepeek.feature.auth.domain.AuthRepository> {
-        val gateway = get<ApiClients>()
-        com.coffeepeek.feature.auth.data.createAuthRepository(gateway.plainClient, get(), get())
-    }
     single<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer> { checkInRenderers.shopPicker(this) }
     single<CheckInCreateFlowRenderer> { checkInRenderers.create(this) }
     single<HomeCheckInDetailRenderer> { checkInRenderers.homeDetail(this) }
@@ -203,5 +198,5 @@ private fun appModule(
     }
     registerDiscoveryCity(settingRepository)
     single { OldReviewDrafts(settingRepository) }
-    factory { NavigatorViewModel(get()) }
+    factory { NavigatorViewModel(get(), get()) }
 }

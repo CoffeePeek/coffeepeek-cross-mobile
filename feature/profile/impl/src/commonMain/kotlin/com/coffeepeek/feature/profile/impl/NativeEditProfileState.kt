@@ -28,6 +28,7 @@ private fun UsernameError.resourceKey() = when (this) {
     UsernameError.Empty -> "profile_edit_username_empty"
     UsernameError.TooShort -> "profile_edit_username_short"
     UsernameError.TooLong -> "profile_edit_username_long"
+    UsernameError.Invalid -> "profile_edit_error_username_invalid"
 }
 
 private fun EditProfileError.titleKey() = when (this) {

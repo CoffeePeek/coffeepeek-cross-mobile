@@ -61,13 +61,13 @@ class EditProfileViewModelTest {
         assertEquals(EditProfileError.Load, silent.state.value.error)
     }
 
-    @Test fun usernameRulesAreMeasuredOnTheUntrimmedValue() = runTest(dispatcher) {
+    @Test fun usernameRulesMatchTrimmedServerConstraints() = runTest(dispatcher) {
         val vm = model(); runCurrent()
         vm.act(EditProfileAction.UsernameChanged("")); assertEquals(UsernameError.Empty, vm.state.value.usernameError)
         vm.act(EditProfileAction.UsernameChanged("A")); assertEquals(UsernameError.TooShort, vm.state.value.usernameError)
-        vm.act(EditProfileAction.UsernameChanged(" A ")); assertNull(vm.state.value.usernameError)
+        vm.act(EditProfileAction.UsernameChanged(" A ")); assertEquals(UsernameError.TooShort, vm.state.value.usernameError)
         vm.act(EditProfileAction.UsernameChanged("x".repeat(80)))
-        assertEquals(64, vm.state.value.username.length); assertNull(vm.state.value.usernameError)
+        assertEquals(30, vm.state.value.username.length); assertNull(vm.state.value.usernameError)
         vm.act(EditProfileAction.AboutChanged("y".repeat(700)))
         assertEquals(600, vm.state.value.about.length); assertFalse(vm.state.value.aboutTooLong)
     }
@@ -78,7 +78,7 @@ class EditProfileViewModelTest {
         val vm = model(accounts, edit); runCurrent()
         val events = mutableListOf<EditProfileEvent>(); backgroundScope.launch(dispatcher) { vm.events.collect(events::add) }
         vm.act(EditProfileAction.AvatarPicked(image()))
-        vm.act(EditProfileAction.UsernameChanged("Anna Two")); vm.act(EditProfileAction.AboutChanged("New about"))
+        vm.act(EditProfileAction.UsernameChanged("Anna_Two")); vm.act(EditProfileAction.AboutChanged("New about"))
         // Another account signs in while the avatar is being saved: neither the username nor the about is sent for it.
         edit.onAvatar = { accounts.signIn("b") }
         vm.act(EditProfileAction.Save); vm.act(EditProfileAction.ConfirmUsernameChange)

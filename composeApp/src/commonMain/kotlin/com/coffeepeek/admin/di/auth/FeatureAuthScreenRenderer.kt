@@ -22,7 +22,7 @@ internal class FeatureAuthScreenRenderer(
     @Composable
     override fun Login() = login.Content(
         onClose = Navigator::closeAuth,
-        onSignedIn = { Navigator.navigate(Navigator.Screen.Main) },
+        onSignedIn = {},
         onForgotPassword = { email -> Navigator.navigate(Navigator.Screen.ForgotPassword(email)) },
         onCreateAccount = { Navigator.popThenNavigate(Navigator.Screen.Register) },
         modifier = Modifier,
@@ -32,7 +32,7 @@ internal class FeatureAuthScreenRenderer(
     override fun Register() = register.Content(
         onClose = Navigator::closeAuth,
         onGoToLogin = { Navigator.popThenNavigate(Navigator.Screen.Auth) },
-        onSignedIn = { Navigator.navigate(Navigator.Screen.Main) },
+        onSignedIn = {},
         modifier = Modifier,
     )
 
