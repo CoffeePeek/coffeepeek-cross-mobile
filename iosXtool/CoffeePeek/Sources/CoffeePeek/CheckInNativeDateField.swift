@@ -22,13 +22,15 @@ struct CheckInNativeDateField: View {
                 HomeCheckInNativeSelection(label: label, symbol: "calendar", error: error)
             } else {
                 HStack {
+                    Image(systemName: "calendar").foregroundStyle(CoffeePeekNativeStyle.secondary).accessibilityHidden(true)
                     Text(label)
                     Spacer()
-                    Image(systemName: "calendar").accessibilityHidden(true)
+                    Image(systemName: "chevron.down").font(.system(size: 14))
+                        .foregroundStyle(CoffeePeekNativeStyle.secondary).accessibilityHidden(true)
                 }
-                .padding(16).frame(minHeight: 48)
-                .background(CoffeePeekNativeStyle.surface, in: Capsule())
-                .overlay(Capsule().stroke(CoffeePeekNativeStyle.border))
+                .padding(.horizontal, 16).frame(minHeight: 48)
+                .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(CoffeePeekNativeStyle.border))
             }
         }
         .buttonStyle(.plain).accessibilityLabel(title).accessibilityValue(label)

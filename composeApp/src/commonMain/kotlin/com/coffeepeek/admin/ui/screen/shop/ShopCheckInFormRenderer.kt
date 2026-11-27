@@ -15,5 +15,6 @@ interface ShopCheckInFormRenderer {
         onSubmitted: () -> Unit,
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
+        shopSelectionIncluded: Boolean = false,
     )
 }

@@ -28,12 +28,15 @@ internal class SessionShopCheckInEntry(
     private val photos: ShopCheckInPhotoPicker,
     private val onCheckInCreated: () -> Unit,
 ) : ShopCheckInCreateEntry {
-    internal fun nativeForm(context: com.coffeepeek.feature.shop.api.ShopDetailContext, callbacks: ShopCheckInNativeCallbacks): NativeShopCheckInForm {
+    internal fun nativeForm(context: com.coffeepeek.feature.shop.api.ShopDetailContext, callbacks: ShopCheckInNativeCallbacks,
+        shopSelectionIncluded: Boolean,
+    ): NativeShopCheckInForm {
         val lease = ShopCheckInSession(sessions, repository, onCheckInCreated)
         val historyLease = CheckInHistorySession(sessions)
         val draft = lease.userId?.takeIf { lease.isCurrent() }?.let { drafts.forShop(context.shopId, context.shopSlug, it) }
         val form = draft?.let { ShopCheckInNativeForm(context.shopId, context.shopSlug, context.shopName, context.shopAddress,
-            lease, it, dates, photos, HistoryShopCheckInPublicationReader(historyLease.bind(history)), lease::isCurrent, callbacks) }
+            lease, it, dates, photos, HistoryShopCheckInPublicationReader(historyLease.bind(history)), lease::isCurrent,
+            callbacks, shopSelectionIncluded) }
         return NativeShopCheckInForm(form, lease, historyLease)
     }
     @Composable
@@ -47,6 +50,7 @@ internal class SessionShopCheckInEntry(
         onSubmitted: () -> Unit,
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
+        shopSelectionIncluded: Boolean,
     ) {
         val lease = remember(shopId, shopSlug) { ShopCheckInSession(sessions, repository, onCheckInCreated) }
         val historyLease = remember(lease) { CheckInHistorySession(sessions) }
@@ -71,7 +75,7 @@ internal class SessionShopCheckInEntry(
         val form = ShopCheckInNativeForm(shopId, shopSlug, shopName, shopAddress, lease, boundDrafts, dates, photos,
             HistoryShopCheckInPublicationReader(historyLease.bind(history)), lease::isCurrent,
             ShopCheckInNativeCallbacks(onDismiss, onChangeShop, { if (lease.isCurrent()) onSubmitted() },
-                { if (lease.isCurrent()) onGoToFeed() }, { if (lease.isCurrent()) onOpenHistory() }))
+                { if (lease.isCurrent()) onGoToFeed() }, { if (lease.isCurrent()) onOpenHistory() }), shopSelectionIncluded)
         SessionShopCheckInContent(form)
     }
 }
@@ -95,7 +99,7 @@ private fun SessionShopCheckInContent(form: ShopCheckInNativeForm) {
             }
             entry.Content(form.shopId, form.shopSlug, form.shopName, form.shopAddress,
                 form.callbacks.dismiss, form.callbacks.changeShop, form.callbacks.submitted,
-                form.callbacks.goToFeed, form.callbacks.openHistory)
+                form.callbacks.goToFeed, form.callbacks.openHistory, form.shopSelectionIncluded)
         }
     }
 }

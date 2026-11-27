@@ -3,16 +3,12 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.impl.resources.Res
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_ratings
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_rating_atmosphere
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_rating_coffee
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_rating_service
@@ -25,11 +21,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun ShopCheckInRatings(rating: ShopRating, enabled: Boolean, onChange: (ShopRating) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        Text(
-            stringResource(Res.string.shop_checkin_form_ratings),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
         ShopCheckInRatingCard(Res.drawable.shop_checkin_rating_coffee,
             stringResource(Res.string.shop_review_coffee), rating.coffee, enabled) {
             onChange(rating.copy(coffee = it))

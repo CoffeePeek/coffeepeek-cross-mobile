@@ -16,7 +16,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_empty
-import com.coffeepeek.feature.shop.impl.resources.shop_maskot_with_book
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
 import org.jetbrains.compose.resources.painterResource
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -25,7 +25,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun ShopCheckInsEmptyState(shopTitle: String, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        Image(painterResource(Res.drawable.shop_maskot_with_book), null, modifier = Modifier.size(160.dp))
+        Image(painterResource(CoffeePeekIllustrations.CreationSuccess), null, modifier = Modifier.size(160.dp))
         Text(stringResource(Res.string.shop_checkins_empty, shopTitle), style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }

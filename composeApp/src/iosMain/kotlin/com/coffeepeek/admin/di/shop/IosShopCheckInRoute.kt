@@ -14,7 +14,7 @@ import org.jetbrains.compose.resources.getString
 
 /** Picker-to-editor route, including native loading and recoverable session/detail errors. */
 class IosShopCheckInRoute internal constructor(accounts: SessionReader, details: ShopDetailsRepository,
-    forms: SessionShopCheckInEntry, language: LanguagePort, id: String,
+    forms: SessionShopCheckInEntry, language: LanguagePort, id: String, private val shopSelectionIncluded: Boolean,
 ) {
     private val host = ShopBrowsingHostViewModel(accounts)
     private val store = ViewModelStore().apply { put("native-shop-editor-route", host) }
@@ -38,7 +38,7 @@ class IosShopCheckInRoute internal constructor(accounts: SessionReader, details:
     fun observe(receive: (IosShopCheckInRouteState) -> Unit) = IosShopCheckInObservation(host.viewModelScope.launch { state.collect(receive) })
     fun back() {
         if (closed || ended) return
-        state.value.editor?.dismiss() ?: Navigator.popBack()
+        state.value.editor?.dismiss() ?: leaveLoadingScreen()
     }
     fun retry() { if (!closed && !ended) host.retry() }
     fun close() {
@@ -61,7 +61,7 @@ class IosShopCheckInRoute internal constructor(accounts: SessionReader, details:
     ) {
         val result = session.lease.details(details).getDetails(id)
         result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-        if (!session.lease.isCurrent() || closed) return
+        if (!live(session) || ended) return
         val overview = result.getOrNull()?.overview
         if (overview == null) {
             state.update { it.copy(failed = true) }
@@ -69,7 +69,7 @@ class IosShopCheckInRoute internal constructor(accounts: SessionReader, details:
         }
         val context = ShopDetailContext(id, overview.id, overview.title, overview.address)
         val callbacks = callbacks(session)
-        val editor = nativeShopCheckInForm(forms, context, language, accounts, callbacks, ::revoked)
+        val editor = nativeShopCheckInForm(forms, context, language, accounts, callbacks, shopSelectionIncluded, ::revoked)
         if (editor == null) {
             revoked()
             return
@@ -84,6 +84,11 @@ class IosShopCheckInRoute internal constructor(accounts: SessionReader, details:
         { finish(session) { Navigator.popThenSelectTab(Navigator.Screen.CommunityTab) } },
         { finish(session) { Navigator.openProfileCheckIns(popCurrent = true) } },
     )
+
+    private fun leaveLoadingScreen() {
+        ended = true
+        if (shopSelectionIncluded) Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn) else Navigator.popBack()
+    }
     private fun finish(session: ShopBrowsingHostSession, action: () -> Unit) {
         if (ended || !live(session)) return
         ended = true

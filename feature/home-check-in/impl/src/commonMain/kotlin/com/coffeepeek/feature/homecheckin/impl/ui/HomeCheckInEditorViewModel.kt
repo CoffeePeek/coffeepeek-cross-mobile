@@ -34,6 +34,7 @@ internal class HomeCheckInEditorViewModel(
     private var loadJob: Job? = null
     private var saveJob: Job? = null
     private var methodsJob: Job? = null
+    private var drinksJob: Job? = null
     private var beansJob: Job? = null
     private var searchRevision = 0L
     private var revision = 0L
@@ -52,11 +53,11 @@ internal class HomeCheckInEditorViewModel(
     private suspend fun dispatchAction(action: HomeCheckInEditorAction) {
         when (action) {
             HomeCheckInEditorAction.Initialize, HomeCheckInEditorAction.RetryDetail,
-            HomeCheckInEditorAction.RetryMethods -> handleLoadAction(action)
+            HomeCheckInEditorAction.RetryMethods, HomeCheckInEditorAction.RetryDrinks -> handleLoadAction(action)
             is HomeCheckInEditorAction.DateChosen, is HomeCheckInEditorAction.MethodChanged,
             is HomeCheckInEditorAction.DoseChanged, is HomeCheckInEditorAction.DurationChanged,
             is HomeCheckInEditorAction.TasteRatingTapped, is HomeCheckInEditorAction.NoteChanged,
-            is HomeCheckInEditorAction.DrinkNameChanged, is HomeCheckInEditorAction.VisibilityChanged -> handleFieldAction(action)
+            is HomeCheckInEditorAction.DrinkSelected, is HomeCheckInEditorAction.VisibilityChanged -> handleFieldAction(action)
             HomeCheckInEditorAction.OpenBeanPicker, HomeCheckInEditorAction.LoadShelfBags,
             HomeCheckInEditorAction.ResolveShelfBagCard, HomeCheckInEditorAction.CloseBeanPicker,
             is HomeCheckInEditorAction.BeanQueryChanged, HomeCheckInEditorAction.SearchBeans -> handleBeanSearchAction(action)
@@ -75,6 +76,7 @@ internal class HomeCheckInEditorViewModel(
             HomeCheckInEditorAction.Initialize -> if (!initialized) {
                 initialized = true
                 onAction(HomeCheckInEditorAction.RetryMethods)
+                onAction(HomeCheckInEditorAction.RetryDrinks)
                 if (preparationId == null) {
                     track(HomeCheckInEditorMetric.Opened)
                     updateState { copy(isReady = true) }
@@ -83,6 +85,7 @@ internal class HomeCheckInEditorViewModel(
             }
             HomeCheckInEditorAction.RetryDetail -> if (initialized) loadDetail()
             HomeCheckInEditorAction.RetryMethods -> loadMethods()
+            HomeCheckInEditorAction.RetryDrinks -> loadDrinks()
             else -> Unit
         }
     }
@@ -97,7 +100,7 @@ internal class HomeCheckInEditorViewModel(
                 copy(tasteScore = action.score.takeUnless { it == tasteScore })
             }
             is HomeCheckInEditorAction.NoteChanged -> edit { copy(text = action.value.take(1000).ifBlank { null }) }
-            is HomeCheckInEditorAction.DrinkNameChanged -> changeDrinkName(action.value)
+            is HomeCheckInEditorAction.DrinkSelected -> selectDrink(action.slug)
             is HomeCheckInEditorAction.VisibilityChanged -> edit { copy(visibility = action.value) }
             else -> Unit
         }
@@ -108,9 +111,10 @@ internal class HomeCheckInEditorViewModel(
         if (preparedOn == action.civilDate) this else copy(preparedOn = action.civilDate, preparedAt = action.preparedAt)
     }
 
-    private fun changeDrinkName(value: String) = edit {
-        val name = value.take(100).ifBlank { null }
-        copy(drinkSlug = "other".takeIf { name != null }, customDrinkName = name)
+    private fun selectDrink(slug: String?) {
+        if (slug == null || currentState.drinks.any { it.slug == slug }) {
+            edit { copy(drinkSlug = slug, customDrinkName = null) }
+        }
     }
 
     private suspend fun handleBeanSearchAction(action: HomeCheckInEditorAction) {
@@ -294,6 +298,26 @@ internal class HomeCheckInEditorViewModel(
         }
     }
 
+    private suspend fun loadDrinks() {
+        if (drinksJob != null || saveJob != null || currentState.drinks.isNotEmpty()) return
+        val job = currentCoroutineContext().job
+        drinksJob = job
+        updateState { copy(drinksLoading = true, drinksFailed = false) }
+        try {
+            val options = catalog.drinkOptions().getOrThrow()
+            currentCoroutineContext().ensureActive()
+            if (!canAccess()) { revokeAccess(); return }
+            updateState { copy(drinks = options.filter { it.slug.isNotBlank() && it.slug != "other" }.distinctBy { it.slug }) }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            if (!canAccess()) { revokeAccess(); return }
+            if (drinksJob === job && job.isActive) updateState { copy(drinksFailed = true) }
+        } finally {
+            if (drinksJob === job) { drinksJob = null; updateState { copy(drinksLoading = false) } }
+        }
+    }
+
     private suspend fun searchBeans(debounce: Boolean) {
         cancelSearch()
         val job = currentCoroutineContext().job
@@ -412,6 +436,8 @@ internal class HomeCheckInEditorViewModel(
         cancelSearch()
         methodsJob?.cancel()
         methodsJob = null
+        drinksJob?.cancel()
+        drinksJob = null
     }
 
     private fun invalidateWork() {

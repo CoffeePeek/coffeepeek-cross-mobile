@@ -5,5 +5,5 @@ import androidx.compose.runtime.Composable
 /** Application destination that loads a place and hosts its check-in editor. */
 interface ShopCheckInEditorRenderer {
     @Composable
-    fun Content(shopId: String)
+    fun Content(shopId: String, shopSelectionIncluded: Boolean)
 }

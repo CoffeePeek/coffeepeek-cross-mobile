@@ -17,6 +17,9 @@
     <string name="profile_following">Вы падпісаны</string>
     <string name="profile_follow_description">Падпісацца на @%1$s</string>
     <string name="profile_unfollow_description">Адпісацца ад @%1$s</string>
+    <string name="profile_unfollow">Адпісацца</string>
+    <string name="profile_unfollow_confirm_title">Адпісацца ад @%1$s?</string>
+    <string name="profile_unfollow_confirm_message">Вы зможаце падпісацца зноў у любы час.</string>
     <string name="profile_stat_check_ins">Чэкіны</string>
     <string name="profile_stat_shops">Кавярні</string>
     <string name="profile_stat_roasters">Абсмажчыкі</string>

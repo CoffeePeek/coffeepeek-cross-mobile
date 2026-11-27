@@ -16,7 +16,7 @@ internal fun NativeHomeCheckInState.iosState() = IosHomeCheckInState(
 
 private fun NativeHomeCheckInDraft.iosDraft() = IosHomeCheckInDraft(
     preparedOn, dateLabel, methodCode, dose, durationSeconds, tasteScore, note, drinkName, isPublic,
-    beanName, shelfBagId, showShelfBag, shelfBagCardUrl, photos.map { it.iosPhoto() }, existingPhotoUrls, customBeanName,
+    beanName, shelfBagId, showShelfBag, shelfBagCardUrl, photos.map { it.iosPhoto() }, existingPhotoUrls, customBeanName, drinkSlug,
 )
 
 private fun NativeHomeCheckInStatus.iosStatus() = IosHomeCheckInStatus(
@@ -26,6 +26,7 @@ private fun NativeHomeCheckInStatus.iosStatus() = IosHomeCheckInStatus(
 private fun NativeHomeCheckInCatalog.iosCatalog() = IosHomeCheckInCatalog(
     beanPickerOpen, beanQuery, methods.map { it.iosOption() }, beans.map { it.iosOption() },
     shelfBags.map { it.iosOption() }, methodsLoading, beansLoading, methodsIssueKey, beansIssueKey,
+    drinks.map { it.iosOption() }, drinksLoading, drinksIssueKey,
 )
 
 private fun NativeHomeCheckInOption.iosOption() = IosHomeCheckInOption(id, name, detail, imageUrl)

@@ -1,4 +1,9 @@
 <resources>
+    <string name="home_check_in_step_next">Далее</string>
+    <string name="home_check_in_step_impressions">Оценки и впечатления</string>
+    <string name="home_check_in_step_details">Детали чекина</string>
+    <string name="home_check_in_step_back">Назад</string>
+    <string name="home_check_in_step_progress">Шаг %1$d из %2$d</string>
     <string name="home_check_in_actions">Действия с чекином</string>
     <string name="home_check_in_create_title">Новый чекин</string>
     <string name="home_check_in_create_prompt">Где вы пили кофе?</string>
@@ -82,6 +87,7 @@
     <string name="home_check_in_recipe_expanded">Развёрнут</string>
     <string name="home_check_in_saved_private">Сохранено только для вас</string>
     <string name="home_check_in_saved_unknown">Чекин добавлен</string>
+    <string name="home_check_in_saved_description">Он сохранён в вашей истории.</string>
     <string name="home_check_in_saved_visibility_changed">Настройка аудитории не подтвердилась. Проверьте запись.</string>
     <string name="home_check_in_taste_question">Как получился кофе?</string>
     <string name="home_check_in_choose_rating">Как получился кофе?: выбрать %1$d из 5</string>
@@ -122,7 +128,9 @@
     <string name="home_check_in_editor_note">Заметка</string>
     <string name="home_check_in_note_hint">Какой вкус? Что хочется повторить?</string>
     <string name="home_check_in_drink">Напиток</string>
-    <string name="home_check_in_drink_hint">Например, капучино</string>
+    <string name="home_check_in_drink_other">Другое</string>
+    <string name="home_check_in_drinks_empty">В каталоге пока нет напитков</string>
+    <string name="home_check_in_drinks_error">Не удалось загрузить напитки</string>
     <string name="home_check_in_photos">Фото</string>
     <string name="home_check_in_photos_hint">Чашка, зерно или процесс приготовления — до 5 фото.</string>
     <string name="home_check_in_photos_count">Добавлено: %1$d/5</string>

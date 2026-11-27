@@ -28,6 +28,7 @@ import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.resources.coffeepeek_rating_description
 import com.coffeepeek.core.designsystem.resources.coffeepeek_rating_choose
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import kotlin.math.roundToInt
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -40,6 +41,7 @@ enum class CoffeePeekRatingDisplay { Stars, Compact }
  * Compact is a rating symbol + value, never a one-star scale. Editable Stars emit 1..5:
  * the caller owns validation, state and optional tap-again-to-clear behavior.
  * [starDescription] lets feature-specific labels retain their localized contracts.
+ * [spreadChoices] gives editable stars equal space across a bounded form row.
  */
 @Composable
 fun CoffeePeekRating(
@@ -57,26 +59,26 @@ fun CoffeePeekRating(
     inactiveColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     valueColor: Color = LocalContentColor.current,
     valueStyle: TextStyle = MaterialTheme.typography.bodyMedium,
+    spreadChoices: Boolean = false,
     starDescription: @Composable (Int) -> String = { stringResource(Res.string.coffeepeek_rating_choose, it) },
 ) {
     require(onRatingChange == null || display == CoffeePeekRatingDisplay.Stars) { "Only Stars can be edited" }
     val value = coffeePeekRatingValue(rating)
     val description = contentDescription ?: stringResource(Res.string.coffeepeek_rating_description, coffeePeekRatingText(value))
-    // Editable stars pack from the start under the caller's label like the
-    // read-only ones; widthIn only caps the row so narrow cards scroll instead
-    // of stretching the glyphs across the whole card.
+    val spread = spreadChoices && onRatingChange != null
+    // Compact input scrolls in narrow rows. Spread input divides the available width into five targets.
     val behavior = if (onRatingChange == null) Modifier.semantics(mergeDescendants = true) {
         this.contentDescription = description
         progressBarRangeInfo = ProgressBarRangeInfo(value.toFloat(), 0f..5f)
-    } else Modifier.widthIn(max = coffeePeekRatingInputWidth(size.starSize, starSpacing))
+    } else if (spread) Modifier.fillMaxWidth() else Modifier.widthIn(max = coffeePeekRatingInputWidth(size.starSize, starSpacing))
     Row(modifier.then(behavior), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(valueSpacing)) {
         // Reserve an editable caption before measuring the scrolling stars, without stretching them.
-        val starsModifier = if (onRatingChange != null && valueText != null) Modifier.weight(1f, fill = false) else Modifier
+        val starsModifier = if (spread || (onRatingChange != null && valueText != null)) Modifier.weight(1f, fill = spread) else Modifier
         if (display == CoffeePeekRatingDisplay.Compact) {
             CoffeePeekRatingStar(1f, size.starSize, activeColor, inactiveColor)
         } else CoffeePeekRatingStars(value, size.starSize, enabled, starSpacing, activeColor, inactiveColor,
-            onRatingChange, starDescription, starsModifier)
+            onRatingChange, starDescription, starsModifier, spread)
         if (valueText != null) Text(valueText, style = valueStyle, color = valueColor)
     }
 }
@@ -86,25 +88,24 @@ internal fun coffeePeekRatingInputWidth(starSize: Dp, spacing: Dp): Dp = starSiz
 @Composable
 private fun CoffeePeekRatingStars(value: Double, starSize: Dp, enabled: Boolean, spacing: Dp,
     active: Color, inactive: Color, onChange: ((Int) -> Unit)?, description: @Composable (Int) -> String,
-    modifier: Modifier) {
-    val scrolling = if (onChange == null) Modifier else Modifier.horizontalScroll(rememberScrollState())
+    modifier: Modifier, spread: Boolean) {
+    val scrolling = if (onChange == null || spread) Modifier else Modifier.horizontalScroll(rememberScrollState())
     Row(modifier.then(scrolling), horizontalArrangement = Arrangement.spacedBy(spacing),
         verticalAlignment = Alignment.CenterVertically) {
         repeat(5) { index ->
             if (onChange == null) CoffeePeekRatingStar(coffeePeekRatingStarFill(value, index), starSize, active, inactive)
-            else CoffeePeekRatingChoice(index + 1, value, starSize, enabled, active, inactive, description(index + 1), onChange)
+            else {
+                val target = if (spread) Modifier.weight(1f).height(CoffeePeekDimens.minimumTouchTarget) else Modifier.size(starSize)
+                CoffeePeekRatingChoice(index + 1, value, starSize, enabled, active, inactive, description(index + 1), onChange, target)
+            }
         }
     }
 }
 
 @Composable
 private fun CoffeePeekRatingChoice(score: Int, value: Double, starSize: Dp, enabled: Boolean,
-    active: Color, inactive: Color, description: String, onChange: (Int) -> Unit) {
-    // The touch box hugs the glyph exactly so the star's left point lines up
-    // with the caller's label edge. A full minimumTouchTarget box per star
-    // spread the row across the whole card and pushed the glyphs away from
-    // the left-aligned label above them.
-    Box(Modifier.size(starSize).clip(RoundedCornerShape(8.dp))
+    active: Color, inactive: Color, description: String, onChange: (Int) -> Unit, modifier: Modifier) {
+    Box(modifier.clip(RoundedCornerShape(8.dp))
         .selectable(selected = value == score.toDouble(), enabled = enabled, role = Role.Button) { onChange(score) }
         .semantics { contentDescription = description }, contentAlignment = Alignment.Center) {
         CoffeePeekRatingStar(coffeePeekRatingStarFill(value, score - 1), starSize, active, inactive)
@@ -154,6 +155,7 @@ internal fun coffeePeekRatingText(rating: Double): String {
             CoffeePeekRating(4.5, size = CoffeePeekRatingSize.Large, valueText = "4.5")
             CoffeePeekRating(4.3, display = CoffeePeekRatingDisplay.Compact)
             CoffeePeekRating(4.0, size = CoffeePeekRatingSize.Large, onRatingChange = {})
+            CoffeePeekRating(4.0, size = CoffeePeekRatingSize.Large, onRatingChange = {}, spreadChoices = true)
             CoffeePeekRating(0.0, size = CoffeePeekRatingSize.Large, onRatingChange = {}, enabled = false)
             CoffeePeekRating(3.0, modifier = Modifier.width(96.dp), onRatingChange = {})
             CoffeePeekRating(4.0, size = CoffeePeekRatingSize.Large, valueText = "4/5", onRatingChange = {})

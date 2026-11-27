@@ -36,7 +36,7 @@ internal class FeatureShopCheckInEditorRenderer(
     private val form: ShopCheckInFormRenderer,
 ) : ShopCheckInEditorRenderer {
     @Composable
-    override fun Content(shopId: String) {
+    override fun Content(shopId: String, shopSelectionIncluded: Boolean) {
         ShopBrowsingHost("shop-check-in-editor:$shopId", sessions) { session ->
             var retry by remember(session, shopId) { mutableIntStateOf(0) }
             val detailsResult by produceState<Result<ShopDetails>?>(null, session, shopId, retry) {
@@ -51,7 +51,8 @@ internal class FeatureShopCheckInEditorRenderer(
                     onChangeShop = { Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn) },
                     onSubmitted = {},
                     onGoToFeed = { Navigator.popThenSelectTab(Navigator.Screen.CommunityTab) },
-                    onOpenHistory = { Navigator.openProfileCheckIns(popCurrent = true) })
+                    onOpenHistory = { Navigator.openProfileCheckIns(popCurrent = true) },
+                    shopSelectionIncluded = shopSelectionIncluded)
                 detailsResult == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CoffeePeekLoader()
                 }

@@ -44,7 +44,8 @@ class NativeHomeCheckInSession(
     fun durationChanged(seconds: Int?) = dispatch(HomeCheckInEditorAction.DurationChanged(seconds))
     fun tasteTapped(score: Int) = dispatch(HomeCheckInEditorAction.TasteRatingTapped(score))
     fun noteChanged(value: String) = dispatch(HomeCheckInEditorAction.NoteChanged(value))
-    fun drinkChanged(value: String) = dispatch(HomeCheckInEditorAction.DrinkNameChanged(value))
+    fun drinkSelected(slug: String?) = dispatch(HomeCheckInEditorAction.DrinkSelected(slug))
+    fun retryDrinks() = dispatch(HomeCheckInEditorAction.RetryDrinks)
     fun visibilityChanged(isPublic: Boolean) = dispatch(HomeCheckInEditorAction.VisibilityChanged(
         if (isPublic) HomePreparationVisibility.Public else HomePreparationVisibility.Private))
     fun openBeanPicker() = dispatch(HomeCheckInEditorAction.OpenBeanPicker)

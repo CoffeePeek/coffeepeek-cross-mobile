@@ -56,6 +56,9 @@ internal fun CheckInShopPickerList(
             Text(stringResource(Res.string.discovery_picker_recent), style = MaterialTheme.typography.titleSmall)
         }
         pickerShopRows(recent, state.userLocation, reduceMotion, onAction)
+        if (recent.isNotEmpty() && remaining.isNotEmpty()) item(key = "shops-heading") {
+            Text(stringResource(Res.string.discovery_section_shops), style = MaterialTheme.typography.titleSmall)
+        }
         pickerShopRows(remaining, state.userLocation, reduceMotion, onAction)
         pickerListStatus(state, shops.isEmpty() && recent.isEmpty(), isPending, onAction)
     }

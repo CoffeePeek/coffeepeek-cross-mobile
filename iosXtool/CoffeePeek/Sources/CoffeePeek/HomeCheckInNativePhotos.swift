@@ -155,7 +155,7 @@ private func homePhotoPreviewDraft(count: Int, editing: Bool) -> IosHomeCheckInD
         dose: "", durationSeconds: nil, tasteScore: nil, note: "", drinkName: "", isPublic: nil,
         beanName: nil, shelfBagId: nil, showShelfBag: false, shelfBagCardUrl: nil,
         photos: editing ? [] : photos,
-        existingPhotoUrls: editing ? (0..<count).map { "https://preview.invalid/photo/\($0)" } : [], customBeanName: nil)
+        existingPhotoUrls: editing ? (0..<count).map { "https://preview.invalid/photo/\($0)" } : [], customBeanName: nil, drinkSlug: nil)
 }
 
 #Preview("Home photo grid light") {

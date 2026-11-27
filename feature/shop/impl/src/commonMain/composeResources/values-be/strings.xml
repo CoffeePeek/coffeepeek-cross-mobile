@@ -126,9 +126,8 @@
     <string name="shop_checkin_form_date_confirm">Гатова</string>
     <string name="shop_checkin_form_cancel">Адмена</string>
     <string name="shop_checkin_form_drink">Напой</string>
-    <string name="shop_checkin_form_drink_none">Не выбраны</string>
     <string name="shop_checkin_form_drink_other">Іншае</string>
-    <string name="shop_checkin_form_drink_custom">Назва напою</string>
+    <string name="shop_checkin_form_drinks_empty">У каталогу пакуль няма напояў</string>
     <string name="shop_checkin_form_drinks_error">Не ўдалося загрузіць напоі</string>
     <string name="shop_checkin_form_retry">Паўтарыць</string>
     <string name="shop_checkin_form_photos">Фота</string>
@@ -137,7 +136,6 @@
     <string name="shop_checkin_form_public">Зрабіць публічным</string>
     <string name="shop_checkin_form_public_hint">Дадаць у стужку. Калі выключана, чэкін бачны толькі вам.</string>
     <string name="shop_checkin_form_submit">Апублікаваць</string>
-    <string name="shop_checkin_form_change_shop">Змяніць</string>
     <string name="shop_checkin_today">Сёння</string>
     <string name="shop_checkin_form_sending">Адпраўляем чэкін…</string>
     <string name="shop_checkin_form_success_published">Чэкін дададзены</string>
@@ -191,4 +189,9 @@
     <string name="shop_detail_dismiss">Закрыць</string>
     <string name="shop_detail_load_error">Не ўдалося загрузіць кавярню</string>
     <string name="shop_detail_load_error_body">Праверце злучэнне і паспрабуйце яшчэ раз.</string>
+    <string name="shop_checkin_step_experience">Ацэнкі і ўражанні</string>
+    <string name="shop_checkin_step_details">Дэталі чэкіна</string>
+    <string name="shop_checkin_step_progress">Крок %1$d з %2$d</string>
+    <string name="shop_checkin_step_next">Далей</string>
+    <string name="shop_checkin_step_back">Назад</string>
 </resources>

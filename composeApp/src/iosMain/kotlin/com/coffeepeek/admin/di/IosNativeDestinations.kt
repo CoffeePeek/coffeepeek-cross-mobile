@@ -91,6 +91,7 @@ internal class IosNativeDestinations(private val dependencies: Koin, private val
         is Navigator.Screen.HomeCheckInDetail -> { { home.controller(screen.id, false) } }
         is Navigator.Screen.EditHomeCheckIn -> { { home.controller(screen.id, true) } }
         is Navigator.Screen.ShopCheckInEditor -> { { shopCheckIn.controller(screen.shopId) } }
+        is Navigator.Screen.ShopCheckInEditorFromPicker -> { { shopCheckIn.controller(screen.shopId, shopSelectionIncluded = true) } }
         Navigator.Screen.CreateCheckIn -> { { IosNativeCheckInShopPickerFactory(
             dependencies.get<CheckInShopPickerRenderer>() as NativeCheckInShopPickerSessionFactory,
             dependencies.get(), language, media).controller() } }

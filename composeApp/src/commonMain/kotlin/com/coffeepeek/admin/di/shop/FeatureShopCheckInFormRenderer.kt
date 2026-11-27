@@ -20,12 +20,13 @@ internal class FeatureShopCheckInFormRenderer(
         onSubmitted: () -> Unit,
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
+        shopSelectionIncluded: Boolean,
     ) {
         if (shopSlug.isNullOrBlank()) {
             LaunchedEffect(Unit) { onDismiss() }
             return
         }
         entry.Content(shopId, shopSlug, shopName, shopAddress, onDismiss, onChangeShop,
-            onSubmitted, onGoToFeed, onOpenHistory)
+            onSubmitted, onGoToFeed, onOpenHistory, shopSelectionIncluded)
     }
 }

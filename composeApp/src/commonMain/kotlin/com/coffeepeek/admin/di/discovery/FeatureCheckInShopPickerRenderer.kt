@@ -42,10 +42,10 @@ internal class FeatureCheckInShopPickerRenderer(
         val focus = LocalFocusManager.current
         val keyboard = LocalSoftwareKeyboardController.current
         val navigation = remember(session) {
-            CheckInShopPickerNavigation(session.lease::isCurrent, { slug ->
+            CheckInShopPickerNavigation(session.lease::isCurrent, { route ->
                 focus.clearFocus(force = true)
                 keyboard?.hide()
-                Navigator.popThenNavigate(Navigator.Screen.ShopCheckInEditor(slug))
+                Navigator.popThenNavigate(route)
             }, Navigator::popBack)
         }
         DisposableEffect(navigation) { onDispose { navigation.dispose() } }

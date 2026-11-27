@@ -15,5 +15,6 @@ interface ShopCheckInCreateEntry {
         onSubmitted: () -> Unit,
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
+        shopSelectionIncluded: Boolean = false,
     )
 }

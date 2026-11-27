@@ -10,6 +10,7 @@ import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
+import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
 import kotlin.test.*
@@ -23,12 +24,16 @@ class HomeCheckInPortsTest {
             override suspend fun search(query: String): Result<List<CoffeePickerItem>> {
                 queries += query; return Result.success(listOf(CoffeePickerItem("slug", "Зерно", "Обжарщик")))
             }
-        }, BrewMethodCatalog { Result.success(listOf(BrewMethodOption("hario-v60", "Hario V60"))) })
+        }, BrewMethodCatalog { Result.success(listOf(BrewMethodOption("hario-v60", "Hario V60"))) },
+            { Result.success(listOf(ShopConsumedDrinkOption("espresso", "Эспрессо", "Espresso"))) })
         assertEquals("slug", catalog.searchBeans("query").getOrThrow().single().slug)
         assertEquals(listOf("query"), queries)
         val method = catalog.brewMethods().getOrThrow().single()
         assertEquals("hario-v60", method.code); assertEquals("Hario V60", method.name)
         assertEquals(setOf("pour_over"), method.previousCodes)
+        val drink = catalog.drinkOptions().getOrThrow().single()
+        assertEquals("espresso", drink.slug)
+        assertEquals("Эспрессо", drink.nameRu)
     }
 
     @Test fun repositoryKeepsResultsAndTokenRenewalButRevokedLeaseNeverStartsAnotherCall() = runTest {
@@ -54,8 +59,9 @@ class HomeCheckInPortsTest {
         val lease = CheckInHistorySession(CheckInTestSessions(null))
         val catalog = AppHomeCheckInCatalog(lease, object : CoffeePicker {
             override suspend fun search(query: String): Result<List<CoffeePickerItem>> = error("Guest search")
-        }, BrewMethodCatalog { error("Guest methods") })
+        }, BrewMethodCatalog { error("Guest methods") }, { error("Guest drinks") })
         assertTrue(catalog.brewMethods().isFailure); assertTrue(catalog.searchBeans("").isFailure)
+        assertTrue(catalog.drinkOptions().isFailure)
         val bytes = byteArrayOf(2)
         val photos = (1..7).map { PickedImage(bytes, it.toString()) }
         val selected = photos.toHomePreparationPhotos(99)
@@ -88,7 +94,7 @@ class HomeCheckInPortsTest {
         val catalog = AppHomeCheckInCatalog(lease, object : CoffeePicker {
             override suspend fun search(query: String): Result<List<CoffeePickerItem>> =
                 Result.failure(java.io.IOException("Private transport details"))
-        }, BrewMethodCatalog { Result.failure(CancellationException("cancelled")) })
+        }, BrewMethodCatalog { Result.failure(CancellationException("cancelled")) }, { Result.success(emptyList()) })
         val failure = catalog.searchBeans("").exceptionOrNull() as HomePreparationFailure
         assertEquals(HomePreparationIssue.Offline, failure.issue)
         assertFalse(failure.message.orEmpty().contains("Private transport details"))

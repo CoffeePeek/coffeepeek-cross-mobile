@@ -16,6 +16,7 @@ data class NativeHomeCheckInDraft(
     val beanName: String?, val shelfBagId: String?, val showShelfBag: Boolean,
     val shelfBagCardUrl: String?, val photos: List<NativeHomeCheckInPhoto>, val existingPhotoUrls: List<String>,
     val customBeanName: String? = null,
+    val drinkSlug: String? = null,
 )
 
 data class NativeHomeCheckInStatus(
@@ -29,6 +30,7 @@ data class NativeHomeCheckInCatalog(
     val methods: List<NativeHomeCheckInOption>, val beans: List<NativeHomeCheckInOption>,
     val shelfBags: List<NativeHomeCheckInOption>, val methodsLoading: Boolean, val beansLoading: Boolean,
     val methodsIssueKey: String?, val beansIssueKey: String?,
+    val drinks: List<NativeHomeCheckInOption>, val drinksLoading: Boolean, val drinksIssueKey: String?,
 )
 
 data class NativeHomeCheckInOption(val id: String, val name: String?, val detail: String?, val imageUrl: String?)

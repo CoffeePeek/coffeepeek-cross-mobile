@@ -446,7 +446,22 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
         }
     }
 
-    private var submission: some View {
+    @ViewBuilder private var submission: some View {
+        if state.submit == "done" && (state.kind == "AddShop" || state.kind == "AddRoaster") { creationSuccess }
+        else { existingSubmission }
+    }
+
+    private var creationSuccess: some View {
+        CoffeePeekNativeSuccessScreen(title: strings.text("\(submissionPrefix)_success_title"),
+            description: state.submitMessage.flatMap { $0.isEmpty ? nil : $0 } ?? strings.text("\(submissionPrefix)_success_description"),
+            buttonTitle: strings.text(state.kind == "AddShop" ? "shop_go_home" : "roaster_done"),
+            closeLabel: strings.text("roaster_done"),
+            notice: state.kind == "AddRoaster" && !state.field("address").value.isEmpty && state.addressValidated == false
+                ? strings.text("roaster_address_unchecked") : nil,
+            onDismiss: onBack, action: onBack)
+    }
+
+    private var existingSubmission: some View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 16) {
@@ -493,7 +508,6 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
                 "\(submissionPrefix)_success_title"))
                 .font(CoffeePeekNativeStyle.font(24, weight: "Bold", relativeTo: .title2))
             successDescription
-            if state.kind == "AddShop" { sentShopCard.padding(.top, 8) }
         }
     }
 
@@ -505,23 +519,7 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
         } else {
             Text(state.submitMessage.flatMap { $0.isEmpty ? nil : $0 } ?? strings.text("\(submissionPrefix)_success_description"))
                 .foregroundStyle(CoffeePeekNativeStyle.secondary)
-            if state.kind == "AddRoaster", !state.field("address").value.isEmpty, state.addressValidated == false {
-                Text(strings.text("roaster_address_unchecked")).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            }
         }
-    }
-
-    private var sentShopCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if let cover = state.photos.first(where: { !$0.menu }) {
-                photo(cover).frame(maxWidth: .infinity).frame(height: 120).clipped()
-            }
-            Text(state.field("name").value.isEmpty ? strings.text("shop_fallback_name") : state.field("name").value)
-                .font(.headline)
-            Text([state.group("city").first(where: \.selected)?.name, state.field("address").value]
-                .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", "))
-                .foregroundStyle(CoffeePeekNativeStyle.secondary)
-        }.multilineTextAlignment(.leading).contributionsCard()
     }
 
     @ViewBuilder private var submissionActions: some View {

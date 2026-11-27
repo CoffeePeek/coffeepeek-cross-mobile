@@ -1,4 +1,9 @@
 <resources>
+    <string name="home_check_in_step_next">Далей</string>
+    <string name="home_check_in_step_impressions">Ацэнкі і ўражанні</string>
+    <string name="home_check_in_step_details">Дэталі чэкіна</string>
+    <string name="home_check_in_step_back">Назад</string>
+    <string name="home_check_in_step_progress">Крок %1$d з %2$d</string>
     <string name="home_check_in_actions">Дзеянні з чэкінам</string>
     <string name="home_check_in_home">Кава дома</string>
     <string name="home_check_in_title_fallback">Хатняе прыгатаванне</string>
@@ -53,6 +58,7 @@
     <string name="home_check_in_recipe_expanded">Разгорнуты</string>
     <string name="home_check_in_saved_private">Захавана толькі для вас</string>
     <string name="home_check_in_saved_unknown">Чэкін дададзены</string>
+    <string name="home_check_in_saved_description">Ён захаваны ў вашай гісторыі.</string>
     <string name="home_check_in_saved_visibility_changed">Налада аўдыторыі не пацвердзілася. Праверце запіс.</string>
     <string name="home_check_in_taste_question">Як атрымалася кава?</string>
     <string name="home_check_in_choose_rating">Як атрымалася кава?: выбраць %1$d з 5</string>
@@ -93,7 +99,9 @@
     <string name="home_check_in_editor_note">Нататка</string>
     <string name="home_check_in_note_hint">Які смак? Што хочацца паўтарыць?</string>
     <string name="home_check_in_drink">Напой</string>
-    <string name="home_check_in_drink_hint">Напрыклад, капучына</string>
+    <string name="home_check_in_drink_other">Іншае</string>
+    <string name="home_check_in_drinks_empty">У каталогу пакуль няма напояў</string>
+    <string name="home_check_in_drinks_error">Не ўдалося загрузіць напоі</string>
     <string name="home_check_in_photos">Фота</string>
     <string name="home_check_in_photos_hint">Кубак, зерне або працэс прыгатавання — да 5 фота.</string>
     <string name="home_check_in_photos_count">Дададзена: %1$d/5</string>

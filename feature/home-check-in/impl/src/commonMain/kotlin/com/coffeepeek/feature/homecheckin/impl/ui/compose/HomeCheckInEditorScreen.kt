@@ -17,18 +17,13 @@ import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_save
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_saving
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import org.jetbrains.compose.resources.pluralStringResource
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.*
@@ -42,8 +37,8 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
@@ -119,52 +114,12 @@ internal fun HomeCheckInEditorScreenContent(
             { onAction(HomeCheckInEditorAction.FinishSaved) }, modifier)
         return
     }
-    val focus = LocalFocusManager.current
-    val keyboard = LocalSoftwareKeyboardController.current
-    val enabled = state.isReady && !state.isLoading && !state.isSaving
-    val draft = state.draft
-    var showDatePicker by rememberSaveable { mutableStateOf(false) }
-    var recipeExpanded by rememberSaveable(state.entry?.id) { mutableStateOf<Boolean?>(null) }
-    fun dispatch(action: HomeCheckInEditorAction) {
-        focus.clearFocus(force = true); keyboard?.hide(); onAction(action)
-    }
-    if (showDatePicker && enabled && !state.isBeanPickerOpen) HomeCheckInEditorDatePicker(
-        draft.preparedOn.orEmpty(), today, { showDatePicker = false },
-    ) { date ->
-        // Do not even convert the current day: keep the exact original instant and offset.
-        if (date != draft.preparedOn) onAction(HomeCheckInEditorAction.DateChosen(date, dateToInstant(date)))
-        showDatePicker = false
-    }
-    // The full-screen host leaves IME handling to this form on both platforms.
-    Box(Modifier.imePadding().then(modifier)) {
-        if (state.isBeanPickerOpen && enabled) {
-            HomeCheckInEditorBeanPickerContent(state, media, onAction, ::dispatch)
-            return@Box
-        }
-        Column(Modifier.fillMaxSize()) {
-            HomeCheckInEditorHeader(state, { dispatch(HomeCheckInEditorAction.Close) })
-            if (!state.isReady) {
-                HomeCheckInEditorLoadStatus(state, { onAction(HomeCheckInEditorAction.RetryDetail) }, Modifier.weight(1f))
-                return@Column
-            }
-            HomeCheckInEditorSaveError(state)
-            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
-                .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2),
-                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6)) {
-                HomeCheckInEditorPrimaryFields(state, enabled, formatDate, media, pickerLoading, onAction,
-                    { focus.clearFocus(); keyboard?.hide(); showDatePicker = true },
-                    { focus.clearFocus(); keyboard?.hide(); onAddPhotos(it) })
-                HomeCheckInEditorRecipeFields(state, enabled, formatMethod, media, onAction, recipeExpanded,
-                    { recipeExpanded = it }, { dispatch(HomeCheckInEditorAction.OpenBeanPicker) })
-            }
-            HomeCheckInEditorFooter(state, enabled && !pickerLoading, onAction,
-                { onBeforeSave(); dispatch(HomeCheckInEditorAction.Save) })
-        }
-    }
+    HomeCheckInEditorForm(state, onAction, today, formatDate, dateToInstant, formatMethod,
+        media, pickerLoading, onAddPhotos, modifier, onBeforeSave)
 }
 
 @Composable
-private fun HomeCheckInEditorBeanPickerContent(state: HomeCheckInEditorState, media: HomeCheckInEditorMedia,
+internal fun HomeCheckInEditorBeanPickerContent(state: HomeCheckInEditorState, media: HomeCheckInEditorMedia,
     onAction: (HomeCheckInEditorAction) -> Unit, dispatch: (HomeCheckInEditorAction) -> Unit) {
     HomeCheckInBeanPicker(state, { action ->
         when (action) {
@@ -175,7 +130,18 @@ private fun HomeCheckInEditorBeanPickerContent(state: HomeCheckInEditorState, me
 }
 
 @Composable
-private fun HomeCheckInEditorHeader(state: HomeCheckInEditorState, onClose: () -> Unit) {
+internal fun HomeCheckInEditorHeader(state: HomeCheckInEditorState, step: HomeCheckInEditorStep,
+    onClose: () -> Unit, onBack: (() -> Unit)?) {
+    if (state.entry == null && state.isReady) {
+        CoffeePeekTopBar(
+            title = stringResource(if (step == HomeCheckInEditorStep.Experience)
+                Res.string.home_check_in_step_impressions else Res.string.home_check_in_step_details),
+            backDescription = stringResource(Res.string.home_check_in_step_back),
+            onBack = (onBack ?: onClose).takeUnless { state.isSaving },
+            titleMaxLines = 2,
+        )
+        return
+    }
     Row(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4)
         .padding(bottom = CoffeePeekDimens.spacing4), verticalAlignment = Alignment.CenterVertically) {
         Text(stringResource(if (state.entry == null) Res.string.home_check_in_home else Res.string.home_check_in_editor_title),
@@ -187,7 +153,7 @@ private fun HomeCheckInEditorHeader(state: HomeCheckInEditorState, onClose: () -
 }
 
 @Composable
-private fun HomeCheckInEditorLoadStatus(state: HomeCheckInEditorState, onRetry: () -> Unit, modifier: Modifier) {
+internal fun HomeCheckInEditorLoadStatus(state: HomeCheckInEditorState, onRetry: () -> Unit, modifier: Modifier) {
     Column(modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4), horizontalAlignment = Alignment.CenterHorizontally) {
         if (state.isLoading) CoffeePeekLoader(stringResource(Res.string.home_check_in_loading))
         state.loadIssue?.let {
@@ -202,7 +168,7 @@ private fun HomeCheckInEditorLoadStatus(state: HomeCheckInEditorState, onRetry: 
 }
 
 @Composable
-private fun HomeCheckInEditorSaveError(state: HomeCheckInEditorState) {
+internal fun HomeCheckInEditorSaveError(state: HomeCheckInEditorState) {
     val summary = if (state.fieldErrors.isNotEmpty()) pluralStringResource(Res.plurals.home_check_in_validation_summary,
         state.fieldErrors.size, state.fieldErrors.size)
     else if (state.saveIssue != null && state.failedOperation == HomePreparationOperation.PhotoUpload)
@@ -213,16 +179,13 @@ private fun HomeCheckInEditorSaveError(state: HomeCheckInEditorState) {
 }
 
 @Composable
-private fun HomeCheckInEditorFooter(state: HomeCheckInEditorState, enabled: Boolean,
+internal fun HomeCheckInEditorFooter(state: HomeCheckInEditorState, enabled: Boolean,
     onAction: (HomeCheckInEditorAction) -> Unit, onSave: () -> Unit) {
     // Leave the available height to the form while typing, including in iOS full-screen dialogs.
     if (WindowInsets.ime.getBottom(LocalDensity.current) > 0) return
     Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(CoffeePeekDimens.spacing4),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        HomeCheckInEditorVisibility(state.draft.visibility == HomePreparationVisibility.Public, enabled) {
-            onAction(HomeCheckInEditorAction.VisibilityChanged(if (it) HomePreparationVisibility.Public else HomePreparationVisibility.Private))
-        }
-        state.fieldErrors[HomePreparationField.Visibility]?.let { HomeCheckInEditorFieldError(it.editorText()) }
+        if (state.entry != null) HomeCheckInEditorVisibilityField(state, enabled, onAction)
         CoffeePeekButton(stringResource(if (state.isSaving) Res.string.home_check_in_saving else Res.string.home_check_in_save),
             onSave, enabled = enabled)
     }

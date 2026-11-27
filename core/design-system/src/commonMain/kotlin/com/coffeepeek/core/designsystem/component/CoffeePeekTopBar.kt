@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,6 +52,7 @@ fun CoffeePeekTopBar(
     actions: (@Composable RowScope.() -> Unit)? = null,
     customBack: Boolean = false,
     nativeAction: CoffeePeekHeaderAction? = null,
+    titleMaxLines: Int = 1,
 ) {
     // A bar with only a title, back and one text action can live in the platform's native navigation bar.
     if ((actions == null || nativeAction != null) &&
@@ -62,7 +64,8 @@ fun CoffeePeekTopBar(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
+                maxLines = titleMaxLines,
+                textAlign = TextAlign.Center,
                 overflow = TextOverflow.Ellipsis,
             )
         },

@@ -6,6 +6,8 @@ import com.coffeepeek.admin.di.checkinhistory.FeatureHomeCheckInDetailRenderer
 import com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactory
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
+import com.coffeepeek.admin.di.shop.AppShopCheckInDateFormatter
+import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.core.network.ApiClients
@@ -79,6 +81,7 @@ class IosShelfModuleTest {
             single<BrewMethodCatalog> { BrewMethodCatalog { error("Resolving the graph must not read brew methods") } }
         }, coffeeModule(), homeCheckInModule(apiBaseUrl = "https://fixture.invalid"),
             checkInHistoryModule(apiBaseUrl = "https://fixture.invalid"),
+            shopCheckInModule(AppShopCheckInDateFormatter()) { error("Shelf must not access shop drafts") },
             iosShelfModule("https://fixture.invalid") { key ->
                 requested += key
                 "https://models.invalid/$key"

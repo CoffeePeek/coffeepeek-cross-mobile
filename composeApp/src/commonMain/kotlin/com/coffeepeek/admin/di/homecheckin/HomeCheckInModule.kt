@@ -12,6 +12,7 @@ import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepos
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationShelfBagReader
 import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
 import org.koin.dsl.module
 
 /** History and global creation share Home data and shelf bags. Resolving performs no account or network work. */
@@ -27,9 +28,10 @@ internal fun homeCheckInModule(apiBaseUrl: String = Constants.BASE_URL) = module
         val repository = get<HomePreparationRepository>()
         val picker = get<CoffeePicker>()
         val methods = get<BrewMethodCatalog>()
+        val drinks = get<ShopCheckInRepository>()::getDrinkOptions
         val shelfBags = ShelfHomeCheckInBags(get())
         FeatureCheckInCreateFlowRenderer(get(), onCreated = { get<NotificationFeature>().onCheckInCreated() }) { lease, tracker ->
-            appHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Global, tracker, shelfBags)
+            appHomeCheckInEditor(lease, repository, picker, methods, drinks, CheckInSource.Global, tracker, shelfBags)
         }
     }
 }

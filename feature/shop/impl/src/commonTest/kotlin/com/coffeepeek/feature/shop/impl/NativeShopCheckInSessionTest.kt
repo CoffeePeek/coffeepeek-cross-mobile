@@ -78,6 +78,21 @@ class NativeShopCheckInSessionTest {
         assertFalse(session.current().editable)
     }
 
+    @Test fun changeShopUsesFeatureEventWithoutCreatingAnUntouchedDraft() = runTest(dispatcher) {
+        val drafts = Drafts()
+        val session = session(drafts = drafts)
+        val events = mutableListOf<NativeShopCheckInEvent>()
+        backgroundScope.launch { session.events.collect { events += it } }
+        runCurrent()
+        session.changeShop()
+        session.changeShop()
+        runCurrent()
+        assertEquals(listOf(NativeShopCheckInEvent.ChangeShop), events)
+        assertEquals(null, drafts.snapshot)
+        assertFalse(session.current().editable)
+        assertTrue(session.current().changingShop)
+    }
+
     @Test fun uncertainDeliveryStaysInTheDraftAndDoesNotAutomaticallyRetry() = runTest(dispatcher) {
         val repository = Repository().apply { failure = ShopCheckInCreationUnconfirmed() }
         val drafts = Drafts()

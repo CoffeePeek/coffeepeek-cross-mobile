@@ -39,15 +39,15 @@ internal fun ShopCheckInRatingCard(image: DrawableResource, label: String, ratin
     Row(Modifier.fillMaxWidth().clip(shape)
         .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
         .border(1.dp, MaterialTheme.colorScheme.outline, shape)
-        .padding(horizontal = CoffeePeekDimens.spacing2, vertical = CoffeePeekDimens.spacing3),
+        .padding(CoffeePeekDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        Image(painterResource(image), contentDescription = null, contentScale = ContentScale.Crop,
+        Image(painterResource(image), contentDescription = null, contentScale = ContentScale.Fit,
             modifier = Modifier.size(56.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusSm)))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
             CoffeePeekRating(rating.toDouble(), size = CoffeePeekRatingSize.Large,
-                onRatingChange = onChange, enabled = enabled,
+                onRatingChange = onChange, enabled = enabled, spreadChoices = true,
                 inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 starDescription = { stringResource(Res.string.shop_review_rating_value, label, it) })
         }

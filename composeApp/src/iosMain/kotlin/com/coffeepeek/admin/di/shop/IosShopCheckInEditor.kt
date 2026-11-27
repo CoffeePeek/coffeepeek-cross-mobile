@@ -67,7 +67,6 @@ class IosShopCheckInEditor internal constructor(
     fun ratingChanged(place: Int, service: Int, coffee: Int) = action { presentation.ratingChanged(place, service, coffee) }
     fun visibilityChanged(isPublic: Boolean) = action { presentation.visibilityChanged(isPublic) }
     fun drinkChanged(slug: String?) = action { presentation.drinkChanged(slug) }
-    fun customDrinkChanged(value: String) = action { presentation.customDrinkChanged(value) }
     fun retryDrinks() = action(presentation::retryDrinks)
     fun removePhoto(index: Int) = action { presentation.removePhoto(index) }
     fun movePhoto(from: Int, to: Int) = action { presentation.movePhoto(from, to) }
@@ -79,7 +78,9 @@ class IosShopCheckInEditor internal constructor(
     fun historyChecked() = action(presentation::historyChecked)
     fun openHistory() = action(presentation::openHistory)
     fun goToFeed() = action(presentation::goToFeed)
-    fun changeShop() { if (current().editable) action(callbacks().changeShop) }
+    fun changeShop() {
+        if (form.shopSelectionIncluded && picker()?.isPreparing != true) action(presentation::changeShop)
+    }
 
     fun dateChanged(civilDate: String) {
         val millis = try { LocalDate.parse(civilDate).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds() }
@@ -129,6 +130,7 @@ class IosShopCheckInEditor internal constructor(
         if (!isCurrent()) return
         when (event) {
             NativeShopCheckInEvent.Dismiss -> callbacks().dismiss()
+            NativeShopCheckInEvent.ChangeShop -> callbacks().changeShop()
             NativeShopCheckInEvent.Submitted -> callbacks().submitted()
             NativeShopCheckInEvent.OpenHistory -> callbacks().openHistory()
             NativeShopCheckInEvent.GoToFeed -> callbacks().goToFeed()
@@ -145,7 +147,7 @@ class IosShopCheckInEditor internal constructor(
             photos(input.photos), active && isCurrent(), loading, editable && isCurrent() && !preparing.value,
             preparing.value, draftFailed, hasDraft, confirmDiscard, discarding, drinksLoading, drinksFailed,
             submitting, submitted, publication.name, deliveryUnconfirmed, failure?.shopMessageKey(),
-            failure?.serverMessage, validation?.shopMessageKey())
+            failure?.serverMessage, validation?.shopMessageKey(), changingShop, form.shopSelectionIncluded)
     }
 
     private fun photos(items: List<ShopCheckInPhoto>): List<IosShopCheckInPhoto> {

@@ -23,6 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -40,6 +43,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmat
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekCheckInProgress
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
@@ -49,8 +53,6 @@ import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.usecase.ShopCheckInValidationError
 import com.coffeepeek.feature.shop.impl.resources.Res
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_dismiss
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_title
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_today
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_history
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_uncertain
@@ -77,7 +79,15 @@ import com.coffeepeek.feature.shop.impl.ui.ShopCheckInCreateViewModel
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInFormFields
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInSaveBar
 import com.coffeepeek.feature.shop.impl.ui.compose.component.isEditable
+import com.coffeepeek.feature.shop.impl.ui.compose.component.canLeaveEditor
+import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInEditorStep
+import com.coffeepeek.feature.shop.impl.ui.compose.model.editorStep
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_step_experience
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_step_details
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_step_progress
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_step_back
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInSubmissionContent
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInSendingContent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInSubmitFailure
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
@@ -95,7 +105,7 @@ internal fun ShopCheckInCreateScreen(
     shopAddress: String?,
     dates: ShopCheckInDateFormatter,
     photos: ShopCheckInPhotoPicker,
-    onChangeShop: () -> Unit,
+    shopSelectionIncluded: Boolean,
     onEvent: (ShopCheckInFormEvent) -> Unit,
 ) {
     val picker = photos.rememberController()
@@ -106,30 +116,65 @@ internal fun ShopCheckInCreateScreen(
         else dates.label(state.input.visitedAtIso)
     val currentOnEvent by rememberUpdatedState(onEvent)
     LaunchedEffect(viewModel) { viewModel.events.collect { currentOnEvent(it) } }
-    CoffeePeekBackHandler(enabled = !state.isSubmitting && !state.isDiscarding) {
-        viewModel.onAction(ShopCheckInFormAction.Dismiss)
+    val stepIndex = rememberSaveable(state.input.shopSlug) { mutableIntStateOf(0) }
+    val step = ShopCheckInEditorStep.entries[stepIndex.intValue]
+    LaunchedEffect(state.validationError, state.deliveryUnconfirmed) {
+        state.validationError?.let { stepIndex.intValue = it.editorStep().ordinal }
+        if (state.deliveryUnconfirmed) stepIndex.intValue = ShopCheckInEditorStep.Details.ordinal
     }
-    val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
-    CoffeePeekScaffold(
-        modifier = Modifier.fillMaxSize().imePadding(),
-        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
-        topBar = { ShopCheckInEditorTopBar(state, viewModel::onAction) },
-        bottomBar = { if (!keyboardVisible && !state.submitted && !state.isSubmitting) ShopCheckInSaveBar(
-            state, picker.isPreparing, viewModel::onAction) },
-    ) { insets ->
-        Box(Modifier.fillMaxSize().padding(insets)) {
-            ShopCheckInCreateScreenContent(
-                state = state, shopName = shopName, shopAddress = shopAddress,
-                visitLabel = visitLabel,
-                selectedVisitMillis = visitMillis, nowMillis = todayMillis,
-                onAction = viewModel::onAction, onChangeShop = onChangeShop,
-                onVisitDate = { viewModel.onAction(ShopCheckInFormAction.VisitDateChanged(dates.visitInstant(it, state.input.visitedAtIso))) },
-                onGallery = { remaining -> picker.pickFromGallery(remaining) { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
-                onCamera = { picker.takePhoto { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
-                modifier = Modifier.fillMaxSize(), photosPreparing = picker.isPreparing)
+    val back = {
+        if (state.canLeaveEditor(picker.isPreparing)) {
+            if (state.submitted || state.isLoading) viewModel.onAction(ShopCheckInFormAction.Dismiss)
+            else if (step == ShopCheckInEditorStep.Details) stepIndex.intValue = ShopCheckInEditorStep.Ratings.ordinal
+            else viewModel.onAction(if (shopSelectionIncluded) ShopCheckInFormAction.ChangeShop else ShopCheckInFormAction.Dismiss)
         }
     }
+    val action: (ShopCheckInFormAction) -> Unit = {
+        if (it == ShopCheckInFormAction.Submit) state.validationError?.let { error -> stepIndex.intValue = error.editorStep().ordinal }
+        viewModel.onAction(it)
+    }
+    CoffeePeekBackHandler(enabled = true, onBack = back)
+    ShopCheckInFormLayout(state, picker.isPreparing, step, shopSelectionIncluded, action,
+        onNext = { stepIndex.intValue = ShopCheckInEditorStep.Details.ordinal }, onBack = back) { modifier ->
+        ShopCheckInCreateScreenContent(state, shopName, shopAddress, visitLabel, visitMillis, todayMillis,
+            viewModel::onAction,
+            { viewModel.onAction(ShopCheckInFormAction.VisitDateChanged(dates.visitInstant(it, state.input.visitedAtIso))) },
+            { remaining -> picker.pickFromGallery(remaining) { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
+            { picker.takePhoto { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
+            modifier, picker.isPreparing, step)
+    }
     if (state.confirmDiscard) ShopCheckInDiscardConfirmation(viewModel::onAction)
+}
+
+@Composable
+private fun ShopCheckInFormLayout(state: ShopCheckInFormState, photosPreparing: Boolean, step: ShopCheckInEditorStep,
+    shopSelectionIncluded: Boolean, onAction: (ShopCheckInFormAction) -> Unit,
+    onNext: () -> Unit, onBack: () -> Unit, content: @Composable (Modifier) -> Unit) {
+    if (state.submitted) {
+        ShopCheckInSubmissionContent(state.input.visibility, state.draftFailed,
+            onFeed = { onAction(ShopCheckInFormAction.GoToFeed) }, onClose = onBack)
+        return
+    }
+    val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    CoffeePeekScaffold(modifier = Modifier.fillMaxSize().imePadding(), contentWindowInsets = WindowInsets(0),
+        topBar = {
+            Column {
+                ShopCheckInEditorTopBar(state, step, onAction, onBack.takeIf { state.canLeaveEditor(photosPreparing) })
+                ShopCheckInStepProgress(step, shopSelectionIncluded)
+            }
+        },
+        bottomBar = { if (!keyboardVisible && !state.isSubmitting)
+            ShopCheckInSaveBar(state, photosPreparing, onAction, step, onNext) },
+    ) { insets -> key(step) { content(Modifier.fillMaxSize().padding(insets)) } }
+}
+
+@Composable
+private fun ShopCheckInStepProgress(step: ShopCheckInEditorStep, shopSelectionIncluded: Boolean) {
+    val position = step.ordinal + if (shopSelectionIncluded) 2 else 1
+    val total = if (shopSelectionIncluded) 3 else 2
+    CoffeePeekCheckInProgress(position, total,
+        stringResource(Res.string.shop_checkin_step_progress, position, total),
+        Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2))
 }
 
 /** Previewable body: no DI, ViewModel, platform picker or network lookup. */
@@ -142,12 +187,12 @@ internal fun ShopCheckInCreateScreenContent(
     selectedVisitMillis: Long?,
     nowMillis: Long,
     onAction: (ShopCheckInFormAction) -> Unit,
-    onChangeShop: () -> Unit,
     onVisitDate: (Long) -> Unit,
     onGallery: (Int) -> Unit,
     onCamera: () -> Unit,
     modifier: Modifier = Modifier,
     photosPreparing: Boolean = false,
+    step: ShopCheckInEditorStep = ShopCheckInEditorStep.Ratings,
 ) {
     if (state.isSubmitting) {
         ShopCheckInSendingPane(modifier)
@@ -171,18 +216,12 @@ internal fun ShopCheckInCreateScreenContent(
             .padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
     ) {
-        if (state.submitted) {
-            ShopCheckInSubmissionContent(
-                submittedVisibility = state.input.visibility.takeIf { state.submitted },
-                cleanupFailed = state.submitted && state.draftFailed,
-                onFeed = { onAction(ShopCheckInFormAction.GoToFeed) },
-            )
-        } else if (state.isLoading) {
+        if (state.isLoading) {
             CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
         } else {
             ShopCheckInFormFields(state, shopName, shopAddress, visitLabel,
                 selectedVisitMillis, nowMillis, editable, photosPreparing,
-                onAction, onChangeShop, onVisitDate, onGallery, onCamera)
+                onAction, onVisitDate, onGallery, onCamera, step)
             ShopCheckInFeedback(state, onAction)
         }
     }
@@ -215,17 +254,19 @@ private fun ShopCheckInFeedback(state: ShopCheckInFormState, onAction: (ShopChec
 }
 
 @Composable
-private fun ShopCheckInEditorTopBar(state: ShopCheckInFormState, onAction: (ShopCheckInFormAction) -> Unit) {
+private fun ShopCheckInEditorTopBar(state: ShopCheckInFormState, step: ShopCheckInEditorStep,
+    onAction: (ShopCheckInFormAction) -> Unit, onBack: (() -> Unit)?) {
     CoffeePeekTopBar(
-        title = stringResource(Res.string.shop_checkin_form_title),
-        backDescription = stringResource(Res.string.shop_checkin_form_dismiss),
-        onBack = { onAction(ShopCheckInFormAction.Dismiss) },
+        title = stringResource(if (step == ShopCheckInEditorStep.Ratings) Res.string.shop_checkin_step_experience else Res.string.shop_checkin_step_details),
+        titleMaxLines = 2,
+        backDescription = stringResource(Res.string.shop_checkin_step_back),
+        onBack = onBack,
         actions = {
-            if (state.hasDraft && !state.isLoading && !state.isSubmitting && !state.submitted) {
+            if (state.hasDraft && !state.isLoading && !state.isSubmitting) {
                 CoffeePeekGlassIconButton(
                     onClick = { onAction(ShopCheckInFormAction.AskDiscard) },
                     contentDescription = stringResource(Res.string.shop_checkin_discard),
-                    enabled = !state.isDiscarding,
+                    enabled = !state.isDiscarding && !state.isChangingShop,
                 ) {
                     CoffeePeekIcon(CoffeePeekIcons.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
                 }
@@ -252,7 +293,7 @@ private fun ShopCheckInSendingPane(modifier: Modifier) {
         modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4),
         contentAlignment = Alignment.Center,
     ) {
-        ShopCheckInSubmissionContent(null, false, {})
+        ShopCheckInSendingContent()
     }
 }
 
@@ -272,28 +313,27 @@ private fun validationMessage(error: ShopCheckInValidationError?): String? = err
 @Composable
 private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
     photosPreparing: Boolean = false, submitted: Boolean = false, loading: Boolean = false,
-    submitting: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    submitting: Boolean = false, step: ShopCheckInEditorStep = ShopCheckInEditorStep.Ratings) = CoffeePeekTheme(darkTheme = dark) {
     val state = ShopCheckInFormState(
         input = ShopCheckInCreateInput("preview-shop", "Понравился фильтр", ShopRating(4, 4, 4), "2026-10-09T09:00:00Z"),
         isLoading = loading, isSubmitting = submitting, deliveryUnconfirmed = uncertain,
         submitted = submitted, hasDraft = !loading && !submitted,
     )
-    CoffeePeekScaffold(
-        topBar = { ShopCheckInEditorTopBar(state, {}) },
-        bottomBar = { if (!state.submitted && !state.isSubmitting) ShopCheckInSaveBar(state, photosPreparing, {}) },
-    ) { insets ->
+    ShopCheckInFormLayout(state, photosPreparing, step, true, {}, {}, {}) { modifier ->
         ShopCheckInCreateScreenContent(state, "The Coffee Room", "ул. Петра Мстиславца, 20",
-            "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {}, {},
-            modifier = Modifier.padding(insets), photosPreparing = photosPreparing)
+            "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {},
+            modifier = modifier, photosPreparing = photosPreparing, step = step)
     }
 }
 
 @Preview @Composable private fun ShopCheckInFormLightPreview() = ShopCheckInFormPreview(false)
 @Preview @Composable private fun ShopCheckInFormDarkPreview() = ShopCheckInFormPreview(true)
+@Preview @Composable private fun ShopCheckInDetailsStepLightPreview() = ShopCheckInFormPreview(false, step = ShopCheckInEditorStep.Details)
+@Preview @Composable private fun ShopCheckInDetailsStepDarkPreview() = ShopCheckInFormPreview(true, step = ShopCheckInEditorStep.Details)
 @Preview @Composable private fun ShopCheckInSuccessLightPreview() = ShopCheckInFormPreview(false, submitted = true)
 @Preview @Composable private fun ShopCheckInSuccessDarkPreview() = ShopCheckInFormPreview(true, submitted = true)
-@Preview @Composable private fun ShopCheckInUnconfirmedLightPreview() = ShopCheckInFormPreview(false, true)
-@Preview @Composable private fun ShopCheckInUnconfirmedDarkPreview() = ShopCheckInFormPreview(true, true)
+@Preview @Composable private fun ShopCheckInUnconfirmedLightPreview() = ShopCheckInFormPreview(false, true, step = ShopCheckInEditorStep.Details)
+@Preview @Composable private fun ShopCheckInUnconfirmedDarkPreview() = ShopCheckInFormPreview(true, true, step = ShopCheckInEditorStep.Details)
 @Preview @Composable private fun ShopCheckInPhotosPreparingLightPreview() = ShopCheckInFormPreview(false, photosPreparing = true)
 @Preview @Composable private fun ShopCheckInPhotosPreparingDarkPreview() = ShopCheckInFormPreview(true, photosPreparing = true)
 @Preview @Composable private fun ShopCheckInLoadingLightPreview() = ShopCheckInFormPreview(false, loading = true)
