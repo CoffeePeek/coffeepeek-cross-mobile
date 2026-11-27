@@ -1,34 +1,27 @@
 package com.coffeepeek.admin.ui
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlin.test.*
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class CollectionProfileReturnTest {
-    private val dispatcher = StandardTestDispatcher()
     private val owner = RootNavigationSession(true, "owner", 1)
     private val origin = RootNavigationOrigin(owner)
     private val saved = Navigator.NavEvent.ReturnToProfile(origin)
 
     @BeforeTest fun before() {
-        Dispatchers.setMain(dispatcher)
         clearRequests()
     }
 
     @AfterTest fun after() {
         clearRequests()
-        Dispatchers.resetMain()
     }
 
-    @Test fun acceptedSaveSelectsCollectionsInsteadOfAnEarlierShelfRequest() = runTest(dispatcher) {
-        Navigator.returnToProfileShelf()
-        runCurrent()
+    @Test fun acceptedSaveSelectsCollectionsInsteadOfAnEarlierShelfRequest() = runTest {
+        selectProfile { Navigator.returnToProfileShelf() }
         assertTrue(Navigator.pendingProfileShelf.value)
         assertEquals(Navigator.Screen.ProfileTab, Navigator.pendingTabSelection.value)
         assertTrue(Navigator.prepareRootEvent(saved, origin, owner))
@@ -38,11 +31,9 @@ class CollectionProfileReturnTest {
         assertNull(Navigator.pendingTabSelection.value)
     }
 
-    @Test fun acceptedSaveSupersedesHistoryUntilTheProfileConsumesIt() = runTest(dispatcher) {
-        Navigator.openProfileCheckIns()
-        runCurrent()
+    @Test fun acceptedSaveSupersedesHistoryUntilTheProfileConsumesIt() = runTest {
+        selectProfile { Navigator.openProfileCheckIns() }
         Navigator.prepareRootEvent(saved, origin, owner)
-        runCurrent()
         assertTrue(Navigator.pendingProfileCollections.value)
         assertFalse(Navigator.pendingProfileCheckIns.value)
         Navigator.consumeProfileCollections()
@@ -53,37 +44,33 @@ class CollectionProfileReturnTest {
         assertTrue(Navigator.pendingProfileCollections.value)
     }
 
-    @Test fun aNewShelfIntentSupersedesTheSavedCollectionSection() = runTest(dispatcher) {
+    @Test fun aNewShelfIntentSupersedesTheSavedCollectionSection() = runTest {
         Navigator.prepareRootEvent(saved, origin, owner)
-        Navigator.returnToProfileShelf()
-        runCurrent()
+        selectProfile { Navigator.returnToProfileShelf() }
         assertFalse(Navigator.pendingProfileCollections.value)
         assertTrue(Navigator.pendingProfileShelf.value)
         assertFalse(Navigator.pendingProfileCheckIns.value)
     }
 
-    @Test fun aNewHistoryIntentSupersedesTheSavedCollectionSection() = runTest(dispatcher) {
+    @Test fun aNewHistoryIntentSupersedesTheSavedCollectionSection() = runTest {
         Navigator.prepareRootEvent(saved, origin, owner)
-        Navigator.openProfileCheckIns()
-        runCurrent()
+        selectProfile { Navigator.openProfileCheckIns() }
         assertFalse(Navigator.pendingProfileCollections.value)
         assertFalse(Navigator.pendingProfileShelf.value)
         assertTrue(Navigator.pendingProfileCheckIns.value)
     }
 
-    @Test fun ordinaryProfileSelectionDoesNotReplayAConsumedCollectionIntent() = runTest(dispatcher) {
+    @Test fun ordinaryProfileSelectionDoesNotReplayAConsumedCollectionIntent() = runTest {
         Navigator.prepareRootEvent(saved, origin, owner)
         Navigator.consumeProfileCollections()
-        Navigator.selectTab(Navigator.Screen.ProfileTab)
-        runCurrent()
+        selectProfile { Navigator.selectTab(Navigator.Screen.ProfileTab) }
         assertFalse(Navigator.pendingProfileCollections.value)
         assertFalse(Navigator.pendingProfileShelf.value)
         assertFalse(Navigator.pendingProfileCheckIns.value)
     }
 
-    @Test fun obsoleteAccountCompletionCannotConsumeTheSuccessorsSectionRequest() = runTest(dispatcher) {
-        Navigator.returnToProfileShelf()
-        runCurrent()
+    @Test fun obsoleteAccountCompletionCannotConsumeTheSuccessorsSectionRequest() = runTest {
+        selectProfile { Navigator.returnToProfileShelf() }
         val successor = RootNavigationSession(true, "successor", 2)
         assertFalse(Navigator.prepareRootEvent(saved, RootNavigationOrigin(successor), successor))
         assertFalse(Navigator.pendingProfileCollections.value)
@@ -119,6 +106,14 @@ class CollectionProfileReturnTest {
         model.confirm(model.plan(Navigator.NavEvent.PopBack))
         assertEquals(Navigator.Screen.CollectionsLibrary, model.actual.stacks[0].last().screen)
         assertFalse(Navigator.pendingProfileCollections.value)
+    }
+
+    private suspend fun TestScope.selectProfile(action: () -> Unit) {
+        val selected = async(start = CoroutineStart.UNDISPATCHED) {
+            Navigator.navigationEvents.first { it == Navigator.NavEvent.SelectTab(Navigator.Screen.ProfileTab) }
+        }
+        action()
+        selected.await()
     }
 
     private fun clearRequests() {
