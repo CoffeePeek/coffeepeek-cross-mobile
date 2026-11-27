@@ -68,7 +68,10 @@ class SandboxDiscoveryFixturesTest {
         assertEquals("Минск", catalog.cities.single().name)
         assertEquals(2, catalog.brewMethods.size)
         val drinks = createShopCheckInRepository(client.client, client.uploadClient).getDrinkOptions().getOrThrow()
-        assertEquals("cappuccino", drinks.single().slug)
+        assertEquals(
+            listOf("espresso", "americano", "cappuccino", "flat-white", "filter", "espresso-tonic", "hot-chocolate", "tea"),
+            drinks.map { it.slug },
+        )
         val store = object : RoasterCatalogStore {
             private var saved: String? = null
             override suspend fun read() = saved
