@@ -671,3 +671,18 @@ and unrelated discovery test opt-in warnings remain; no changed-file lint issue
 or new function-body debt was reported. Kotlin/Native and Swift compilation,
 manual Sandbox/native UI, accessibility and real-backend acceptance remain
 unverified locally. No UI/instrumented/screenshot test or live write was used.
+
+Native CI selector follow-up, 2026-11-27: PR #450 checkpoint `1d42f7ccb` passed
+Android CI, iOS Kotlin/Swift compilation and binary compatibility. Its native
+core phase also passed, but the explicit `--tests` list did not select
+`com.coffeepeek.admin.ui.CollectionProfileReturnTest`. Those ten new regressions
+were compiled for Native; the earlier phase's success is not evidence that they
+executed there. They were executed by the Windows/JVM gate recorded above.
+
+Plan/correction: add only that exact selector beside the existing root-navigation
+contracts in `ios-verify.yml`, retaining all existing filters. Runtime and test
+sources stay frozen; a local Gradle repeat adds no evidence for this YAML-only
+change. The next macOS native core run must execute the ten-test class, and its
+result/report must be checked before claiming Native execution. The current
+`1d42f7ccb` native workflow is allowed to finish for its remaining evidence/cache;
+it does not satisfy this new gate.
