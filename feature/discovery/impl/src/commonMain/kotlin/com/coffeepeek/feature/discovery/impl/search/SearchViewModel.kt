@@ -184,6 +184,7 @@ internal class SearchViewModel(
     }
 
     private fun locationDenied() {
+        if (location.current.value != null) location.refresh()
         val requested = currentState.nearbyRequested
         reportLocation(GeolocationOutcome.Unavailable, requested)
         cancelNearbyRequest()
@@ -255,7 +256,8 @@ internal class SearchViewModel(
     }
 
     private fun onLocation(point: Coordinates?) {
-        if (point == null || !point.isValid || (point == origin && !currentState.nearbyRequested)) return
+        if (point == null) return clearUserLocation()
+        if (!point.isValid || (point == origin && !currentState.nearbyRequested)) return
         val enabling = currentState.nearbyRequested
         val before = currentState.filters
         origin = point
@@ -268,6 +270,14 @@ internal class SearchViewModel(
             if (purpose != SearchPurpose.CheckInPicker) updateState { copy(shops = emptyList()) }
             if (cityReady) loadShops(reset = true)
         }
+    }
+
+    private fun clearUserLocation() {
+        if (origin == null && currentState.userLocation == null) return
+        val wasNearby = currentState.filters.nearbyOnly
+        origin = null
+        updateState { copy(canUseNearby = false, userLocation = null, filters = filters.copy(nearbyOnly = false)) }
+        if (wasNearby && cityReady) loadShops(reset = true)
     }
 
     private fun reportLocation(outcome: GeolocationOutcome, userTriggered: Boolean = false) {

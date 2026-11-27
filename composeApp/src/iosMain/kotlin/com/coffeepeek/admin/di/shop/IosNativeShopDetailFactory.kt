@@ -52,7 +52,7 @@ internal class IosNativeShopDetailFactory(private val accounts: SessionReader, p
             ::formatShopMenuLocalDate, { lat, lon -> formatDistance(distanceToShopMeters(location, lat, lon)) }, AppShopAnalytics,
             { event -> if (session.lease.isCurrent()) effect(event, session, id, checkNotNull(overlays), binding, platformScope) }, linkedCheckIn)
         bindSource(route, session, binding, { source -> overlays = source.overlays }, {
-            if (PlatformLocation.hasPermission()) location = PlatformLocation.getLastKnownLocation()
+            location = readPermittedUserLocation()
             binding.formatChanged()
         })
     }
@@ -81,7 +81,9 @@ internal class IosNativeShopDetailFactory(private val accounts: SessionReader, p
         location: suspend () -> Unit,
     ): Nothing = coroutineScope {
         launch { binding.state.filterNotNull().collect(detail::update) }
-        launch { location() }
+        launch { detail.screenVisible.collectLatest { shown ->
+            if (shown) locationAuthorizationChanges().collectLatest { location() }
+        } }
         launch { ownership.profileChanges.drop(1).collect { binding.core.retry() } }
         analytics(detail, binding, this)
         awaitCancellation()
