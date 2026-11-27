@@ -611,3 +611,78 @@ The shared ProfilePreference contract is retained for the native/API boundary.
 Paired grid/control/section/collection-pane previews use fake state and compile
 without requiring an account. Full verification evidence and manual gates are in
 `../profile/PROFILE_TABS_PLAN.md` under Android profile parity.
+
+### Saved editor selects the profile Collections section — #422 follow-up, 2026-11-27
+
+Base: develop `8168bfed4388b8051fc0c87ca6411198e3e69ca2`, branch
+`codex/migration-collections-return-422-v2`. The previous fix already routes
+successful new/edit saves through the library, profile preview and native
+workspace adapters to the profile root. It does not request the Collections
+section: Compose restores its last section (or Check-ins), and native profile
+only observes explicit Shelf and Check-ins requests. The Telegram video was not
+viewed; this finding follows the active production entry and callback paths.
+
+Verification plan before implementation: add a one-shot Collections request at
+accepted root-event delivery, after the existing root/account-lifetime guard.
+Pass it into profile through a narrow slot; observe and consume it in the
+retained/recreated Compose profile and the native profile. Explicit Shelf,
+Check-ins and Collections intents supersede one another; account replacement or
+logout clears private requests. An ordinary profile tab tap keeps its section.
+No save ViewModel, persistence, picker quick-create, cancel/back, failure,
+privacy, media or analytics behavior changes. Existing save guards remain the
+only source of successful editor completion.
+
+In-memory contracts will verify accepted/stale completion delivery, pending
+selection and one-time consumption, opposing intents and session reset. Reuse
+existing new/edit save, failure, cancellation, account and native callback suites.
+Required integration gates: collections/profile unit contracts, application
+Direct Debug unit tests, Direct Sandbox assembly/isolation/packaged runtime
+checks, function-body limits and macOS Kotlin/Swift native compilation. No Gradle
+run, device test, live account write, UI/instrumented/screenshot test or preview
+render has run for this follow-up at authoring time. Manual Sandbox/native
+checks of new/edit success, cancel/failure and retained profile sections remain
+separate gates.
+
+Windows verification on 2026-11-27, portable Temurin JDK 17.0.20.1+1/Android SDK,
+`--max-workers=6`: runtime checkpoint `632353d32` passed
+`:feature:collections:impl:testDebugUnitTest` (7 suites/110 cases),
+`:feature:profile:impl:testDebugUnitTest` (10 suites/110 cases),
+`:feature:profile:impl:lintDebug` (zero reported issues),
+`verifyFunctionBodyLimits` (125 recorded, zero new; baseline unchanged), and
+`:composeApp:assembleDirectSandbox`, `:composeApp:verifyDirectSandboxIsolation`,
+`:composeApp:verifyDirectSandboxRuntimeClasses`. The compiled fake light/dark
+previews include the requested Collections section; they were not rendered.
+APK `com.coffeepeek.sandbox`, Direct Sandbox `1.2.2.3438-sandbox`/3438,
+SHA-256 `e52aa5b0d10652fe74beb82b7a6a45e4a044cea8a088394df6ad7bd3389f825d`;
+no deployment or app launch occurred.
+
+The first full `:composeApp:testDirectDebugUnitTest` run at `632353d32` executed
+763 cases with two failures in the new test fixture: `runCurrent` does not wait
+for Navigator's real Default-dispatcher tab selection. Both failures expected
+ProfileTab before that asynchronous setter had executed. The original report
+and log are retained locally. Test-only checkpoint `bb08fbe20` subscribes before
+dispatch and awaits the actual SelectTab event before assertions/cleanup,
+without changing production dispatchers, adding sleeps or weakening assertions.
+Only the affected full application unit task was rerun: 170 suites/763 cases,
+including all ten new return contracts, zero failures/errors/skips (1m 2s).
+Together with the unchanged feature suites this verifies 983 cases. Other passed
+gates were not repeated after the fixture-only change. Existing AGP/KMP, Preview
+and unrelated discovery test opt-in warnings remain; no changed-file lint issue
+or new function-body debt was reported. Kotlin/Native and Swift compilation,
+manual Sandbox/native UI, accessibility and real-backend acceptance remain
+unverified locally. No UI/instrumented/screenshot test or live write was used.
+
+Native CI selector follow-up, 2026-11-27: PR #450 checkpoint `1d42f7ccb` passed
+Android CI, iOS Kotlin/Swift compilation and binary compatibility. Its native
+core phase also passed, but the explicit `--tests` list did not select
+`com.coffeepeek.admin.ui.CollectionProfileReturnTest`. Those ten new regressions
+were compiled for Native; the earlier phase's success is not evidence that they
+executed there. They were executed by the Windows/JVM gate recorded above.
+
+Plan/correction: add only that exact selector beside the existing root-navigation
+contracts in `ios-verify.yml`, retaining all existing filters. Runtime and test
+sources stay frozen; a local Gradle repeat adds no evidence for this YAML-only
+change. The next macOS native core run must execute the ten-test class, and its
+result/report must be checked before claiming Native execution. The current
+`1d42f7ccb` native workflow is allowed to finish for its remaining evidence/cache;
+it does not satisfy this new gate.

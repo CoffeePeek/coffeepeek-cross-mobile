@@ -26,6 +26,7 @@ import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.OwnProfileShelf
+import com.coffeepeek.feature.profile.api.OwnProfileSectionRequest
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
 import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.impl.createOwnProfileEntry
@@ -117,5 +118,9 @@ private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfi
         content = { modifier, header -> ProfileOwnShelf(modifier, header) },
         openRequested = { Navigator.pendingProfileShelf.collectAsState().value },
         onOpened = Navigator::consumeProfileShelf,
+    ),
+    collectionsRequest = OwnProfileSectionRequest(
+        requested = { Navigator.pendingProfileCollections.collectAsState().value },
+        onConsumed = Navigator::consumeProfileCollections,
     ),
 )

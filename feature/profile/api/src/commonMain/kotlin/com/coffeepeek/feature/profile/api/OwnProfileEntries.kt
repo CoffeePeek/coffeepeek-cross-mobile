@@ -23,6 +23,12 @@ class OwnProfileHistory(
     val selectionRevision: Int,
 )
 
+/** A pending section intent is consumed after selection; it is not saved profile state. */
+class OwnProfileSectionRequest(
+    val requested: @Composable () -> Boolean,
+    val onConsumed: () -> Unit,
+)
+
 /** App-rendered pieces that only the owner's own profile shows. */
 class OwnProfileSlots(
     val shared: ProfileSlots,
@@ -33,6 +39,7 @@ class OwnProfileSlots(
     /** Mascot error content with a retry action. */
     val loadError: @Composable (onRetry: () -> Unit) -> Unit,
     val shelf: OwnProfileShelf? = null,
+    val collectionsRequest: OwnProfileSectionRequest? = null,
 )
 
 /** The Profile tab. Caller owns the tab, navigation, sign-in and the floating bar clearance. *

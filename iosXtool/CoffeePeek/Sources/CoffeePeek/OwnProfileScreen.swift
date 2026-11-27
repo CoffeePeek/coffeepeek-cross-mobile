@@ -271,10 +271,12 @@ final class OwnProfileModel: ObservableObject {
         profile.resume()
         if profile.shelfRequested() { openRequestedShelf() }
         if profile.checkInsRequested() { openRequestedCheckIns() }
+        if profile.collectionsRequested() { openRequestedCollections() }
         observation = profile.observe(onState: { [weak self] in self?.update($0) },
                                       onLanguage: { [weak self] in self?.strings = OwnProfileStrings(languageTag: $0) },
                                       onShelf: { [weak self] in self?.openRequestedShelf() },
-                                      onCheckIns: { [weak self] in self?.openRequestedCheckIns() })
+                                      onCheckIns: { [weak self] in self?.openRequestedCheckIns() },
+                                      onCollections: { [weak self] in self?.openRequestedCollections() })
     }
 
     func stopObserving() {
@@ -353,6 +355,11 @@ final class OwnProfileModel: ObservableObject {
     private func openRequestedShelf() {
         select(.shelf)
         profile.consumeShelfRequest()
+    }
+
+    private func openRequestedCollections() {
+        select(.collections)
+        profile.consumeCollectionsRequest()
     }
 }
 

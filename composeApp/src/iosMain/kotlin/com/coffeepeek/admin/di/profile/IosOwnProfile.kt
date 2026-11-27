@@ -41,14 +41,16 @@ class IosOwnProfile internal constructor(
     fun languageTag() = language.current().languageTag
     fun shelfRequested() = Navigator.pendingProfileShelf.value && isCurrent()
     fun checkInsRequested() = Navigator.pendingProfileCheckIns.value && isCurrent()
+    fun collectionsRequested() = Navigator.pendingProfileCollections.value && isCurrent()
     fun observe(onState: (IosOwnProfileState) -> Unit, onLanguage: (String) -> Unit,
-        onShelf: () -> Unit, onCheckIns: () -> Unit): IosOwnProfileObservation {
+        onShelf: () -> Unit, onCheckIns: () -> Unit, onCollections: () -> Unit): IosOwnProfileObservation {
         return IosOwnProfileObservation(
             profile.observe { onState(current()) },
             history.observe { onState(current()) },
             scope.launch { language.observe().collect { onLanguage(it.languageTag); onState(current()) } },
             scope.launch { Navigator.pendingProfileShelf.collect { if (it && isCurrent()) onShelf() } },
             scope.launch { Navigator.pendingProfileCheckIns.collect { if (it && isCurrent()) onCheckIns() } },
+            scope.launch { Navigator.pendingProfileCollections.collect { if (it && isCurrent()) onCollections() } },
         )
     }
 
@@ -91,6 +93,7 @@ class IosOwnProfile internal constructor(
     fun openCollections() { if (isCurrent()) openProfileCollections() }
     fun consumeShelfRequest() { if (isCurrent()) Navigator.consumeProfileShelf() }
     fun consumeCheckInsRequest() { if (isCurrent()) Navigator.consumeProfileCheckIns() }
+    fun consumeCollectionsRequest() { if (isCurrent()) Navigator.consumeProfileCollections() }
 
     fun openConnection(slug: String) {
         val person = profile.current().connections.firstOrNull { it.slug == slug } ?: return

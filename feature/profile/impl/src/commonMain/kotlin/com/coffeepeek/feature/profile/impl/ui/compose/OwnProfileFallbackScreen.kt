@@ -88,6 +88,7 @@ private fun OwnProfileFallbackContent(
         shelf = { OwnProfileFallbackShelf(callbacks.editProfile) },
         onOpenCollections = callbacks.openFavorites,
         modifier = Modifier.fillMaxSize(), ownerShelf = slots.shelf, ownerHistory = history, bottomPadding = bottomPadding,
+        ownerCollections = slots.collectionsRequest,
     ) {
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OwnProfileFallbackHeader(profile, slots, callbacks, onPhoto)
